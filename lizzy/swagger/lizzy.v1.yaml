@@ -1,0 +1,82 @@
+swagger: "2.0"
+
+info:
+  title: Lizzy
+  version: "1.0"
+
+basePath: /v1.0
+produces:
+  - application/json
+
+paths:
+  /deploy/:
+    get:
+      summary: List all deployments
+      operationId: lizzy.api.v1.all_deployments
+    post:
+      summary: New deployments
+      operationId: lizzy.api.v1.new_deployment
+      responses:
+        200:
+          schema:
+            type: string
+            $ref: '#/definitions/deployment'
+      parameters:
+        - name: senza_yaml
+          required: true
+          type: string
+          in: body
+          schema:
+            $ref: '#/definitions/new_deployment'
+  /deploy/{deployment_id}:
+    get:
+      summary: Get a deployment
+      description: Generates a greeting message.
+      operationId: lizzy.api.v1.deploy
+      responses:
+        200:
+          description: greeting response
+          schema:
+            type: string
+            $ref: '#/definitions/deployment'
+      parameters:
+        - name: deployment_id
+          in: path
+          description: Deployment id
+          required: true
+          type: string
+
+definitions:
+  new_deployment:
+    properties:
+      senza_yaml:
+        type: string
+        description: YAML to provide to senza
+      deployment_strategy:
+        type: string
+        description: Deployment strategy
+      image_version:
+        type: string
+        description: Docker image version to deploy
+    required:
+      - senza_yaml
+      - deployment_strategy
+      - image_version
+  deployment:
+    properties:
+      deployment_id:
+        type: string
+        description: Unique ID for the deployment
+      senza_yaml:
+        type: string
+        description: YAML to provide to senza
+      deployment_strategy:
+        type: string
+        description: Deployment strategy
+      image_version:
+        type: string
+        description: Docker image version to deploy
+    required:
+      - senza_yaml
+      - deployment_strategy
+      - image_version

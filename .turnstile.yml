@@ -1,0 +1,8 @@
+checks:
+    - specification
+    - branch-release
+    - codevalidator
+specification:
+    allowed_schemes: ['https']
+branch-release:
+    pattern: '^v(?:\d|\_|\.)+$'
