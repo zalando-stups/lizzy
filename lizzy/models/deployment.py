@@ -1,6 +1,6 @@
 import logging
 import datetime
-import uuid
+import random
 
 import rod.model
 import yaml
@@ -22,20 +22,27 @@ class Deployment(rod.model.Model):
                  stack_version: str=None,
                  status: str='LIZZY_NEW',
                  **kwargs):
-        self.deployment_id = deployment_id if deployment_id is not None else str(uuid.uuid1())
-        self.deployment_strategy = deployment_strategy
-        self.image_version = image_version
-        self.senza_yaml = senza_yaml
-        self.stack_version = stack_version if stack_version is not None else self.generate_version()
-        self.status = status  # status is cloud formation status or LIZZY_NEW
-
         # TODO validate
         self._senza_definition = yaml.safe_load(senza_yaml)
 
+        self.stack_version = stack_version if stack_version is not None else self.generate_version()
+        self.deployment_id = deployment_id if deployment_id is not None else self.generate_id()
+        self.deployment_strategy = deployment_strategy
+        self.image_version = image_version
+        self.senza_yaml = senza_yaml
+        self.status = status  # status is cloud formation status or LIZZY_NEW
+
     @staticmethod
-    def generate_version():
+    def generate_version() -> str:
         now = datetime.datetime.utcnow()
-        return '{:%Y%m%d%H%M%S}'.format(now)
+        random_part = random.randint(0, 99)
+        return '{time:%y%m%d%H%M%S}-{rand:02}'.format(time=now, rand=random_part)
+
+    def generate_id(self) -> str:
+        """
+        The id will be the same as the stack name on aws
+        """
+        return '{name}-{version}'.format(name=self.stack_name, version=self.stack_version)
 
     @property
     def stack_name(self) -> str:
