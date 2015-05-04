@@ -67,16 +67,15 @@ definitions:
       deployment_id:
         type: string
         description: Unique ID for the deployment
-      senza_yaml:
-        type: string
-        description: YAML to provide to senza
       deployment_strategy:
         type: string
         description: Deployment strategy
       image_version:
         type: string
         description: Docker image version to deploy
-    required:
-      - senza_yaml
-      - deployment_strategy
-      - image_version
+      senza_yaml:
+        type: string
+        description: YAML to provide to senza
+      stack_name:
+        type: string
+        description: Cloud formation stack name prefix

@@ -1,7 +1,10 @@
+import logging
 import uuid
 
 import rod.model
 import yaml
+
+logger = logging.getLogger('lizzy.model.deployment')
 
 
 class Deployment(rod.model.Model):
@@ -15,20 +18,22 @@ class Deployment(rod.model.Model):
                  deployment_strategy: str,
                  image_version: str,
                  senza_yaml: str,
-                 stack_name: str=None,
                  status: str='LIZZY_NEW',
                  **kwargs):
         self.deployment_id = deployment_id if deployment_id is not None else str(uuid.uuid1())
         self.deployment_strategy = deployment_strategy
         self.image_version = image_version
         self.senza_yaml = senza_yaml
-        if stack_name is None:
-            # TODO: error handling
-            senza_definition = yaml.safe_load(senza_yaml)
-            self.stack_name = senza_definition['SenzaInfo']['StackName']
-        else:
-            self.stack_name = stack_name
         self.status = status  # status is cloud formation status or LIZZY_NEW
 
-    def as_dict(self):
-        return self.__dict__
+        # TODO validate
+        self._senza_definition = yaml.safe_load(senza_yaml)
+
+    @property
+    def stack_name(self) -> str:
+        # TODO error handling
+        try:
+            return self._senza_definition['SenzaInfo']['StackName']
+        except Exception:
+            logger.exception("Couldn't get stack name for:\n%s", str(self._senza_definition))
+            return ''
