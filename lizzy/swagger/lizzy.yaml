@@ -4,7 +4,6 @@ info:
   title: Lizzy
   version: "1.0"
 
-basePath: /v1.0
 produces:
   - application/json
 
@@ -12,10 +11,10 @@ paths:
   /deploy/:
     get:
       summary: List all deployments
-      operationId: lizzy.api.v1.all_deployments
+      operationId: lizzy.api.all_deployments
     post:
       summary: New deployments
-      operationId: lizzy.api.v1.new_deployment
+      operationId: lizzy.api.new_deployment
       responses:
         200:
           schema:
@@ -32,7 +31,7 @@ paths:
     get:
       summary: Get a deployment
       description: Generates a greeting message.
-      operationId: lizzy.api.v1.deploy
+      operationId: lizzy.api.deploy
       responses:
         200:
           description: greeting response

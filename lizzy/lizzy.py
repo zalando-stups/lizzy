@@ -21,7 +21,7 @@ scheduler.add_job(lizzy.jobs.check_status, interval, max_instances=10)
 
 # configure app
 swagger_app = connexion.App(__name__, PORT, specification_dir='swagger/')
-swagger_app.add_api('lizzy.v1.yaml')
+swagger_app.add_api('lizzy.yaml')
 
 
 def main():
