@@ -3,7 +3,7 @@ import connexion
 from lizzy.models.deployment import Deployment
 
 
-def _serizalize_deployment(deployment: Deployment) -> dict:
+def _get_deployment_dict(deployment: Deployment) -> dict:
     """
     From lizzy.v1.yaml:
       deployment_id:
@@ -26,12 +26,13 @@ def _serizalize_deployment(deployment: Deployment) -> dict:
                        'deployment_strategy': deployment.deployment_strategy,
                        'image_version': deployment.image_version,
                        'senza_yaml': deployment.senza_yaml,
-                       'stack_name': deployment.stack_name}
+                       'stack_name': deployment.stack_name,
+                       'stack_version': deployment.stack_version}
     return deployment_dict
 
 
 def all_deployments() -> dict:
-    deployments = [(_serizalize_deployment(deployment)) for deployment in Deployment.all()]
+    deployments = [(_get_deployment_dict(deployment)) for deployment in Deployment.all()]
     return {'deployments': deployments}
 
 
@@ -42,7 +43,7 @@ def new_deployment() -> dict:
 
     deployment = Deployment(**connexion.request.json)
     deployment.save()
-    return _serizalize_deployment(deployment)
+    return _get_deployment_dict(deployment)
 
 
 def deploy(deployment_id: str) -> dict:
@@ -50,4 +51,4 @@ def deploy(deployment_id: str) -> dict:
     GET /v1.0/deploy/{id}
     """
     deployment = Deployment.get(deployment_id)
-    return _serizalize_deployment(deployment)
+    return _get_deployment_dict(deployment)

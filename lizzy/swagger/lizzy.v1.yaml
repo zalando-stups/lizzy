@@ -79,3 +79,6 @@ definitions:
       stack_name:
         type: string
         description: Cloud formation stack name prefix
+      stack_version:
+        type: string
+        description: Cloud formation stack version
