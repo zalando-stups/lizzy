@@ -33,7 +33,8 @@ def _get_deployment_dict(deployment: Deployment) -> dict:
                        'image_version': deployment.image_version,
                        'senza_yaml': deployment.senza_yaml,
                        'stack_name': deployment.stack_name,
-                       'stack_version': deployment.stack_version}
+                       'stack_version': deployment.stack_version,
+                       'status': deployment.status}
     return deployment_dict
 
 
