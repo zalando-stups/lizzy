@@ -41,7 +41,15 @@ def new_deployment() -> dict:
     POST /v1.0/deploy/
     """
 
-    deployment = Deployment(**connexion.request.json)
+    try:
+        deployment_strategy = connexion.request.json['deployment_strategy']
+        image_version = connexion.request.json['image_version']
+        senza_yaml = connexion.request.json['senza_yaml']
+    except KeyError as e:
+        missing_property = str(e)
+        raise connexion.exceptions.BadRequest('Missing property: {}'.format(missing_property))
+
+    deployment = Deployment(deployment_strategy=deployment_strategy, image_version=image_version, senza_yaml=senza_yaml)
     deployment.save()
     return _get_deployment_dict(deployment)
 
