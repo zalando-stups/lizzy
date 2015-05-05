@@ -3,3 +3,4 @@ connexion
 flask
 pyyaml
 rod
+stups-senza
