@@ -1,6 +1,12 @@
+import logging
+
 import connexion
+import yaml
 
 from lizzy.models.deployment import Deployment
+
+
+logger = logging.getLogger('lizzy.api')
 
 
 def _get_deployment_dict(deployment: Deployment) -> dict:
@@ -47,9 +53,32 @@ def new_deployment() -> dict:
         senza_yaml = connexion.request.json['senza_yaml']
     except KeyError as e:
         missing_property = str(e)
-        raise connexion.exceptions.BadRequest('Missing property: {}'.format(missing_property))
+        logger.error("Missing property on request: %s", missing_property)
+        raise connexion.exceptions.BadRequest("Missing property: {}".format(missing_property))
 
-    deployment = Deployment(deployment_strategy=deployment_strategy, image_version=image_version, senza_yaml=senza_yaml)
+    try:
+        senza_definition = yaml.safe_load(senza_yaml)
+        if not isinstance(senza_definition, dict):
+            raise TypeError
+    except yaml.YAMLError:
+        logger.exception("Couldn't parse senza yaml:\n %s", senza_yaml)
+        raise connexion.exceptions.BadRequest("Invalid senza yaml")
+    except TypeError:
+        logger.exception("Senza yaml is not a dict:\n %s", senza_yaml)
+        raise connexion.exceptions.BadRequest("Invalid senza yaml")
+
+    try:
+        stack_name = senza_definition['SenzaInfo']['StackName']
+        # TODO validate stack name
+    except KeyError as e:
+        logger.error("Couldn't get stack name for:\n%s", senza_yaml)
+        missing_property = str(e)
+        raise connexion.exceptions.BadRequest("Missing property in senza yaml: {}".format(missing_property))
+
+    deployment = Deployment(deployment_strategy=deployment_strategy,
+                            image_version=image_version,
+                            senza_yaml=senza_yaml,
+                            stack_name=stack_name)
     deployment.save()
     return _get_deployment_dict(deployment)
 

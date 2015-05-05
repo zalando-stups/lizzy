@@ -3,7 +3,7 @@ import datetime
 import random
 
 import rod.model
-import yaml
+
 
 logger = logging.getLogger('lizzy.model.deployment')
 
@@ -19,12 +19,11 @@ class Deployment(rod.model.Model):
                  deployment_strategy: str,
                  image_version: str,
                  senza_yaml: str,
+                 stack_name: str,
                  stack_version: str=None,
                  status: str='LIZZY_NEW',
                  **kwargs):
-        # TODO validate
-        self._senza_definition = yaml.safe_load(senza_yaml)
-
+        self.stack_name = stack_name
         self.stack_version = stack_version if stack_version is not None else self.generate_version()
         self.deployment_id = deployment_id if deployment_id is not None else self.generate_id()
         self.deployment_strategy = deployment_strategy
@@ -43,12 +42,3 @@ class Deployment(rod.model.Model):
         The id will be the same as the stack name on aws
         """
         return '{name}-{version}'.format(name=self.stack_name, version=self.stack_version)
-
-    @property
-    def stack_name(self) -> str:
-        # TODO error handling
-        try:
-            return self._senza_definition['SenzaInfo']['StackName']
-        except Exception:
-            logger.exception("Couldn't get stack name for:\n%s", str(self._senza_definition))
-            return ''
