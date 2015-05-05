@@ -20,6 +20,17 @@ import lizzy.senza_wrapper as senza
 logger = logging.getLogger('lizzy.job')
 
 
+def deploy_and_forget(deployment):
+    if senza.Senza.create(deployment.senza_yaml, deployment.stack_version, deployment.image_version):
+        deployment.status = 'LIZZY_DEPLOYING'
+    else:
+        deployment.status = 'LIZZY_ERROR'
+
+
+def deploy_blue_green(deployment):
+    pass
+
+
 def check_status():
     all_deployments = Deployment.all()
     logger.debug('In Job')
@@ -35,16 +46,24 @@ def check_status():
             pass
 
     for deployment in all_deployments:
-        if deployment.status == 'LIZZY_NEW' and deployment.lock(3600000):
+        if deployment.status == 'LIZZY_REMOVED':
+            # There is nothing to do this, the stack is no more, it has expired, it's an ex-stack
+            ...
+        elif deployment.status == 'LIZZY_NEW' and deployment.lock(3600000):
             logger.debug("Trying to deploy '%s'", deployment.deployment_id)
-            if senza.Senza.create(deployment.senza_yaml, deployment.stack_version, deployment.image_version):
-                deployment.status = 'LIZZY_DEPLOYING'
+            if deployment.strategy == 'BLUE_GREEN':
+                deploy_blue_green(deployment)
             else:
-                deployment.status = 'LIZZY_ERROR'
+                deploy_and_forget(deployment)
             deployment.save()
             deployment.unlock()
         elif deployment.lock(3600000):
-            deployment.status = lizzy_stacks[deployment.stack_name][deployment.stack_version]['status']
+            try:
+                deployment.status = lizzy_stacks[deployment.stack_name][deployment.stack_version]['status']
+            except KeyError:
+                # If this happens is because the stack was removed from aws
+                logger.debug("'%s' no longer exists, marking as removed", deployment.deployment_id)
+                deployment.status = 'LIZZY_REMOVED'
             deployment.save()
             deployment.unlock()
             logger.debug('ID: %s, STATUS: %s', deployment.deployment_id, deployment.status)
