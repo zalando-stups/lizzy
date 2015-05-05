@@ -14,7 +14,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 import json
 import logging
 import subprocess
-import shlex
+import tempfile
 
 
 logger = logging.getLogger('lizzy.senza')
@@ -25,19 +25,32 @@ class Senza:
     region = 'eu-west-1'
 
     @classmethod
+    def create(cls, senza_yaml: str, stack_version: str, image_version: str) -> bool:
+        with tempfile.NamedTemporaryFile() as temp_yaml:
+            temp_yaml.write(senza_yaml.encode())
+            temp_yaml.file.flush()
+            error = cls._execute('create', temp_yaml.name, stack_version, image_version)
+        return not error
+
+    @classmethod
     def list(cls) -> list:
         """
         Returns the stack list
         """
-        stacks = cls._execute('list')
+        stacks = cls._execute('list', expect_json=True)
         return stacks
 
     @classmethod
-    def _execute(cls, subcommand: str):
+    def _execute(cls, *args, expect_json: bool=False):
         command = ['senza']
-        command += shlex.split(subcommand)
-        command += ['--region', cls.region, '-o', 'json']
+        command += args
+        command += ['--region', cls.region]
+        if expect_json:
+            command += ['-o', 'json']
         logger.debug('%s', command)
         process = subprocess.Popen(command, stdout=subprocess.PIPE)
         stdout, _ = process.communicate()
-        return json.loads(stdout.decode())
+        if expect_json:
+            return json.loads(stdout.decode())
+        else:
+            return process.returncode

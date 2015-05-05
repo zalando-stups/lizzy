@@ -11,6 +11,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
  language governing permissions and limitations under the License.
 """
 
+import collections
 import logging
 
 from lizzy.models.deployment import Deployment
@@ -23,17 +24,29 @@ def check_status():
     all_deployments = Deployment.all()
     logger.debug('In Job')
     stacks = senza.Senza.list()
+    lizzy_stacks = collections.defaultdict(dict)  # stacks managed by lizzy
     for stack in stacks:
         deployment_name = '{stack_name}-{version}'.format_map(stack)
         try:
             deployment = Deployment.get(deployment_name)
-            logger.debug("'%s' not in redis.", deployment_name)
-            logger.debug("'%s' found.", deployment.stack_name)
+            logger.debug("'%s' found.", stack)
+            lizzy_stacks[deployment.stack_name][deployment.stack_version] = stack
         except KeyError:
-            logger.debug("'%s' not in redis.", deployment_name)
+            pass
 
     for deployment in all_deployments:
-        if deployment.lock(5000):
+        if deployment.status == 'LIZZY_NEW' and deployment.lock(3600000):
+            logger.debug("Trying to deploy '%s'", deployment.deployment_id)
+            if senza.Senza.create(deployment.senza_yaml, deployment.stack_version, deployment.image_version):
+                deployment.status = 'LIZZY_DEPLOYING'
+            else:
+                deployment.status = 'LIZZY_ERROR'
+            deployment.save()
+            deployment.unlock()
+        elif deployment.lock(3600000):
+            deployment.status = lizzy_stacks[deployment.stack_name][deployment.stack_version]['status']
+            deployment.save()
+            deployment.unlock()
             logger.debug('ID: %s, STATUS: %s', deployment.deployment_id, deployment.status)
         else:
-            logger.debug('Deployment object was locked skipping')
+            logger.debug('ID: %s, STATUS: %s', deployment.deployment_id, deployment.status)

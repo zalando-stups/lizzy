@@ -29,7 +29,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 # configure scheduler
 scheduler = scheduler_background.BackgroundScheduler()
-interval = scheduler_interval.IntervalTrigger(seconds=5)  # Todo Make this configurable
+interval = scheduler_interval.IntervalTrigger(seconds=15)  # Todo Make this configurable
 scheduler.add_job(lizzy.jobs.check_status, interval, max_instances=10)
 
 # configure app
