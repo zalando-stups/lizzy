@@ -12,7 +12,12 @@ Unless required by applicable law or agreed to in writing, software distributed 
 """
 
 import json
+import logging
 import subprocess
+import shlex
+
+
+logger = logging.getLogger('lizzy.senza')
 
 
 class Senza:
@@ -24,8 +29,15 @@ class Senza:
         """
         Returns the stack list
         """
-        cmd = 'senza', 'list', '-o', 'json', '--region', cls.region
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        stdout, _ = process.communicate()
-        stacks = json.loads(stdout.decode())
+        stacks = cls._execute('list')
         return stacks
+
+    @classmethod
+    def _execute(cls, subcommand: str):
+        command = ['senza']
+        command += shlex.split(subcommand)
+        command += ['--region', cls.region, '-o', 'json']
+        logger.debug('%s', command)
+        process = subprocess.Popen(command, stdout=subprocess.PIPE)
+        stdout, _ = process.communicate()
+        return json.loads(stdout.decode())
