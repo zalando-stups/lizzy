@@ -34,7 +34,7 @@ class Deployment(rod.model.Model):
                  senza_yaml: str,
                  stack_name: str,
                  stack_version: str=None,
-                 status: str='LIZZY_NEW',
+                 status: str='LIZZY:NEW',
                  **kwargs):
         self.stack_name = stack_name
         self.stack_version = stack_version if stack_version is not None else self.generate_version()

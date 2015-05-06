@@ -41,6 +41,11 @@ class Senza:
         return stacks
 
     @classmethod
+    def remove(cls, stack_name: str, stack_version: str) -> bool:
+        error = cls._execute('delete', stack_name, stack_version)
+        return not error
+
+    @classmethod
     def _execute(cls, *args, expect_json: bool=False):
         command = ['senza']
         command += args

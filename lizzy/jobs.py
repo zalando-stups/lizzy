@@ -15,20 +15,10 @@ import collections
 import logging
 
 from lizzy.models.deployment import Deployment
+from lizzy.deployers import DeployAndForget, BlueGreenDeployer
 import lizzy.senza_wrapper as senza
 
 logger = logging.getLogger('lizzy.job')
-
-
-def deploy_and_forget(deployment):
-    if senza.Senza.create(deployment.senza_yaml, deployment.stack_version, deployment.image_version):
-        deployment.status = 'LIZZY_DEPLOYING'
-    else:
-        deployment.status = 'LIZZY_ERROR'
-
-
-def deploy_blue_green(deployment):
-    pass
 
 
 def check_status():
@@ -46,26 +36,25 @@ def check_status():
             pass
 
     for deployment in all_deployments:
-        if deployment.status == 'LIZZY_REMOVED':
+        logger.debug(deployment.status)
+        if deployment.status in ['LIZZY:REMOVED', 'LIZZY:ERROR']:
+            logger.debug('Removed')
             # There is nothing to do this, the stack is no more, it has expired, it's an ex-stack
-            ...
-        elif deployment.status == 'LIZZY_NEW' and deployment.lock(3600000):
-            logger.debug("Trying to deploy '%s'", deployment.deployment_id)
-            if deployment.strategy == 'BLUE_GREEN':
-                deploy_blue_green(deployment)
-            else:
-                deploy_and_forget(deployment)
-            deployment.save()
-            deployment.unlock()
-        elif deployment.lock(3600000):
-            try:
-                deployment.status = lizzy_stacks[deployment.stack_name][deployment.stack_version]['status']
-            except KeyError:
-                # If this happens is because the stack was removed from aws
-                logger.debug("'%s' no longer exists, marking as removed", deployment.deployment_id)
-                deployment.status = 'LIZZY_REMOVED'
-            deployment.save()
-            deployment.unlock()
-            logger.debug('ID: %s, STATUS: %s', deployment.deployment_id, deployment.status)
+            continue
+
+        strategy = deployment.deployment_strategy.lower()
+        if strategy == 'deploy_and_forget':
+            deployer = DeployAndForget
+        elif strategy == 'blue_green':
+            deployer = BlueGreenDeployer
         else:
-            logger.debug('ID: %s, STATUS: %s', deployment.deployment_id, deployment.status)
+            deployer = DeployAndForget  # TODO should mark deployment as invalid later
+
+        if deployment.lock(3600000):
+            controller = deployer(lizzy_stacks, deployment)
+            try:
+                new_status = controller.handle()
+                deployment.status = new_status
+                deployment.save()
+            finally:
+                deployment.unlock()
