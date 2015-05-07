@@ -22,7 +22,7 @@ logger = logging.getLogger('lizzy.senza')
 
 class Senza:
 
-    region = 'eu-west-1'
+    region = 'eu-central-1'
 
     @classmethod
     def create(cls, senza_yaml: str, stack_version: str, image_version: str) -> bool:
@@ -31,6 +31,14 @@ class Senza:
             temp_yaml.file.flush()
             error = cls._execute('create', temp_yaml.name, stack_version, image_version)
         return not error
+
+    @classmethod
+    def domains(cls, stack_name: str=None):
+        if stack_name:
+            stack_domains = cls._execute('domains', stack_name, expect_json=True)
+        else:
+            stack_domains = cls._execute('domains', expect_json=True)
+        return stack_domains
 
     @classmethod
     def list(cls) -> list:
@@ -44,6 +52,11 @@ class Senza:
     def remove(cls, stack_name: str, stack_version: str) -> bool:
         error = cls._execute('delete', stack_name, stack_version)
         return not error
+
+    @classmethod
+    def traffic(cls, stack_name: str, stack_version: str, percentage: int):
+        traffic_weights = cls._execute('traffic', stack_name, stack_version, str(percentage), expect_json=True)
+        return traffic_weights
 
     @classmethod
     def _execute(cls, subcommand, *args, expect_json: bool=False):

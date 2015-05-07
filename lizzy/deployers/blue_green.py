@@ -52,13 +52,19 @@ class BlueGreenDeployer(BaseDeployer):
         versions_to_remove = all_versions[:-2]
         self.logger.debug("Versions to be removed: %s", versions_to_remove)
         for version in versions_to_remove:
-            self.logger.info("Removing '%s-%d'...".format(self.deployment.stack_name, version))
+            self.logger.info("Removing '%s-%d'...", self.deployment.stack_name, version)
             try:
                 senza.Senza.remove(self.deployment.stack_name, version)
-                self.logger.info("'%s-%d' removed.".format(self.deployment.stack_name, version))
+                self.logger.info("'%s-%d' removed.", self.deployment.stack_name, version)
             except Exception:
-                self.logger.exception("Failed to remove '%s-%d'.".format(self.deployment.stack_name, version))
+                self.logger.exception("Failed to remove '%s-%d'.", self.deployment.stack_name, version)
 
-        # TODO Switch traffic
+        # Switch all traffic to new version
+        if senza.Senza.domains(self.deployment.stack_name):
+            self.logger.info("Switching '%s' traffic to '%s'.",
+                             self.deployment.stack_name, self.deployment.deployment_id)
+            senza.Senza.traffic(self.deployment.stack_name, self.deployment.stack_version, 100)
+        else:
+            self.logger.info("'%s' doesn't have a domain so traffic will not be switched.", self.deployment.stack_name)
 
         return 'CF:{}'.format(cloud_formation_status)

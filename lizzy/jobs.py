@@ -41,7 +41,6 @@ def check_status():
             pass
 
     for deployment in all_deployments:
-        logger.debug(deployment.status)
         if deployment.status in ['LIZZY:REMOVED', 'LIZZY:ERROR']:
             # There is nothing to do this, the stack is no more, it has expired, it's an ex-stack
             continue
