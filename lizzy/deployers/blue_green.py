@@ -26,10 +26,16 @@ class BlueGreenDeployer(BaseDeployer):
         cloud_formation_status = self._get_stack_status()
 
         if cloud_formation_status is None:  # Stack no longer exist.
+            self.logger.info("'%s' no longer exists, marking as removed.", self.deployment.deployment_id)
             new_status = 'LIZZY:REMOVED'
+        elif cloud_formation_status == 'CREATE_IN_PROGRESS':
+            self.logger.debug("'%s' is still deploying.", self.deployment.deployment_id)
+            new_status = 'LIZZY:DEPLOYING'
         elif cloud_formation_status == 'CREATE_COMPLETE':
+            self.logger.info("'%s' stack created.", self.deployment.deployment_id)
             new_status = 'LIZZY:DEPLOYED'
         else:
+            self.logger.info("'%s' status is '%s'.", self.deployment.deployment_id, cloud_formation_status)
             new_status = 'CF:{}'.format(cloud_formation_status)
 
         return new_status
@@ -37,6 +43,7 @@ class BlueGreenDeployer(BaseDeployer):
     def deployed(self):
         cloud_formation_status = self._get_stack_status()
         if cloud_formation_status is None:  # Stack no longer exist.
+            self.logger.info("'%s' no longer exists, marking as removed", self.deployment.deployment_id)
             return 'LIZZY:REMOVED'
 
         all_versions = sorted(self.stacks[self.deployment.stack_name].keys())
@@ -45,8 +52,12 @@ class BlueGreenDeployer(BaseDeployer):
         versions_to_remove = all_versions[:-2]
         self.logger.debug("Versions to be removed: %s", versions_to_remove)
         for version in versions_to_remove:
-            self.logger.info("Removing '%s-%d'".format(self.deployment.stack_name, version))
-            senza.Senza.remove(self.deployment.stack_name, version)
+            self.logger.info("Removing '%s-%d'...".format(self.deployment.stack_name, version))
+            try:
+                senza.Senza.remove(self.deployment.stack_name, version)
+                self.logger.info("'%s-%d' removed.".format(self.deployment.stack_name, version))
+            except Exception:
+                self.logger.exception("Failed to remove '%s-%d'.".format(self.deployment.stack_name, version))
 
         # TODO Switch traffic
 
