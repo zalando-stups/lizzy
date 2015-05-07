@@ -55,12 +55,12 @@ class BaseDeployer:
         Handler for when deployment status=='LIZZY:NEW'
         By default the stack is created
         """
-        self.logger.debug("Creating stack for '%s'...", self.deployment.deployment_id)
+        self.logger.info("Creating stack for '%s'...", self.deployment.deployment_id)
         if senza.Senza.create(self.deployment.senza_yaml, self.deployment.stack_version, self.deployment.image_version):
-            self.logger.debug("Stack for '%s' created.", self.deployment.deployment_id)
+            self.logger.info("Stack for '%s' created.", self.deployment.deployment_id)
             new_status = 'LIZZY:DEPLOYING'
         else:
-            self.logger.debug("Error creating stack for '%s'.", self.deployment.deployment_id)
+            self.logger.error("Error creating stack for '%s'.", self.deployment.deployment_id)
             new_status = 'LIZZY:ERROR'
 
         return new_status
@@ -92,6 +92,6 @@ class BaseDeployer:
             new_status = 'CF:{}'.format(cloud_formation_status)
         else:
             # If this happens is because the stack was removed from aws
-            self.logger.debug("'%s' no longer exists, marking as removed", self.deployment.deployment_id)
+            self.logger.info("'%s' no longer exists, marking as removed", self.deployment.deployment_id)
             new_status = 'LIZZY:REMOVED'
         return new_status

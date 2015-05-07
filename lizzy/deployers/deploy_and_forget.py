@@ -34,9 +34,9 @@ class DeployAndForget(BaseDeployer):
         if senza.Senza.create(self.deployment.senza_yaml, self.deployment.stack_version, self.deployment.image_version):
             self.logger.debug("Stack for '%s' created.", self.deployment.deployment_id)
             # With this strategy the deployment is done as soon as we create the stack
-            new_status = 'LIZZY:DEPLOYMENT_DONE'
+            new_status = 'LIZZY:DEPLOYED'
         else:
-            self.logger.debug("Error creating stack for '%s'.", self.deployment.deployment_id)
+            self.logger.error("Error creating stack for '%s'.", self.deployment.deployment_id)
             new_status = 'LIZZY:ERROR'
 
         return new_status
