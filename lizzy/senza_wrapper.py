@@ -46,16 +46,20 @@ class Senza:
         return not error
 
     @classmethod
-    def _execute(cls, *args, expect_json: bool=False):
-        command = ['senza']
-        command += args
+    def _execute(cls, subcommand, *args, expect_json: bool=False):
+        command = ['senza', subcommand]
         command += ['--region', cls.region]
         if expect_json:
             command += ['-o', 'json']
+        command += args
         logger.debug('%s', command)
-        process = subprocess.Popen(command, stdout=subprocess.PIPE)
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         stdout, _ = process.communicate()
         if expect_json:
-            return json.loads(stdout.decode())
+            if process.returncode == 0:
+                return json.loads(stdout.decode())
+            else:
+                logger.error("Error executing '%s':\n%s", ' '.join(command), stdout.decode())
+                return None
         else:
             return process.returncode

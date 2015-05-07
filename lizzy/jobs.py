@@ -25,6 +25,11 @@ def check_status():
     all_deployments = Deployment.all()
     logger.debug('In Job')
     stacks = senza.Senza.list()
+
+    if stacks is None:
+        logger.error("Couldn't get CF stacks. Exiting Job.")
+        return
+
     lizzy_stacks = collections.defaultdict(dict)  # stacks managed by lizzy
     for stack in stacks:
         deployment_name = '{stack_name}-{version}'.format_map(stack)
@@ -38,7 +43,6 @@ def check_status():
     for deployment in all_deployments:
         logger.debug(deployment.status)
         if deployment.status in ['LIZZY:REMOVED', 'LIZZY:ERROR']:
-            logger.debug('Removed')
             # There is nothing to do this, the stack is no more, it has expired, it's an ex-stack
             continue
 
