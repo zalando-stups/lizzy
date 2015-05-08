@@ -18,6 +18,9 @@ from lizzy.deployers.base import BaseDeployer
 import lizzy.senza_wrapper as senza
 
 
+_failed_to_get_domains = object()  # sentinel value for when we failed to get domains from senza
+
+
 class BlueGreenDeployer(BaseDeployer):
 
     logger = logging.getLogger('lizzy.controller.deployment.blue_green')
@@ -60,11 +63,21 @@ class BlueGreenDeployer(BaseDeployer):
                 self.logger.exception("Failed to remove '%s-%d'.", self.deployment.stack_name, version)
 
         # Switch all traffic to new version
-        if senza.Senza.domains(self.deployment.stack_name):
+        try:
+            domains = senza.Senza.domains(self.deployment.stack_name)
+        except senza.ExecutionError:
+            self.logger.exception("Failed to get '%s' domains. Traffic will no be switched.",
+                                  self.deployment.stack_name)
+            domains = _failed_to_get_domains
+
+        if not domains:
+            self.logger.info("'%s' doesn't have a domain so traffic will not be switched.", self.deployment.stack_name)
+        elif domains is not _failed_to_get_domains:
             self.logger.info("Switching '%s' traffic to '%s'.",
                              self.deployment.stack_name, self.deployment.deployment_id)
-            senza.Senza.traffic(self.deployment.stack_name, self.deployment.stack_version, 100)
-        else:
-            self.logger.info("'%s' doesn't have a domain so traffic will not be switched.", self.deployment.stack_name)
+            try:
+                senza.Senza.traffic(self.deployment.stack_name, self.deployment.stack_version, 100)
+            except senza.ExecutionError:
+                self.logger.exception("Failed to switch '%s' traffic.", self.deployment.stack_name)
 
         return 'CF:{}'.format(cloud_formation_status)

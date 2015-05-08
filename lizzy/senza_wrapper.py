@@ -20,6 +20,15 @@ import tempfile
 logger = logging.getLogger('lizzy.senza')
 
 
+class ExecutionError(Exception):
+    def __init__(self, error_code: int, output: str):
+        self.error_code = error_code
+        self.output = output.strip()
+
+    def __str__(self):
+        return '({error_code}): {output}'.format_map(vars(self))
+
+
 class Senza:
 
     region = 'eu-central-1'
@@ -68,11 +77,12 @@ class Senza:
         logger.debug('%s', command)
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         stdout, _ = process.communicate()
+        output = stdout.decode()
         if expect_json:
             if process.returncode == 0:
-                return json.loads(stdout.decode())
+                return json.loads(output)
             else:
-                logger.error("Error executing '%s':\n%s", ' '.join(command), stdout.decode())
-                return None
+                logger.error("Error executing '%s': %s", ' '.join(command), output.strip())
+                raise ExecutionError(process.returncode, output)
         else:
             return process.returncode

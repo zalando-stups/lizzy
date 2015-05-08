@@ -24,10 +24,11 @@ logger = logging.getLogger('lizzy.job')
 def check_status():
     all_deployments = Deployment.all()
     logger.debug('In Job')
-    stacks = senza.Senza.list()
 
-    if stacks is None:
-        logger.error("Couldn't get CF stacks. Exiting Job.")
+    try:
+        stacks = senza.Senza.list()
+    except senza.ExecutionError:
+        logger.exception("Couldn't get CF stacks. Exiting Job.")
         return
 
     lizzy_stacks = collections.defaultdict(dict)  # stacks managed by lizzy
