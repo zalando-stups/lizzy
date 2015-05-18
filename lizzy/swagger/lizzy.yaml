@@ -7,11 +7,24 @@ info:
 produces:
   - application/json
 
+
+securityDefinitions:
+    greendale:
+        type: oauth2
+        flow: password
+        tokenUrl: https://token.auth.zalando.com/access_token
+        x-tokenInfoUrl: https://auth.zalando.com/am/oauth2/tokeninfo
+        scopes:
+            uid: do everything for now
+
 paths:
   /deploy/:
     get:
       summary: List all deployments
       operationId: lizzy.api.all_deployments
+      security:
+        greendale:
+            - uid
     post:
       summary: New deployments
       operationId: lizzy.api.new_deployment
