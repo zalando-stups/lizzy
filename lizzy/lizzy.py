@@ -23,33 +23,40 @@ import rod.connection
 import lizzy.configuration as configuration
 import lizzy.jobs
 
-PORT = 9000
 
 logger = logging.getLogger('lizzy')
 logging.basicConfig(level=logging.DEBUG)
 
-# configure scheduler
-scheduler = scheduler_background.BackgroundScheduler()
-interval = scheduler_interval.IntervalTrigger(seconds=15)  # Todo Make this configurable
-scheduler.add_job(lizzy.jobs.check_status, interval, max_instances=10)
 
-# configure app
-config = configuration.Configuration()
-swagger_app = connexion.App(__name__, config.port, specification_dir='swagger/')
-swagger_app.add_api('lizzy.yaml')
+def setup_scheduler(config):
+    # configure scheduler
+    scheduler = scheduler_background.BackgroundScheduler()
+    interval = scheduler_interval.IntervalTrigger(seconds=config.job_interval)
+    scheduler.add_job(lizzy.jobs.check_status, interval, max_instances=10)
+    return scheduler
+
+
+def setup_webapp(config):
+    app = connexion.App(__name__, config.port, specification_dir='swagger/')
+    app.add_api('lizzy.yaml')
+    return app
 
 
 def main():
+    config = configuration.Configuration()
+
     logger.info('Connecting to Redis @ %s:%d', config.redis_host, config.redis_port)
     rod.connection.setup(redis_host=config.redis_host, port=config.redis_port)
     logger.info('Connected to Redis')
 
     logger.info('Starting Scheduler')
+    scheduler = setup_scheduler(config)
     scheduler.start()
     logger.info('Scheduler running')
 
     logger.info('Starting web app')
-    swagger_app.run()
+    app = setup_webapp(config)
+    app.run()
 
 
 if __name__ == '__main__':
