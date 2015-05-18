@@ -20,6 +20,7 @@ import apscheduler.triggers.interval as scheduler_interval
 import connexion
 import rod.connection
 
+import lizzy.configuration as configuration
 import lizzy.jobs
 
 PORT = 9000
@@ -33,14 +34,14 @@ interval = scheduler_interval.IntervalTrigger(seconds=15)  # Todo Make this conf
 scheduler.add_job(lizzy.jobs.check_status, interval, max_instances=10)
 
 # configure app
-swagger_app = connexion.App(__name__, PORT, specification_dir='swagger/')
+config = configuration.Configuration()
+swagger_app = connexion.App(__name__, config.port, specification_dir='swagger/')
 swagger_app.add_api('lizzy.yaml')
 
 
 def main():
-    # TODO make redis configurable
-    logger.info('Connecting to Redis')
-    rod.connection.setup(redis_host='localhost', port=6379)
+    logger.info('Connecting to Redis @ %s:%d', config.redis_host, config.redis_port)
+    rod.connection.setup(redis_host=config.redis_host, port=config.redis_port)
     logger.info('Connected to Redis')
 
     logger.info('Starting Scheduler')
@@ -49,6 +50,7 @@ def main():
 
     logger.info('Starting web app')
     swagger_app.run()
+
 
 if __name__ == '__main__':
     main()

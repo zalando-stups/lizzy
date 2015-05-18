@@ -4,3 +4,4 @@ flask
 pyyaml
 rod
 stups-senza
+environmental
