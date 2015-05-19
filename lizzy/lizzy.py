@@ -25,7 +25,7 @@ import lizzy.jobs
 
 
 logger = logging.getLogger('lizzy')
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG, style='{', format="{asctime} | {levelname: <7} | {name: <20.20} | {message}")
 
 
 def setup_scheduler(config):
