@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import subprocess
+
 import sys
 
-from distutils import log as logger
 from setuptools import setup, find_packages, Command
 from setuptools.command.test import test as TestCommand
 
@@ -23,34 +22,6 @@ def get_long_description():
     except FileNotFoundError:
         description = ''
     return description
-
-
-# TODO move this to a new package
-class Dockerize(Command):
-    """Build."""
-
-    user_options = [('tag=', 't', 'docker image tag')]
-
-    def initialize_options(self):
-        self.tag = None
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
-        # TODO error handling on subprocesses
-        logger.info('Making Wheel')
-        self.run_command('bdist_wheel')
-        logger.info('Making Wheels for dependencies')
-        pip = subprocess.Popen(['pip3', 'wheel', '.'])
-        pip.wait()
-        logger.info('Building docker')
-        docker_cmd = ['docker', 'build', '--pull', '--no-cache']
-        if self.tag:
-            docker_cmd.extend(['--tag', self.tag])
-        docker_cmd.append('.')
-        docker_build = subprocess.Popen(docker_cmd)
-        docker_build.wait()
 
 
 class PyTest(TestCommand):
@@ -82,8 +53,7 @@ setup(
     license='Apache License Version 2.0',
     install_requires=['APScheduler', 'connexion', 'environmental', 'pyyaml', 'rod', 'stups-senza'],
     tests_require=['pytest-cov', 'pytest'],
-    cmdclass={'docker': Dockerize,
-              'test': PyTest},
+    cmdclass={'test': PyTest},
     classifiers=[
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
