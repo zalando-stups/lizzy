@@ -29,7 +29,8 @@ class Deployment(rod.model.Model):
 
     def __init__(self, *,
                  deployment_id: str=None,
-                 deployment_strategy: str,
+                 keep_stacks: int,  # How many stacks to keep
+                 new_trafic: int,  # How much traffic to route to new stack
                  image_version: str,
                  senza_yaml: str,
                  stack_name: str,
@@ -39,7 +40,8 @@ class Deployment(rod.model.Model):
         self.stack_name = stack_name
         self.stack_version = stack_version if stack_version is not None else self.generate_version()
         self.deployment_id = deployment_id if deployment_id is not None else self.generate_id()
-        self.deployment_strategy = deployment_strategy
+        self.keep_stacks = keep_stacks
+        self.new_trafic = new_trafic
         self.image_version = image_version
         self.senza_yaml = senza_yaml
         self.status = status  # status is cloud formation status or LIZZY_NEW

@@ -34,7 +34,7 @@ paths:
             type: string
             $ref: '#/definitions/deployment'
       parameters:
-        - name: senza_yaml
+        - name: new_deployment
           required: true
           type: string
           in: body
@@ -61,27 +61,28 @@ paths:
 definitions:
   new_deployment:
     properties:
-      senza_yaml:
-        type: string
-        description: YAML to provide to senza
-      deployment_strategy:
-        type: string
-        description: Deployment strategy
       image_version:
         type: string
         description: Docker image version to deploy
+      keep_stacks:
+        type: integer
+        description: Number of older stacks to keep
+      new_traffic:
+        type: integer
+        description: Percentage of the traffic to be routed to new version
+      senza_yaml:
+        type: string
+        description: YAML to provide to senza
     required:
-      - senza_yaml
-      - deployment_strategy
       - image_version
+      - keep_stacks
+      - new_traffic
+      - senza_yaml
   deployment:
     properties:
       deployment_id:
         type: string
         description: Unique ID for the deployment
-      deployment_strategy:
-        type: string
-        description: Deployment strategy
       image_version:
         type: string
         description: Docker image version to deploy

@@ -14,9 +14,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 import collections
 import logging
 
+from lizzy import senza_wrapper as senza
+from lizzy.job.deployer import Deployer
 from lizzy.models.deployment import Deployment
-from lizzy.deployers import DeployAndForget, BlueGreenDeployer
-import lizzy.senza_wrapper as senza
 
 logger = logging.getLogger('lizzy.job')
 
@@ -46,16 +46,8 @@ def check_status():
             # There is nothing to do this, the stack is no more, it has expired, it's an ex-stack
             continue
 
-        strategy = deployment.deployment_strategy.lower()
-        if strategy == 'deploy_and_forget':
-            deployer = DeployAndForget
-        elif strategy == 'blue_green':
-            deployer = BlueGreenDeployer
-        else:
-            deployer = DeployAndForget  # TODO should mark deployment as invalid later
-
         if deployment.lock(3600000):
-            controller = deployer(lizzy_stacks, deployment)
+            controller = Deployer(lizzy_stacks, deployment)
             try:
                 new_status = controller.handle()
                 deployment.status = new_status

@@ -21,7 +21,7 @@ import connexion
 import rod.connection
 
 import lizzy.configuration as configuration
-import lizzy.jobs
+from lizzy.job import check_status
 
 
 logger = logging.getLogger('lizzy')
@@ -32,7 +32,7 @@ def setup_scheduler(config):
     # configure scheduler
     scheduler = scheduler_background.BackgroundScheduler()
     interval = scheduler_interval.IntervalTrigger(seconds=config.job_interval)
-    scheduler.add_job(lizzy.jobs.check_status, interval, max_instances=10)
+    scheduler.add_job(check_status, interval, max_instances=10)
     return scheduler
 
 

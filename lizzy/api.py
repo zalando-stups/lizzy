@@ -45,7 +45,6 @@ def _get_deployment_dict(deployment: Deployment) -> dict:
         description: Cloud formation stack status
     """
     deployment_dict = {'deployment_id': deployment.deployment_id,
-                       'deployment_strategy': deployment.deployment_strategy,
                        'image_version': deployment.image_version,
                        'senza_yaml': deployment.senza_yaml,
                        'stack_name': deployment.stack_name,
@@ -65,7 +64,8 @@ def new_deployment() -> dict:
     """
 
     try:
-        deployment_strategy = connexion.request.json['deployment_strategy']
+        keep_stacks = connexion.request.json['keep_stacks']
+        new_traffic = connexion.request.json['new_traffic']
         image_version = connexion.request.json['image_version']
         senza_yaml = connexion.request.json['senza_yaml']
     except KeyError as e:
@@ -92,7 +92,8 @@ def new_deployment() -> dict:
         missing_property = str(e)
         raise connexion.exceptions.BadRequest("Missing property in senza yaml: {}".format(missing_property))
 
-    deployment = Deployment(deployment_strategy=deployment_strategy,
+    deployment = Deployment(keep_stacks=keep_stacks,
+                            new_trafic=new_traffic,
                             image_version=image_version,
                             senza_yaml=senza_yaml,
                             stack_name=stack_name)
