@@ -37,7 +37,7 @@ def setup_scheduler(config):
 
 
 def setup_webapp(config):
-    app = connexion.App(__name__, config.port, specification_dir='swagger/')
+    app = connexion.App(__name__, config.port, specification_dir='swagger/', server='tornado')
     app.add_api('lizzy.yaml')
     return app
 

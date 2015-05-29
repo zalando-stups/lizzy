@@ -8,4 +8,5 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install python3-pip python3
 ADD .docker_data /data
 RUN pip3 install --no-index --find-links=/data/wheelhouse /data/dist/*.whl
 
+ADD scm-source.json /
 CMD python3 -m lizzy
