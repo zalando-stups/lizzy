@@ -18,17 +18,17 @@ import random
 import rod.model
 
 
-logger = logging.getLogger('lizzy.model.deployment')
+logger = logging.getLogger('lizzy.model.stack')
 
 
-class Deployment(rod.model.Model):
+class Stack(rod.model.Model):
 
-    prefix = 'lizzy_deployment'
-    key = 'deployment_id'
-    search_properties = ['deployment_id']
+    prefix = 'lizzy_stack'
+    key = 'stack_id'
+    search_properties = ['stack_id']
 
     def __init__(self, *,
-                 deployment_id: str=None,
+                 stack_id: str=None,
                  keep_stacks: int,  # How many stacks to keep
                  new_trafic: int,  # How much traffic to route to new stack
                  image_version: str,
@@ -39,7 +39,7 @@ class Deployment(rod.model.Model):
                  **kwargs):
         self.stack_name = stack_name
         self.stack_version = stack_version if stack_version is not None else self.generate_version()
-        self.deployment_id = deployment_id if deployment_id is not None else self.generate_id()
+        self.stack_id = stack_id if stack_id is not None else self.generate_id()
         self.keep_stacks = keep_stacks
         self.new_trafic = new_trafic
         self.image_version = image_version

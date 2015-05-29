@@ -16,21 +16,18 @@ import logging
 import connexion
 import yaml
 
-from lizzy.models.deployment import Deployment
+from lizzy.models.stack import Stack
 
 
 logger = logging.getLogger('lizzy.api')
 
 
-def _get_deployment_dict(deployment: Deployment) -> dict:
+def _get_stack_dict(stack: Stack) -> dict:
     """
     From lizzy.v1.yaml:
-      deployment_id:
+      stack_id:
         type: string
-        description: Unique ID for the deployment
-      deployment_strategy:
-        type: string
-        description: Deployment strategy
+        description: Unique ID for the stack
       image_version:
         type: string
         description: Docker image version to deploy
@@ -44,23 +41,26 @@ def _get_deployment_dict(deployment: Deployment) -> dict:
         type: string
         description: Cloud formation stack status
     """
-    deployment_dict = {'deployment_id': deployment.deployment_id,
-                       'image_version': deployment.image_version,
-                       'senza_yaml': deployment.senza_yaml,
-                       'stack_name': deployment.stack_name,
-                       'stack_version': deployment.stack_version,
-                       'status': deployment.status}
-    return deployment_dict
+    stack_dict = {'stack_id': stack.stack_id,
+                  'image_version': stack.image_version,
+                  'senza_yaml': stack.senza_yaml,
+                  'stack_name': stack.stack_name,
+                  'stack_version': stack.stack_version,
+                  'status': stack.status}
+    return stack_dict
 
 
-def all_deployments() -> dict:
-    deployments = [(_get_deployment_dict(deployment)) for deployment in Deployment.all()]
-    return {'deployments': deployments}
-
-
-def new_deployment() -> dict:
+def all_stacks() -> dict:
     """
-    POST /v1.0/deploy/
+    GET /stacks/
+    """
+    stacks = [(_get_stack_dict(stack)) for stack in Stack.all()]
+    return {'stacks': stacks}
+
+
+def new_stack() -> dict:
+    """
+    POST /stacks/
     """
 
     try:
@@ -92,18 +92,18 @@ def new_deployment() -> dict:
         missing_property = str(e)
         raise connexion.exceptions.BadRequest("Missing property in senza yaml: {}".format(missing_property))
 
-    deployment = Deployment(keep_stacks=keep_stacks,
-                            new_trafic=new_traffic,
-                            image_version=image_version,
-                            senza_yaml=senza_yaml,
-                            stack_name=stack_name)
-    deployment.save()
-    return _get_deployment_dict(deployment)
+    stack = Stack(keep_stacks=keep_stacks,
+                  new_trafic=new_traffic,
+                  image_version=image_version,
+                  senza_yaml=senza_yaml,
+                  stack_name=stack_name)
+    stack.save()
+    return _get_stack_dict(stack)
 
 
-def deploy(deployment_id: str) -> dict:
+def get_stack(stack_id: str) -> dict:
     """
-    GET /v1.0/deploy/{id}
+    GET /v1.0/stacks/{id}
     """
-    deployment = Deployment.get(deployment_id)
-    return _get_deployment_dict(deployment)
+    stack = Stack.get(stack_id)
+    return _get_stack_dict(stack)

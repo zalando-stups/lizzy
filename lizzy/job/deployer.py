@@ -13,7 +13,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 
 import logging
 from lizzy import senza_wrapper as senza
-from lizzy.models.deployment import Deployment
+from lizzy.models.stack import Stack
 
 
 _failed_to_get_domains = object()  # sentinel value for when we failed to get domains from senza
@@ -23,16 +23,16 @@ class Deployer():
 
     logger = logging.getLogger('lizzy.job.deployer')
 
-    def __init__(self, stacks: dict, deployment: Deployment):
+    def __init__(self, stacks: dict, stack: Stack):
         self.stacks = stacks
-        self.deployment = deployment
+        self.stack = stack
 
     def _get_stack_status(self) -> str:
         """
         Get Stack Status in CloudFormation
         """
         try:
-            cf_status = self.stacks[self.deployment.stack_name][self.deployment.stack_version]['status']
+            cf_status = self.stacks[self.stack.stack_name][self.stack.stack_version]['status']
         except KeyError:
             cf_status = None
         return cf_status
@@ -44,14 +44,14 @@ class Deployer():
         It replaces the status with the one from Cloud Formation or marks the deployment as removed if it no
         longer exists.
         """
-        self.logger.debug("Trying to find the status of '%s' in AWS CF.", self.deployment.deployment_id)
+        self.logger.debug("Trying to find the status of '%s' in AWS CF.", self.stack.stack_id)
         cloud_formation_status = self._get_stack_status()
         if cloud_formation_status is not None:
-            self.logger.debug("'%s' status is '%s'", self.deployment.deployment_id, cloud_formation_status)
+            self.logger.debug("'%s' status is '%s'", self.stack.stack_id, cloud_formation_status)
             new_status = 'CF:{}'.format(cloud_formation_status)
         else:
             # If this happens is because the stack was removed from aws
-            self.logger.info("'%s' no longer exists, marking as removed", self.deployment.deployment_id)
+            self.logger.info("'%s' no longer exists, marking as removed", self.stack.stack_id)
             new_status = 'LIZZY:REMOVED'
         return new_status
 
@@ -64,16 +64,16 @@ class Deployer():
         cloud_formation_status = self._get_stack_status()
 
         if cloud_formation_status is None:  # Stack no longer exist.
-            self.logger.info("'%s' no longer exists, marking as removed.", self.deployment.deployment_id)
+            self.logger.info("'%s' no longer exists, marking as removed.", self.stack.stack_id)
             new_status = 'LIZZY:REMOVED'
         elif cloud_formation_status == 'CREATE_IN_PROGRESS':
-            self.logger.debug("'%s' is still deploying.", self.deployment.deployment_id)
+            self.logger.debug("'%s' is still deploying.", self.stack.stack_id)
             new_status = 'LIZZY:DEPLOYING'
         elif cloud_formation_status == 'CREATE_COMPLETE':
-            self.logger.info("'%s' stack created.", self.deployment.deployment_id)
+            self.logger.info("'%s' stack created.", self.stack.stack_id)
             new_status = 'LIZZY:DEPLOYED'
         else:
-            self.logger.info("'%s' status is '%s'.", self.deployment.deployment_id, cloud_formation_status)
+            self.logger.info("'%s' status is '%s'.", self.stack.stack_id, cloud_formation_status)
             new_status = 'CF:{}'.format(cloud_formation_status)
 
         return new_status
@@ -87,42 +87,42 @@ class Deployer():
 
         cloud_formation_status = self._get_stack_status()
         if cloud_formation_status is None:  # Stack no longer exist.
-            self.logger.info("'%s' no longer exists, marking as removed", self.deployment.deployment_id)
+            self.logger.info("'%s' no longer exists, marking as removed", self.stack.stack_id)
             return 'LIZZY:REMOVED'
 
-        all_versions = sorted(self.stacks[self.deployment.stack_name].keys())
+        all_versions = sorted(self.stacks[self.stack.stack_name].keys())
         self.logger.debug("Existing versions: %s", all_versions)
         # we want to keep only two versions
-        number_of_versions_to_keep = self.deployment.keep_stacks + 1  # keep provided old stacks + 1
+        number_of_versions_to_keep = self.stack.keep_stacks + 1  # keep provided old stacks + 1
         versions_to_remove = all_versions[:-number_of_versions_to_keep]
         self.logger.debug("Versions to be removed: %s", versions_to_remove)
         for version in versions_to_remove:
-            self.logger.info("Removing '%s-%d'...", self.deployment.stack_name, version)
+            self.logger.info("Removing '%s-%d'...", self.stack.stack_name, version)
             try:
-                senza.Senza.remove(self.deployment.stack_name, version)
-                self.logger.info("'%s-%d' removed.", self.deployment.stack_name, version)
+                senza.Senza.remove(self.stack.stack_name, version)
+                self.logger.info("'%s-%d' removed.", self.stack.stack_name, version)
             except Exception:
-                self.logger.exception("Failed to remove '%s-%d'.", self.deployment.stack_name, version)
+                self.logger.exception("Failed to remove '%s-%d'.", self.stack.stack_name, version)
 
         # Switch all traffic to new version
         try:
-            domains = senza.Senza.domains(self.deployment.stack_name)
+            domains = senza.Senza.domains(self.stack.stack_name)
         except senza.ExecutionError:
             self.logger.exception("Failed to get '%s' domains. Traffic will no be switched.",
-                                  self.deployment.stack_name)
+                                  self.stack.stack_name)
             domains = _failed_to_get_domains
 
         if not domains:
-            self.logger.info("'%s' doesn't have a domain so traffic will not be switched.", self.deployment.stack_name)
+            self.logger.info("'%s' doesn't have a domain so traffic will not be switched.", self.stack.stack_name)
         elif domains is not _failed_to_get_domains:
             self.logger.info("Switching '%s' traffic to '%s'.",
-                             self.deployment.stack_name, self.deployment.deployment_id)
+                             self.stack.stack_name, self.stack.stack_id)
             try:
-                senza.Senza.traffic(stack_name=self.deployment.stack_name,
-                                    stack_version=self.deployment.stack_version,
-                                    percentage=self.deployment.new_trafic)
+                senza.Senza.traffic(stack_name=self.stack.stack_name,
+                                    stack_version=self.stack.stack_version,
+                                    percentage=self.stack.new_trafic)
             except senza.ExecutionError:
-                self.logger.exception("Failed to switch '%s' traffic.", self.deployment.stack_name)
+                self.logger.exception("Failed to switch '%s' traffic.", self.stack.stack_name)
 
         return 'CF:{}'.format(cloud_formation_status)
 
@@ -130,13 +130,13 @@ class Deployer():
         """
         Does the right step for deployment status
         """
-        if self.deployment.status == 'LIZZY:NEW':
+        if self.stack.status == 'LIZZY:NEW':
             return self.new()
-        elif self.deployment.status == 'LIZZY:DEPLOYING':
+        elif self.stack.status == 'LIZZY:DEPLOYING':
             return self.deploying()
-        elif self.deployment.status == 'LIZZY:DEPLOYED':
+        elif self.stack.status == 'LIZZY:DEPLOYED':
             return self.deployed()
-        elif self.deployment.status == 'LIZZY:ERROR':
+        elif self.stack.status == 'LIZZY:ERROR':
             return 'LIZZY:ERROR'  # This is hardcoded because there is nothing more that can be done about it
         else:
             return self.default()
@@ -146,12 +146,12 @@ class Deployer():
         Handler for when deployment status=='LIZZY:NEW'
         By default the stack is created
         """
-        self.logger.info("Creating stack for '%s'...", self.deployment.deployment_id)
-        if senza.Senza.create(self.deployment.senza_yaml, self.deployment.stack_version, self.deployment.image_version):
-            self.logger.info("Stack for '%s' created.", self.deployment.deployment_id)
+        self.logger.info("Creating stack for '%s'...", self.stack.stack_id)
+        if senza.Senza.create(self.stack.senza_yaml, self.stack.stack_version, self.stack.image_version):
+            self.logger.info("Stack for '%s' created.", self.stack.stack_id)
             new_status = 'LIZZY:DEPLOYING'
         else:
-            self.logger.error("Error creating stack for '%s'.", self.deployment.deployment_id)
+            self.logger.error("Error creating stack for '%s'.", self.stack.stack_id)
             new_status = 'LIZZY:ERROR'
 
         return new_status

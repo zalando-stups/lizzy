@@ -16,13 +16,13 @@ import logging
 
 from lizzy import senza_wrapper as senza
 from lizzy.job.deployer import Deployer
-from lizzy.models.deployment import Deployment
+from lizzy.models.stack import Stack
 
 logger = logging.getLogger('lizzy.job')
 
 
 def check_status():
-    all_deployments = Deployment.all()
+    all_stacks = Stack.all()
     logger.debug('In Job')
 
     try:
@@ -33,24 +33,24 @@ def check_status():
 
     lizzy_stacks = collections.defaultdict(dict)  # stacks managed by lizzy
     for stack in stacks:
-        deployment_name = '{stack_name}-{version}'.format_map(stack)
+        stack_name = '{stack_name}-{version}'.format_map(stack)
         try:
-            deployment = Deployment.get(deployment_name)
+            stack = Stack.get(stack_name)
             logger.debug("'%s' found.", stack)
-            lizzy_stacks[deployment.stack_name][deployment.stack_version] = stack
+            lizzy_stacks[stack.stack_name][stack.stack_version] = stack
         except KeyError:
             pass
 
-    for deployment in all_deployments:
-        if deployment.status in ['LIZZY:REMOVED', 'LIZZY:ERROR']:
+    for stack in all_stacks:
+        if stack.status in ['LIZZY:REMOVED', 'LIZZY:ERROR']:
             # There is nothing to do this, the stack is no more, it has expired, it's an ex-stack
             continue
 
-        if deployment.lock(3600000):
-            controller = Deployer(lizzy_stacks, deployment)
+        if stack.lock(3600000):
+            controller = Deployer(lizzy_stacks, stack)
             try:
                 new_status = controller.handle()
-                deployment.status = new_status
-                deployment.save()
+                stack.status = new_status
+                stack.save()
             finally:
-                deployment.unlock()
+                stack.unlock()
