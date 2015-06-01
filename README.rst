@@ -3,14 +3,22 @@ Lizzy
 
 REST Service to deploy AWS CF templates using Senza
 
-
 Configuration
 -------------
+Lizzy uses the following environment variables for configuration:
 
++--------------+----------------------------------------+
+| NAME         | DESCRIPTION                            |
++==============+========================================+
+| JOB_INTERVAL | Interval between executions of the job |
++--------------+----------------------------------------+
+| PORT         | TCP port to use for lizzy              |
++--------------+----------------------------------------+
+| REDIS_HOST   | Hostname of the Redis Server           |
++--------------+----------------------------------------+
+| REDIS_PORT   | Port of the Redis Server               |
++--------------+----------------------------------------+
 
-Build Docker Image
-------------------
-To build the docker
 
 License
 -------

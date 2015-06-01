@@ -13,7 +13,7 @@ securityDefinitions:
         type: oauth2
         flow: password
         tokenUrl: https://token.auth.zalando.com/access_token
-        x-tokenInfoUrl: https://auth.zalando.com/am/oauth2/tokeninfo
+        x-tokenInfoUrl: https://auth.zalando.com/oauth2/tokeninfo
         scopes:
             uid: do everything for now
 
