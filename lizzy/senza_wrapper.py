@@ -38,8 +38,12 @@ class Senza:
         with tempfile.NamedTemporaryFile() as temp_yaml:
             temp_yaml.write(senza_yaml.encode())
             temp_yaml.file.flush()
-            error = cls._execute('create', temp_yaml.name, stack_version, image_version)
-        return not error
+            try:
+                cls._execute('create', temp_yaml.name, stack_version, image_version)
+                return True
+            except ExecutionError as e:
+                logger.error('Failed to create stack: %s', e.output)
+                return False
 
     @classmethod
     def domains(cls, stack_name: str=None):
@@ -59,8 +63,12 @@ class Senza:
 
     @classmethod
     def remove(cls, stack_name: str, stack_version: str) -> bool:
-        error = cls._execute('delete', stack_name, stack_version)
-        return not error
+        try:
+            cls._execute('delete', stack_name, stack_version)
+            return True
+        except ExecutionError as e:
+                logger.error('Failed to delete stack: %s', e.output)
+                return False
 
     @classmethod
     def traffic(cls, stack_name: str, stack_version: str, percentage: int):
@@ -78,11 +86,11 @@ class Senza:
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         stdout, _ = process.communicate()
         output = stdout.decode()
-        if expect_json:
-            if process.returncode == 0:
+        if process.returncode == 0:
+            if expect_json:
                 return json.loads(output)
             else:
-                logger.error("Error executing '%s': %s", ' '.join(command), output.strip())
-                raise ExecutionError(process.returncode, output)
+                return output
         else:
-            return process.returncode
+            logger.error("Error executing '%s': %s", ' '.join(command), output.strip())
+            raise ExecutionError(process.returncode, output)
