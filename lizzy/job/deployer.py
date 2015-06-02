@@ -23,16 +23,17 @@ class Deployer():
 
     logger = logging.getLogger('lizzy.job.deployer')
 
-    def __init__(self, stacks: dict, stack: Stack):
-        self.stacks = stacks
-        self.stack = stack
+    def __init__(self, lizzy_stacks: dict, cf_stacks: dict, stack: Stack):
+        self.lizzy_stacks = lizzy_stacks  # All stacks in lizzy
+        self.cf_stacks = cf_stacks  # Stacks on CloudFormation
+        self.stack = stack  # Stack to deploy
 
     def _get_stack_status(self) -> str:
         """
         Get Stack Status in CloudFormation
         """
         try:
-            cf_status = self.stacks[self.stack.stack_name][self.stack.stack_version].status
+            cf_status = self.cf_stacks[self.stack.stack_name][self.stack.stack_version]['status']
         except KeyError:
             cf_status = None
         return cf_status
@@ -90,7 +91,7 @@ class Deployer():
             self.logger.info("'%s' no longer exists, marking as removed", self.stack.stack_id)
             return 'LIZZY:REMOVED'
 
-        all_versions = sorted(self.stacks[self.stack.stack_name].keys())
+        all_versions = sorted(self.lizzy_stacks[self.stack.stack_name].keys())
         self.logger.debug("Existing versions: %s", all_versions)
         # we want to keep only two versions
         number_of_versions_to_keep = self.stack.keep_stacks + 1  # keep provided old stacks + 1
