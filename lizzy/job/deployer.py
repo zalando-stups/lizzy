@@ -32,7 +32,7 @@ class Deployer():
         Get Stack Status in CloudFormation
         """
         try:
-            cf_status = self.stacks[self.stack.stack_name][self.stack.stack_version]['status']
+            cf_status = self.stacks[self.stack.stack_name][self.stack.stack_version].status
         except KeyError:
             cf_status = None
         return cf_status
