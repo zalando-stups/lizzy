@@ -3,3 +3,4 @@ wheelhouse
 *.egg-info
 dist
 build
+scm-source.json

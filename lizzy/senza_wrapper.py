@@ -39,7 +39,7 @@ class Senza:
             temp_yaml.write(senza_yaml.encode())
             temp_yaml.file.flush()
             try:
-                cls._execute('create', temp_yaml.name, stack_version, image_version)
+                cls._execute('create', '--force', temp_yaml.name, stack_version, image_version)
                 return True
             except ExecutionError as e:
                 logger.error('Failed to create stack: %s', e.output)
