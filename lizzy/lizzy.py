@@ -36,8 +36,12 @@ def setup_scheduler(config: configuration.Configuration):
     return scheduler
 
 
-def setup_webapp(config):
-    app = connexion.App(__name__, config.port, specification_dir='swagger/', server='tornado')
+def setup_webapp(config: configuration.Configuration):
+    arguments = {'token_url': config.token_url,
+                 'token_info_url': config.token_info_url}
+    logger.debug('Token URL: %s',config.token_url)
+    logger.debug('Token Info URL: %s', config.token_info_url)
+    app = connexion.App(__name__, config.port, specification_dir='swagger/', server='tornado', arguments=arguments)
     app.add_api('lizzy.yaml')
     return app
 

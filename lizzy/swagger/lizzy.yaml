@@ -12,8 +12,8 @@ securityDefinitions:
     greendale:
         type: oauth2
         flow: password
-        tokenUrl: https://token.auth.zalando.com/access_token
-        x-tokenInfoUrl: https://auth.zalando.com/oauth2/tokeninfo
+        tokenUrl: {{token_url}}
+        x-tokenInfoUrl: {{token_info_url}}
         scopes:
             uid: do everything for now
 
