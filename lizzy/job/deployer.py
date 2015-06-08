@@ -104,7 +104,7 @@ class Deployer():
                 self.senza.remove(self.stack.stack_name, version)
                 self.logger.info("'%s-%d' removed.", self.stack.stack_name, version)
             except Exception:
-                self.logger.exception("Failed to remove '%s-%d'.", self.stack.stack_name, version)
+                self.logger.exception("Failed to remove '%s-%s'.", self.stack.stack_name, version)
 
         # Switch all traffic to new version
         try:

@@ -10,6 +10,8 @@ Lizzy uses the following environment variables for configuration:
 +----------------+----------------------------------------+-----------+
 | NAME           | DESCRIPTION                            | DEFAULT   |
 +================+========================================+===========+
+| DEPLOYER_SCOPE | OAUTH scope needed to deploy           |           |
++----------------+----------------------------------------+-----------+
 | JOB_INTERVAL   | Interval between executions of the job | 15        |
 +----------------+----------------------------------------+-----------+
 | PORT           | TCP port to use for lizzy              | 8080      |

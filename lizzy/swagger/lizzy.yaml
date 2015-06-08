@@ -15,7 +15,7 @@ securityDefinitions:
         tokenUrl: {{token_url}}
         x-tokenInfoUrl: {{token_info_url}}
         scopes:
-            uid: do everything for now
+            {{deployer_scope}}: Can deploy and change stacks
 
 paths:
   /stacks/:
@@ -24,7 +24,7 @@ paths:
       operationId: lizzy.api.all_stacks
       security:
         greendale:
-            - uid
+            - {{deployer_scope}}
     post:
       summary: Create new stack
       operationId: lizzy.api.new_stack
@@ -35,7 +35,7 @@ paths:
             $ref: '#/definitions/stack'
       security:
         greendale:
-            - uid
+            - {{deployer_scope}}
       parameters:
         - name: new_stack
           required: true
@@ -57,6 +57,9 @@ paths:
           schema:
             type: string
             $ref: '#/definitions/stack'
+      security:
+        greendale:
+            - {{deployer_scope}}
       parameters:
         - name: stack_id
           in: path
