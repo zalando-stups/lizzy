@@ -12,7 +12,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 """
 
 import logging
-from lizzy import senza_wrapper as senza
+from lizzy.senza_wrapper import Senza, ExecutionError
 from lizzy.models.stack import Stack
 
 
@@ -23,7 +23,8 @@ class Deployer():
 
     logger = logging.getLogger('lizzy.job.deployer')
 
-    def __init__(self, lizzy_stacks: dict, cf_stacks: dict, stack: Stack):
+    def __init__(self, region: str, lizzy_stacks: dict, cf_stacks: dict, stack: Stack):
+        self.senza = Senza(region)
         self.lizzy_stacks = lizzy_stacks  # All stacks in lizzy
         self.cf_stacks = cf_stacks  # Stacks on CloudFormation
         self.stack = stack  # Stack to deploy
@@ -100,15 +101,15 @@ class Deployer():
         for version in versions_to_remove:
             self.logger.info("Removing '%s-%d'...", self.stack.stack_name, version)
             try:
-                senza.Senza.remove(self.stack.stack_name, version)
+                self.senza.remove(self.stack.stack_name, version)
                 self.logger.info("'%s-%d' removed.", self.stack.stack_name, version)
             except Exception:
                 self.logger.exception("Failed to remove '%s-%d'.", self.stack.stack_name, version)
 
         # Switch all traffic to new version
         try:
-            domains = senza.Senza.domains(self.stack.stack_name)
-        except senza.ExecutionError:
+            domains = self.senza.domains(self.stack.stack_name)
+        except ExecutionError:
             self.logger.exception("Failed to get '%s' domains. Traffic will no be switched.",
                                   self.stack.stack_name)
             domains = _failed_to_get_domains
@@ -119,10 +120,10 @@ class Deployer():
             self.logger.info("Switching '%s' traffic to '%s'.",
                              self.stack.stack_name, self.stack.stack_id)
             try:
-                senza.Senza.traffic(stack_name=self.stack.stack_name,
-                                    stack_version=self.stack.stack_version,
-                                    percentage=self.stack.new_trafic)
-            except senza.ExecutionError:
+                self.senza.traffic(stack_name=self.stack.stack_name,
+                                   stack_version=self.stack.stack_version,
+                                   percentage=self.stack.new_trafic)
+            except ExecutionError:
                 self.logger.exception("Failed to switch '%s' traffic.", self.stack.stack_name)
 
         return 'CF:{}'.format(cloud_formation_status)
@@ -148,7 +149,7 @@ class Deployer():
         By default the stack is created
         """
         self.logger.info("Creating stack for '%s'...", self.stack.stack_id)
-        if senza.Senza.create(self.stack.senza_yaml, self.stack.stack_version, self.stack.image_version):
+        if self.senza.create(self.stack.senza_yaml, self.stack.stack_version, self.stack.image_version):
             self.logger.info("Stack for '%s' created.", self.stack.stack_id)
             new_status = 'LIZZY:DEPLOYING'
         else:

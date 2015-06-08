@@ -28,11 +28,11 @@ logger = logging.getLogger('lizzy')
 logging.basicConfig(level=logging.DEBUG, style='{', format="{asctime} | {levelname: <7} | {name: <20.20} | {message}")
 
 
-def setup_scheduler(config):
+def setup_scheduler(config: configuration.Configuration):
     # configure scheduler
     scheduler = scheduler_background.BackgroundScheduler()
     interval = scheduler_interval.IntervalTrigger(seconds=config.job_interval)
-    scheduler.add_job(check_status, interval, max_instances=10)
+    scheduler.add_job(check_status, interval, max_instances=10, args=[config.region])
     return scheduler
 
 

@@ -14,20 +14,21 @@ Unless required by applicable law or agreed to in writing, software distributed 
 import collections
 import logging
 
-from lizzy import senza_wrapper as senza
+from lizzy.senza_wrapper import Senza, ExecutionError
 from lizzy.job.deployer import Deployer
 from lizzy.models.stack import Stack
 
 logger = logging.getLogger('lizzy.job')
 
 
-def check_status():
+def check_status(region: str):
     all_stacks = Stack.all()
     logger.debug('In Job')
 
+    senza = Senza(region)
     try:
-        senza_list = senza.Senza.list()  # All stacks in senza
-    except senza.ExecutionError:
+        senza_list = senza.list()  # All stacks in senza
+    except ExecutionError:
         logger.exception("Couldn't get CF stacks. Exiting Job.")
         return
 
@@ -49,7 +50,7 @@ def check_status():
             continue
 
         if lizzy_stack.lock(3600000):
-            controller = Deployer(lizzy_stacks, cf_stacks, lizzy_stack)
+            controller = Deployer(region, lizzy_stacks, cf_stacks, lizzy_stack)
             try:
                 new_status = controller.handle()
                 lizzy_stack.status = new_status

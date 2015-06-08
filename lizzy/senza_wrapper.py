@@ -31,54 +31,49 @@ class ExecutionError(Exception):
 
 class Senza:
 
-    region = 'eu-central-1'
+    def __init__(self, region: str):
+        self.region = region
 
-    @classmethod
-    def create(cls, senza_yaml: str, stack_version: str, image_version: str) -> bool:
+    def create(self, senza_yaml: str, stack_version: str, image_version: str) -> bool:
         with tempfile.NamedTemporaryFile() as temp_yaml:
             temp_yaml.write(senza_yaml.encode())
             temp_yaml.file.flush()
             try:
-                cls._execute('create', '--force', temp_yaml.name, stack_version, image_version)
+                self._execute('create', '--force', temp_yaml.name, stack_version, image_version)
                 return True
             except ExecutionError as e:
                 logger.error('Failed to create stack: %s', e.output)
                 return False
 
-    @classmethod
-    def domains(cls, stack_name: str=None):
+    def domains(self, stack_name: str=None):
         if stack_name:
-            stack_domains = cls._execute('domains', stack_name, expect_json=True)
+            stack_domains = self._execute('domains', stack_name, expect_json=True)
         else:
-            stack_domains = cls._execute('domains', expect_json=True)
+            stack_domains = self._execute('domains', expect_json=True)
         return stack_domains
 
-    @classmethod
-    def list(cls) -> list:
+    def list(self) -> list:
         """
         Returns the stack list
         """
-        stacks = cls._execute('list', expect_json=True)
+        stacks = self._execute('list', expect_json=True)
         return stacks
 
-    @classmethod
-    def remove(cls, stack_name: str, stack_version: str) -> bool:
+    def remove(self, stack_name: str, stack_version: str) -> bool:
         try:
-            cls._execute('delete', stack_name, stack_version)
+            self._execute('delete', stack_name, stack_version)
             return True
         except ExecutionError as e:
                 logger.error('Failed to delete stack: %s', e.output)
                 return False
 
-    @classmethod
-    def traffic(cls, stack_name: str, stack_version: str, percentage: int):
-        traffic_weights = cls._execute('traffic', stack_name, stack_version, str(percentage), expect_json=True)
+    def traffic(self, stack_name: str, stack_version: str, percentage: int):
+        traffic_weights = self._execute('traffic', stack_name, stack_version, str(percentage), expect_json=True)
         return traffic_weights
 
-    @classmethod
-    def _execute(cls, subcommand, *args, expect_json: bool=False):
+    def _execute(self, subcommand, *args, expect_json: bool=False):
         command = ['senza', subcommand]
-        command += ['--region', cls.region]
+        command += ['--region', self.region]
         if expect_json:
             command += ['-o', 'json']
         command += args
