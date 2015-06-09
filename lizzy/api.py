@@ -70,7 +70,7 @@ def new_stack() -> dict:
         senza_yaml = connexion.request.json['senza_yaml']
     except KeyError as e:
         missing_property = str(e)
-        logger.error("Missing property on request: %s", missing_property)
+        logger.error("Missing property on request.", extra={'missing_property': missing_property})
         raise connexion.exceptions.BadRequest("Missing property: {}".format(missing_property))
 
     try:
@@ -78,17 +78,17 @@ def new_stack() -> dict:
         if not isinstance(senza_definition, dict):
             raise TypeError
     except yaml.YAMLError:
-        logger.exception("Couldn't parse senza yaml:\n %s", senza_yaml)
+        logger.exception("Couldn't parse senza yaml.", extra={'senza_yaml': repr(senza_yaml)})
         raise connexion.exceptions.BadRequest("Invalid senza yaml")
     except TypeError:
-        logger.exception("Senza yaml is not a dict:\n %s", senza_yaml)
+        logger.exception("Senza yaml is not a dict.", extra={'senza_yaml': repr(senza_yaml)})
         raise connexion.exceptions.BadRequest("Invalid senza yaml")
 
     try:
         stack_name = senza_definition['SenzaInfo']['StackName']
         # TODO validate stack name
     except KeyError as e:
-        logger.error("Couldn't get stack name for:\n%s", senza_yaml)
+        logger.error("Couldn't get stack name from definition.", extra={'senza_yaml': repr(senza_definition)})
         missing_property = str(e)
         raise connexion.exceptions.BadRequest("Missing property in senza yaml: {}".format(missing_property))
 

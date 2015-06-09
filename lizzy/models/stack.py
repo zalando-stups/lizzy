@@ -11,14 +11,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
  language governing permissions and limitations under the License.
 """
 
-import logging
 import datetime
 import random
 
 import rod.model
-
-
-logger = logging.getLogger('lizzy.model.stack')
 
 
 class Stack(rod.model.Model):
