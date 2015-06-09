@@ -22,10 +22,9 @@ import rod.connection
 
 import lizzy.configuration as configuration
 from lizzy.job import check_status
+from lizzy.logging import init_logging
 
-
-logger = logging.getLogger('lizzy')
-logging.basicConfig(level=logging.DEBUG, style='{', format='{levelname: <5.5} | {name: <20.20} | {message}')
+logger = init_logging()
 
 
 def setup_scheduler(config: configuration.Configuration):
@@ -40,8 +39,8 @@ def setup_webapp(config: configuration.Configuration):
     arguments = {'deployer_scope': config.deployer_scope,
                  'token_url': config.token_url,
                  'token_info_url': config.token_info_url}
-    logger.debug('Deployer Scope: %s',config.deployer_scope)
-    logger.debug('Token URL: %s',config.token_url)
+    logger.debug('Deployer Scope: %s', config.deployer_scope)
+    logger.debug('Token URL: %s', config.token_url)
     logger.debug('Token Info URL: %s', config.token_info_url)
     app = connexion.App(__name__, config.port, specification_dir='swagger/', server='tornado', arguments=arguments)
     app.add_api('lizzy.yaml')

@@ -99,7 +99,7 @@ class Deployer():
         versions_to_remove = all_versions[:-number_of_versions_to_keep]
         self.logger.debug("Versions to be removed: %s", versions_to_remove)
         for version in versions_to_remove:
-            self.logger.info("Removing '%s-%d'...", self.stack.stack_name, version)
+            self.logger.info("Removing '%s-%s'...", self.stack.stack_name, version)
             try:
                 self.senza.remove(self.stack.stack_name, version)
                 self.logger.info("'%s-%s' removed.", self.stack.stack_name, version)
