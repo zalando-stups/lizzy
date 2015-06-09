@@ -38,7 +38,7 @@ def check_status(region: str):
         stack_name = '{stack_name}-{version}'.format_map(cf_stack)
         try:
             lizzy_stack = Stack.get(stack_name)
-            logger.debug("'%s' found.", lizzy_stack)
+            logger.debug("Stack found.", extra={'lizzy.stack.id': lizzy_stack.stack_id})
             lizzy_stacks[lizzy_stack.stack_name][lizzy_stack.stack_version] = lizzy_stack
             cf_stacks[lizzy_stack.stack_name][lizzy_stack.stack_version] = cf_stack
         except KeyError:

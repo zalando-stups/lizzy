@@ -32,8 +32,8 @@ class Deployer():
     @property
     def log_info(self) -> dict:
         log_info = dict()
-        log_info['lizzy_stack_name'] = self.stack.stack_name
-        log_info['lizzy_stack_id'] = self.stack.stack_id
+        log_info['lizzy.stack.name'] = self.stack.stack_name
+        log_info['lizzy.stack.id'] = self.stack.stack_id
 
         cloud_formation_status = self._get_stack_status()
         if cloud_formation_status:
@@ -112,7 +112,7 @@ class Deployer():
         self.logger.debug("Versions to be removed: %s", versions_to_remove, extra=self.log_info)
         for version in versions_to_remove:
             stack_id = '{}-{}'.format(self.stack.stack_name, version)
-            log_info = {'lizzy_stack_id': stack_id, 'new_lizzy_stack_id': self.stack.stack_id}
+            log_info = {'lizzy.stack.id': stack_id, 'lizzy.new_stack.id': self.stack.stack_id}
             self.logger.info("Removing stack...", extra=log_info)
             try:
                 self.senza.remove(self.stack.stack_name, version)
