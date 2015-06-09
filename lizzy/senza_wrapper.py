@@ -42,7 +42,7 @@ class Senza:
                 self._execute('create', '--force', temp_yaml.name, stack_version, image_version)
                 return True
             except ExecutionError as e:
-                logger.error('Failed to create stack: %s', e.output)
+                logger.error('Failed to create stack.', extra={'command.output': e.output})
                 return False
 
     def domains(self, stack_name: str=None):
@@ -64,7 +64,7 @@ class Senza:
             self._execute('delete', stack_name, stack_version)
             return True
         except ExecutionError as e:
-                logger.error('Failed to delete stack: %s', e.output)
+                logger.error('Failed to delete stack.', extra={'command.output': e.output})
                 return False
 
     def traffic(self, stack_name: str, stack_version: str, percentage: int):
@@ -77,7 +77,7 @@ class Senza:
         if expect_json:
             command += ['-o', 'json']
         command += args
-        logger.debug('%s', command)
+        logger.debug('Executing senza.', extra={'command': ' '.join(command)})
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         stdout, _ = process.communicate()
         output = stdout.decode()
@@ -87,5 +87,6 @@ class Senza:
             else:
                 return output
         else:
-            logger.error("Error executing '%s': %s", ' '.join(command), output.strip())
+            logger.error("Error executing command.", extra={'command': ' '.join(command),
+                                                            'command.output': output.strip()})
             raise ExecutionError(process.returncode, output)
