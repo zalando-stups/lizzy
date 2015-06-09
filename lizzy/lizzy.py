@@ -39,9 +39,7 @@ def setup_webapp(config: configuration.Configuration):
     arguments = {'deployer_scope': config.deployer_scope,
                  'token_url': config.token_url,
                  'token_info_url': config.token_info_url}
-    logger.debug('Deployer Scope: %s', config.deployer_scope)
-    logger.debug('Token URL: %s', config.token_url)
-    logger.debug('Token Info URL: %s', config.token_info_url)
+    logger.debug('Webapp Parameters', extra=arguments)
     app = connexion.App(__name__, config.port, specification_dir='swagger/', server='tornado', arguments=arguments)
     app.add_api('lizzy.yaml')
     return app
@@ -50,7 +48,7 @@ def setup_webapp(config: configuration.Configuration):
 def main():
     config = configuration.Configuration()
 
-    logger.info('Connecting to Redis @ %s:%d', config.redis_host, config.redis_port)
+    logger.info('Connecting to Redis', extra={'redis_host': config.redis_host, 'redis_port': config.redis_port})
     rod.connection.setup(redis_host=config.redis_host, port=config.redis_port)
     logger.info('Connected to Redis')
 
