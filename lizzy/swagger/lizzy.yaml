@@ -66,7 +66,29 @@ paths:
           description: Deployment id
           required: true
           type: string
-
+    patch:
+      summary: Update stack
+      operationId: lizzy.api.patch_stack
+      responses:
+        200:
+          schema:
+            type: string
+            $ref: '#/definitions/stack'
+      security:
+        greendale:
+            - {{deployer_scope}}
+      parameters:
+        - name: stack_id
+          in: path
+          description: Deployment id
+          required: true
+          type: string
+        - name: stack_patch
+          required: true
+          type: string
+          in: body
+          schema:
+            $ref: '#/definitions/stack_patch'
 definitions:
   new_stack:
     properties:
@@ -107,3 +129,8 @@ definitions:
       status:
         type: string
         description: Cloud formation stack status
+  stack_patch:
+    properties:
+      new_traffic:
+        type: integer
+        description: Percentage of the traffic to be routed to stack
