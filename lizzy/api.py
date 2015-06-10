@@ -93,7 +93,7 @@ def new_stack() -> dict:
         raise connexion.exceptions.BadRequest("Missing property in senza yaml: {}".format(missing_property))
 
     stack = Stack(keep_stacks=keep_stacks,
-                  new_trafic=new_traffic,
+                  traffic=new_traffic,
                   image_version=image_version,
                   senza_yaml=senza_yaml,
                   stack_name=stack_name)
@@ -103,7 +103,25 @@ def new_stack() -> dict:
 
 def get_stack(stack_id: str) -> dict:
     """
-    GET /v1.0/stacks/{id}
+    GET /stacks/{id}
     """
     stack = Stack.get(stack_id)
+    return _get_stack_dict(stack)
+
+
+def patch_stack(stack_id: str) -> dict:
+    """
+    PATCH /stacks/{id}
+
+    Update traffic
+    """
+    stack = Stack.get(stack_id)
+
+    new_traffic = connexion.request.json.get('new_traffic')  # type: Optional[int]
+
+    if new_traffic:
+        stack.traffic = new_traffic
+
+    stack.status = 'LIZZY:CHANGE'
+    stack.save()
     return _get_stack_dict(stack)

@@ -4,3 +4,4 @@ wheelhouse
 dist
 build
 scm-source.json
+build.py

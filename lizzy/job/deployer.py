@@ -34,6 +34,7 @@ class Deployer():
         log_info = dict()
         log_info['lizzy.stack.name'] = self.stack.stack_name
         log_info['lizzy.stack.id'] = self.stack.stack_id
+        log_info['lizzy.stack.traffic'] = self.stack.traffic
 
         cloud_formation_status = self._get_stack_status()
         if cloud_formation_status:
@@ -58,6 +59,9 @@ class Deployer():
         It replaces the status with the one from Cloud Formation or marks the deployment as removed if it no
         longer exists.
         """
+
+        # TODO update traffic
+
         self.logger.debug("Updating stack status based on AWS CF.", extra=self.log_info)
         cloud_formation_status = self._get_stack_status()
         if cloud_formation_status is not None:
@@ -130,15 +134,41 @@ class Deployer():
         if not domains:
             self.logger.info("App doesn't have a domain so traffic will not be switched.", extra=self.log_info)
         elif domains is not _failed_to_get_domains:
-            self.logger.info("Switching app traffic to new stack.",  extra=self.log_info)
+            self.logger.info("Switching app traffic.",  extra=self.log_info)
             try:
                 self.senza.traffic(stack_name=self.stack.stack_name,
                                    stack_version=self.stack.stack_version,
-                                   percentage=self.stack.new_trafic)
+                                   percentage=self.stack.traffic)
             except ExecutionError:
                 self.logger.exception("Failed to switch app traffic.",  extra=self.log_info)
 
         return 'CF:{}'.format(cloud_formation_status)
+
+    def change(self) -> str:
+        """
+        Update stack. Currently this only changes the traffic.
+
+        Returns the cloud formation status
+        """
+
+        try:
+            domains = self.senza.domains(self.stack.stack_name)
+        except ExecutionError:
+            self.logger.exception("Failed to get domains. Traffic will no be switched.", extra=self.log_info)
+            domains = _failed_to_get_domains
+
+        if not domains:
+            self.logger.info("App doesn't have a domain so traffic will not be switched.", extra=self.log_info)
+        elif domains is not _failed_to_get_domains:
+            self.logger.info("Switching app traffic to stack.",  extra=self.log_info)
+            try:
+                self.senza.traffic(stack_name=self.stack.stack_name,
+                                   stack_version=self.stack.stack_version,
+                                   percentage=self.stack.traffic)
+            except ExecutionError:
+                self.logger.exception("Failed to switch app traffic.",  extra=self.log_info)
+
+        return self.default()
 
     def handle(self) -> str:
         """
@@ -152,6 +182,8 @@ class Deployer():
             return self.deployed()
         elif self.stack.status == 'LIZZY:ERROR':
             return 'LIZZY:ERROR'  # This is hardcoded because there is nothing more that can be done about it
+        elif self.stack.status == 'LIZZY:CHANGE':
+            return self.change()
         else:
             return self.default()
 

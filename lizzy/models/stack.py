@@ -26,18 +26,19 @@ class Stack(rod.model.Model):
     def __init__(self, *,
                  stack_id: str=None,
                  keep_stacks: int,  # How many stacks to keep
-                 new_trafic: int,  # How much traffic to route to new stack
+                 traffic: int,  # How much traffic to route to new stack
                  image_version: str,
                  senza_yaml: str,
                  stack_name: str,
                  stack_version: str=None,
                  status: str='LIZZY:NEW',
                  **kwargs):
+
         self.stack_name = stack_name
         self.stack_version = stack_version if stack_version is not None else self.generate_version()
         self.stack_id = stack_id if stack_id is not None else self.generate_id()
         self.keep_stacks = keep_stacks
-        self.new_trafic = new_trafic
+        self.traffic = traffic
         self.image_version = image_version
         self.senza_yaml = senza_yaml
         self.status = status  # status is cloud formation status or LIZZY_NEW
