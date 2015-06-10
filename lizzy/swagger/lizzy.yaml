@@ -46,8 +46,30 @@ paths:
   /stacks/{stack_id}:
     get:
       summary: Get a stack
-      description: Generates a greeting message.
+      description: Gets a stack.by id.
       operationId: lizzy.api.get_stack
+      security:
+        greendale:
+            - uid
+      responses:
+        200:
+          description: greeting response
+          schema:
+            type: string
+            $ref: '#/definitions/stack'
+      security:
+        greendale:
+            - {{deployer_scope}}
+      parameters:
+        - name: stack_id
+          in: path
+          description: Deployment id
+          required: true
+          type: string
+    delete:
+      summary: Delete a stack
+      description: Deletes the stack.
+      operationId: lizzy.api.delete_stack
       security:
         greendale:
             - uid
