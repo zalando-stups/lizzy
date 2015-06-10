@@ -105,7 +105,11 @@ def get_stack(stack_id: str) -> dict:
     """
     GET /stacks/{id}
     """
-    stack = Stack.get(stack_id)
+    try:
+        stack = Stack.get(stack_id)
+    except KeyError:
+        connexion.abort(404)
+
     return _get_stack_dict(stack)
 
 
@@ -115,7 +119,10 @@ def patch_stack(stack_id: str) -> dict:
 
     Update traffic
     """
-    stack = Stack.get(stack_id)
+    try:
+        stack = Stack.get(stack_id)
+    except KeyError:
+        connexion.abort(404)
 
     new_traffic = connexion.request.json.get('new_traffic')  # type: Optional[int]
 
@@ -123,5 +130,21 @@ def patch_stack(stack_id: str) -> dict:
         stack.traffic = new_traffic
 
     stack.status = 'LIZZY:CHANGE'
+    stack.save()
+    return _get_stack_dict(stack)
+
+
+def delete_stack(stack_id: str) -> dict:
+    """
+    DELETE /stacks/{id}
+
+    Delete a stack
+    """
+    try:
+        stack = Stack.get(stack_id)
+    except KeyError:
+        connexion.abort(404)
+
+    stack.status = 'LIZZY:DELETE'
     stack.save()
     return _get_stack_dict(stack)

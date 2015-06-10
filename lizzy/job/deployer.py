@@ -170,6 +170,20 @@ class Deployer():
 
         return self.default()
 
+    def delete(self) -> str:
+        """
+        Delete the stack.
+        """
+
+        self.logger.info("Removing stack...", extra=self.log_info)
+        try:
+            self.senza.remove(self.stack.stack_name, self.stack.stack_version)
+            self.logger.info("Stack removed.", extra=self.log_info)
+        except Exception:
+            self.logger.exception("Failed to remove stack.", extra=self.log_info)
+
+        return self.default()
+
     def handle(self) -> str:
         """
         Does the right step for deployment status
@@ -184,6 +198,8 @@ class Deployer():
             return 'LIZZY:ERROR'  # This is hardcoded because there is nothing more that can be done about it
         elif self.stack.status == 'LIZZY:CHANGE':
             return self.change()
+        elif self.stack.status == 'LIZZY:DELETE':
+            return self.delete()
         else:
             return self.default()
 
