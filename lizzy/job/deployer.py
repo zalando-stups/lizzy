@@ -108,22 +108,6 @@ class Deployer():
             self.logger.info("Stack no longer exists, marking as removed", extra=self.log_info)
             return 'LIZZY:REMOVED'
 
-        all_versions = sorted(self.lizzy_stacks[self.stack.stack_name].keys())
-        self.logger.debug("Existing versions: %s", all_versions, extra=self.log_info)
-        # we want to keep only two versions
-        number_of_versions_to_keep = self.stack.keep_stacks + 1  # keep provided old stacks + 1
-        versions_to_remove = all_versions[:-number_of_versions_to_keep]
-        self.logger.debug("Versions to be removed: %s", versions_to_remove, extra=self.log_info)
-        for version in versions_to_remove:
-            stack_id = '{}-{}'.format(self.stack.stack_name, version)
-            log_info = {'lizzy.stack.id': stack_id, 'lizzy.new_stack.id': self.stack.stack_id}
-            self.logger.info("Removing stack...", extra=log_info)
-            try:
-                self.senza.remove(self.stack.stack_name, version)
-                self.logger.info("Stack removed.", extra=log_info)
-            except Exception:
-                self.logger.exception("Failed to remove stack.", extra=log_info)
-
         # Switch all traffic to new version
         try:
             domains = self.senza.domains(self.stack.stack_name)
@@ -141,6 +125,22 @@ class Deployer():
                                    percentage=self.stack.traffic)
             except ExecutionError:
                 self.logger.exception("Failed to switch app traffic.",  extra=self.log_info)
+
+        all_versions = sorted(self.lizzy_stacks[self.stack.stack_name].keys())
+        self.logger.debug("Existing versions: %s", all_versions, extra=self.log_info)
+        # we want to keep only two versions
+        number_of_versions_to_keep = self.stack.keep_stacks + 1  # keep provided old stacks + 1
+        versions_to_remove = all_versions[:-number_of_versions_to_keep]
+        self.logger.debug("Versions to be removed: %s", versions_to_remove, extra=self.log_info)
+        for version in versions_to_remove:
+            stack_id = '{}-{}'.format(self.stack.stack_name, version)
+            log_info = {'lizzy.stack.id': stack_id, 'lizzy.new_stack.id': self.stack.stack_id}
+            self.logger.info("Removing stack...", extra=log_info)
+            try:
+                self.senza.remove(self.stack.stack_name, version)
+                self.logger.info("Stack removed.", extra=log_info)
+            except Exception:
+                self.logger.exception("Failed to remove stack.", extra=log_info)
 
         return 'CF:{}'.format(cloud_formation_status)
 
