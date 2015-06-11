@@ -12,7 +12,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 """
 
 import datetime
-import random
 
 import rod.model
 
@@ -25,6 +24,7 @@ class Stack(rod.model.Model):
 
     def __init__(self, *,
                  stack_id: str=None,
+                 creation_time: datetime.datetime=None,
                  keep_stacks: int,  # How many stacks to keep
                  traffic: int,  # How much traffic to route to new stack
                  image_version: str,
@@ -35,8 +35,9 @@ class Stack(rod.model.Model):
                  **kwargs):
 
         self.stack_name = stack_name
+        self.creation_time = creation_time or datetime.datetime.utcnow()
         self.image_version = image_version
-        self.stack_version = stack_version if stack_version is not None else self.generate_version(image_version)
+        self.stack_version = stack_version or self.generate_version(self.creation_time, image_version)
         self.stack_id = stack_id if stack_id is not None else self.generate_id()
         self.keep_stacks = keep_stacks
         self.traffic = traffic
@@ -44,10 +45,9 @@ class Stack(rod.model.Model):
         self.status = status  # status is cloud formation status or LIZZY_NEW
 
     @staticmethod
-    def generate_version(version: str) -> str:
-        now = datetime.datetime.utcnow()
+    def generate_version(creation_time: datetime.datetime, version: str) -> str:
         version = version.lower().replace('-snapshot', 's').replace('.', 'o')
-        return '{version}T{time:%Y%m%d%H%M%S}'.format(version=version, time=now)
+        return '{version}T{time:%Y%m%d%H%M%S}'.format(version=version, time=creation_time)
 
     def generate_id(self) -> str:
         """
