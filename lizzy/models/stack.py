@@ -12,6 +12,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 """
 
 import datetime
+import pytz
 
 import rod.model
 
@@ -35,7 +36,7 @@ class Stack(rod.model.Model):
                  **kwargs):
 
         self.stack_name = stack_name
-        self.creation_time = creation_time or datetime.datetime.utcnow()
+        self.creation_time = creation_time or datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
         self.image_version = image_version
         self.stack_version = stack_version or self.generate_version(self.creation_time, image_version)
         self.stack_id = stack_id if stack_id is not None else self.generate_id()
