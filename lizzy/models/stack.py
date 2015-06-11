@@ -35,19 +35,19 @@ class Stack(rod.model.Model):
                  **kwargs):
 
         self.stack_name = stack_name
-        self.stack_version = stack_version if stack_version is not None else self.generate_version()
+        self.image_version = image_version
+        self.stack_version = stack_version if stack_version is not None else self.generate_version(image_version)
         self.stack_id = stack_id if stack_id is not None else self.generate_id()
         self.keep_stacks = keep_stacks
         self.traffic = traffic
-        self.image_version = image_version
         self.senza_yaml = senza_yaml
         self.status = status  # status is cloud formation status or LIZZY_NEW
 
     @staticmethod
-    def generate_version() -> str:
+    def generate_version(version: str) -> str:
         now = datetime.datetime.utcnow()
-        random_part = random.randint(0, 255)
-        return '{time:%y%m%d%H%M%S}{rand:02x}'.format(time=now, rand=random_part)
+        version = version.lower().replace('-snapshot', 's').replace('.', 'o')
+        return '{version}T{time:%Y%m%d%H%M%S}'.format(version=version, time=now)
 
     def generate_id(self) -> str:
         """
