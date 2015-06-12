@@ -9,7 +9,7 @@ produces:
 
 
 securityDefinitions:
-    greendale:
+    oauth:
         type: oauth2
         flow: password
         tokenUrl: {{token_url}}
@@ -23,18 +23,19 @@ paths:
       summary: List all stacks
       operationId: lizzy.api.all_stacks
       security:
-        greendale:
+        oauth:
             - {{deployer_scope}}
     post:
       summary: Create new stack
       operationId: lizzy.api.new_stack
       responses:
         200:
+          description: Stack to be created
           schema:
             type: string
             $ref: '#/definitions/stack'
       security:
-        greendale:
+        oauth:
             - {{deployer_scope}}
       parameters:
         - name: newStack
@@ -49,21 +50,21 @@ paths:
       description: Gets a stack.by id.
       operationId: lizzy.api.get_stack
       security:
-        greendale:
+        oauth:
             - uid
       responses:
         200:
-          description: greeting response
+          description: Stack information
           schema:
             type: string
             $ref: '#/definitions/stack'
       security:
-        greendale:
+        oauth:
             - {{deployer_scope}}
       parameters:
         - name: stack-id
           in: path
-          description: Deployment id
+          description: Stack Id
           required: true
           type: string
     delete:
@@ -72,12 +73,12 @@ paths:
       operationId: lizzy.api.delete_stack
       responses:
         200:
-          description: greeting response
+          description: Stack to be deleted
           schema:
             type: string
             $ref: '#/definitions/stack'
       security:
-        greendale:
+        oauth:
             - {{deployer_scope}}
       parameters:
         - name: stack-id
@@ -94,7 +95,7 @@ paths:
             type: string
             $ref: '#/definitions/stack'
       security:
-        greendale:
+        oauth:
             - {{deployer_scope}}
       parameters:
         - name: stack-id
