@@ -12,10 +12,10 @@ securityDefinitions:
   oauth:
     type: oauth2
     flow: password
-    tokenUrl: {{token_url}}
-    x-tokenInfoUrl: {{token_info_url}}
+    tokenUrl: "{{token_url}}"
+    x-tokenInfoUrl: "{{token_info_url}}"
     scopes:
-        {{deployer_scope}}: Can deploy and change stacks
+        "{{deployer_scope}}": Can deploy and change stacks
 
 paths:
   /stacks:
@@ -24,10 +24,17 @@ paths:
       operationId: lizzy.api.all_stacks
       security:
         - oauth:
-            - {{deployer_scope}}
+            - "{{deployer_scope}}"
+      responses:
+        200:
+          description: List of stacks
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/stack'
     post:
       summary: Create new stack
-      operationId: lizzy.api.new_stack
+      operationId: lizzy.api.newStack
       responses:
         200:
           description: Stack to be created
@@ -36,14 +43,14 @@ paths:
             $ref: '#/definitions/stack'
       security:
         - oauth:
-            - {{deployer_scope}}
+            - "{{deployer_scope}}"
       parameters:
         - name: newStack
           required: true
-          type: string
           in: body
           schema:
-            $ref: '#/definitions/new_stack'
+            type: object
+            $ref: '#/definitions/newStack'
   /stacks/{stack-id}:
     get:
       summary: Get a stack
@@ -51,16 +58,13 @@ paths:
       operationId: lizzy.api.get_stack
       security:
         - oauth:
-            - uid
+            - "{{deployer_scope}}"
       responses:
         200:
           description: Stack information
           schema:
             type: string
             $ref: '#/definitions/stack'
-      security:
-        - oauth:
-            - {{deployer_scope}}
       parameters:
         - name: stack-id
           in: path
@@ -79,7 +83,7 @@ paths:
             $ref: '#/definitions/stack'
       security:
         - oauth:
-            - {{deployer_scope}}
+            - "{{deployer_scope}}"
       parameters:
         - name: stack-id
           in: path
@@ -91,26 +95,27 @@ paths:
       operationId: lizzy.api.patch_stack
       responses:
         200:
+          description: Stack with changes
           schema:
-            type: string
+            type: object
             $ref: '#/definitions/stack'
       security:
         - oauth:
-            - {{deployer_scope}}
+            - "{{deployer_scope}}"
       parameters:
-        - name: stack-id
-          in: path
-          description: Deployment id
-          required: true
-          type: string
-        - name: stack_patch
-          required: true
-          type: string
-          in: body
-          schema:
-            $ref: '#/definitions/stack_patch'
+      - name: stack-id
+        in: path
+        description: Deployment id
+        required: true
+        type: string
+      - name: stackPatch
+        in: body
+        required: true
+        schema:
+          type: object
+          $ref: '#/definitions/stackPatch'
 definitions:
-  new_stack:
+  newStack:
     properties:
       imageVersion:
         type: string
@@ -153,7 +158,7 @@ definitions:
       status:
         type: string
         description: Cloud formation stack status
-  stack_patch:
+  stackPatch:
     properties:
       newTraffic:
         type: integer
