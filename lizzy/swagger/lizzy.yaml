@@ -37,7 +37,7 @@ paths:
         greendale:
             - {{deployer_scope}}
       parameters:
-        - name: new_stack
+        - name: newStack
           required: true
           type: string
           in: body
@@ -61,7 +61,7 @@ paths:
         greendale:
             - {{deployer_scope}}
       parameters:
-        - name: stack_id
+        - name: stack-id
           in: path
           description: Deployment id
           required: true
@@ -70,9 +70,6 @@ paths:
       summary: Delete a stack
       description: Deletes the stack.
       operationId: lizzy.api.delete_stack
-      security:
-        greendale:
-            - uid
       responses:
         200:
           description: greeting response
@@ -83,7 +80,7 @@ paths:
         greendale:
             - {{deployer_scope}}
       parameters:
-        - name: stack_id
+        - name: stack-id
           in: path
           description: Deployment id
           required: true
@@ -100,7 +97,7 @@ paths:
         greendale:
             - {{deployer_scope}}
       parameters:
-        - name: stack_id
+        - name: stack-id
           in: path
           description: Deployment id
           required: true
@@ -114,41 +111,41 @@ paths:
 definitions:
   new_stack:
     properties:
-      image_version:
+      imageVersion:
         type: string
         description: Docker image version to deploy
-      keep_stacks:
+      keepStacks:
         type: integer
         description: Number of older stacks to keep
-      new_traffic:
+      newTraffic:
         type: integer
         description: Percentage of the traffic to be routed to new version
-      senza_yaml:
+      senzaYaml:
         type: string
         description: YAML to provide to senza
     required:
-      - image_version
-      - keep_stacks
-      - new_traffic
-      - senza_yaml
+      - imageVersion
+      - keepStacks
+      - newTraffic
+      - senzaYaml
   stack:
     properties:
-      stack_id:
+      stackId:
         type: string
         description: Unique ID for the stack
-      creation_time:
+      creationTime:
         type: string
         description: Date and time of stack creation on lizzy in ISO 8601 format
-      image_version:
+      imageVersion:
         type: string
         description: Docker image deployed
-      senza_yaml:
+      senzaYaml:
         type: string
         description: YAML to provide to senza
-      stack_name:
+      stackName:
         type: string
         description: Cloud formation stack name prefix
-      stack_version:
+      stackVersion:
         type: string
         description: Cloud formation stack version
       status:
@@ -156,6 +153,6 @@ definitions:
         description: Cloud formation stack status
   stack_patch:
     properties:
-      new_traffic:
+      newTraffic:
         type: integer
         description: Percentage of the traffic to be routed to stack

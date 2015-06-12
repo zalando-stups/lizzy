@@ -44,12 +44,12 @@ def _get_stack_dict(stack: Stack) -> dict:
         type: string
         description: Cloud formation stack status
     """
-    stack_dict = {'stack_id': stack.stack_id,
-                  'creation_time': stack.creation_time.isoformat(),
-                  'image_version': stack.image_version,
-                  'senza_yaml': stack.senza_yaml,
-                  'stack_name': stack.stack_name,
-                  'stack_version': stack.stack_version,
+    stack_dict = {'stackId': stack.stack_id,
+                  'creationTime': stack.creation_time.isoformat(),
+                  'imageVersion': stack.image_version,
+                  'senzaYaml': stack.senza_yaml,
+                  'stackName': stack.stack_name,
+                  'stackVersion': stack.stack_version,
                   'status': stack.status}
     return stack_dict
 
@@ -68,10 +68,10 @@ def new_stack() -> dict:
     """
 
     try:
-        keep_stacks = connexion.request.json['keep_stacks']
-        new_traffic = connexion.request.json['new_traffic']
-        image_version = connexion.request.json['image_version']
-        senza_yaml = connexion.request.json['senza_yaml']
+        keep_stacks = connexion.request.json['keepStacks']
+        new_traffic = connexion.request.json['newTraffic']
+        image_version = connexion.request.json['imageVersion']
+        senza_yaml = connexion.request.json['senzaYaml']
     except KeyError as e:
         missing_property = str(e)
         logger.error("Missing property on request.", extra={'missing_property': missing_property})
@@ -128,7 +128,7 @@ def patch_stack(stack_id: str) -> dict:
     except KeyError:
         connexion.abort(404)
 
-    new_traffic = connexion.request.json.get('new_traffic')  # type: Optional[int]
+    new_traffic = connexion.request.json.get('newTraffic')  # type: Optional[int]
 
     if new_traffic:
         stack.traffic = new_traffic
