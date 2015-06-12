@@ -135,7 +135,8 @@ definitions:
         type: string
         description: Unique ID for the stack
       creationTime:
-        type: dateTime
+        type: string
+        format: dateTime
         description: Date and time of stack creation on lizzy in ISO 8601 format
       imageVersion:
         type: string
