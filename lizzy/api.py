@@ -28,6 +28,9 @@ def _get_stack_dict(stack: Stack) -> dict:
       stack_id:
         type: string
         description: Unique ID for the stack
+      creation_time:
+        type: string
+        description: Date and time of stack creation on lizzy in ISO 8601 format
       image_version:
         type: string
         description: Docker image version to deploy
