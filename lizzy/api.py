@@ -44,7 +44,6 @@ def _get_stack_dict(stack: Stack) -> dict:
         type: string
         description: Cloud formation stack status
     """
-    # TODO Update api
     stack_dict = {'stack_id': stack.stack_id,
                   'creation_time': stack.creation_time.isoformat(),
                   'image_version': stack.image_version,
