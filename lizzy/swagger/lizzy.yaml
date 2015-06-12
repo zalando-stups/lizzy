@@ -18,7 +18,7 @@ securityDefinitions:
             {{deployer_scope}}: Can deploy and change stacks
 
 paths:
-  /stacks/:
+  /stacks:
     get:
       summary: List all stacks
       operationId: lizzy.api.all_stacks
@@ -43,7 +43,7 @@ paths:
           in: body
           schema:
             $ref: '#/definitions/new_stack'
-  /stacks/{stack_id}:
+  /stacks/{stack-id}:
     get:
       summary: Get a stack
       description: Gets a stack.by id.
