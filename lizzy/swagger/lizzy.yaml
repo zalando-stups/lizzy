@@ -9,13 +9,13 @@ produces:
 
 
 securityDefinitions:
-    oauth:
-        type: oauth2
-        flow: password
-        tokenUrl: {{token_url}}
-        x-tokenInfoUrl: {{token_info_url}}
-        scopes:
-            {{deployer_scope}}: Can deploy and change stacks
+  oauth:
+    type: oauth2
+    flow: password
+    tokenUrl: {{token_url}}
+    x-tokenInfoUrl: {{token_info_url}}
+    scopes:
+        {{deployer_scope}}: Can deploy and change stacks
 
 paths:
   /stacks:
@@ -23,7 +23,7 @@ paths:
       summary: List all stacks
       operationId: lizzy.api.all_stacks
       security:
-        oauth:
+        - oauth:
             - {{deployer_scope}}
     post:
       summary: Create new stack
@@ -35,7 +35,7 @@ paths:
             type: string
             $ref: '#/definitions/stack'
       security:
-        oauth:
+        - oauth:
             - {{deployer_scope}}
       parameters:
         - name: newStack
@@ -50,7 +50,7 @@ paths:
       description: Gets a stack.by id.
       operationId: lizzy.api.get_stack
       security:
-        oauth:
+        - oauth:
             - uid
       responses:
         200:
@@ -59,7 +59,7 @@ paths:
             type: string
             $ref: '#/definitions/stack'
       security:
-        oauth:
+        - oauth:
             - {{deployer_scope}}
       parameters:
         - name: stack-id
@@ -78,7 +78,7 @@ paths:
             type: string
             $ref: '#/definitions/stack'
       security:
-        oauth:
+        - oauth:
             - {{deployer_scope}}
       parameters:
         - name: stack-id
@@ -95,7 +95,7 @@ paths:
             type: string
             $ref: '#/definitions/stack'
       security:
-        oauth:
+        - oauth:
             - {{deployer_scope}}
       parameters:
         - name: stack-id
