@@ -39,7 +39,6 @@ paths:
         200:
           description: Stack to be created
           schema:
-            type: string
             $ref: '#/definitions/stack'
       security:
         - oauth:
@@ -49,7 +48,6 @@ paths:
           required: true
           in: body
           schema:
-            type: object
             $ref: '#/definitions/new_stack'
   /stacks/{stack-id}:
     get:
@@ -63,7 +61,6 @@ paths:
         200:
           description: Stack information
           schema:
-            type: string
             $ref: '#/definitions/stack'
       parameters:
         - name: stack-id
@@ -112,10 +109,10 @@ paths:
         in: body
         required: true
         schema:
-          type: object
           $ref: '#/definitions/stack_patch'
 definitions:
   new_stack:
+    type: object
     properties:
       image_version:
         type: string
@@ -135,6 +132,7 @@ definitions:
       - new_traffic
       - senza_yaml
   stack:
+    type: object
     properties:
       stack_id:
         type: string
@@ -159,6 +157,7 @@ definitions:
         type: string
         description: Cloud formation stack status
   stack_patch:
+    type: object
     properties:
       new_traffic:
         type: integer
