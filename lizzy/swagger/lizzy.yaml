@@ -34,7 +34,7 @@ paths:
               $ref: '#/definitions/stack'
     post:
       summary: Create new stack
-      operationId: lizzy.api.newStack
+      operationId: lizzy.api.new_stack
       responses:
         200:
           description: Stack to be created
@@ -45,12 +45,12 @@ paths:
         - oauth:
             - "{{deployer_scope}}"
       parameters:
-        - name: newStack
+        - name: new_stack
           required: true
           in: body
           schema:
             type: object
-            $ref: '#/definitions/newStack'
+            $ref: '#/definitions/new_stack'
   /stacks/{stack-id}:
     get:
       summary: Get a stack
@@ -108,45 +108,45 @@ paths:
         description: Deployment id
         required: true
         type: string
-      - name: stackPatch
+      - name: stack_patch
         in: body
         required: true
         schema:
           type: object
-          $ref: '#/definitions/stackPatch'
+          $ref: '#/definitions/stack_patch'
 definitions:
-  newStack:
+  new_stack:
     properties:
-      imageVersion:
+      image_version:
         type: string
         description: Docker image version to deploy
-      keepStacks:
+      keep_stacks:
         type: integer
         description: Number of older stacks to keep
-      newTraffic:
+      new_traffic:
         type: integer
         description: Percentage of the traffic to be routed to new version
-      senzaYaml:
+      senza_yaml:
         type: string
         description: YAML to provide to senza
     required:
-      - imageVersion
-      - keepStacks
-      - newTraffic
-      - senzaYaml
+      - image_version
+      - keep_stacks
+      - new_traffic
+      - senza_yaml
   stack:
     properties:
-      stackId:
+      stack_id:
         type: string
         description: Unique ID for the stack
-      creationTime:
+      creation_time:
         type: string
         format: dateTime
         description: Date and time of stack creation on lizzy in ISO 8601 format
-      imageVersion:
+      image_version:
         type: string
         description: Docker image deployed
-      senzaYaml:
+      senza_yaml:
         type: string
         description: YAML to provide to senza
       stackName:
@@ -158,8 +158,8 @@ definitions:
       status:
         type: string
         description: Cloud formation stack status
-  stackPatch:
+  stack_patch:
     properties:
-      newTraffic:
+      new_traffic:
         type: integer
         description: Percentage of the traffic to be routed to stack
