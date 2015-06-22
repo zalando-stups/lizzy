@@ -1,5 +1,6 @@
 import datetime
 import logging
+import traceback
 
 
 class KVPFormatter(logging.Formatter):
@@ -30,11 +31,20 @@ class KVPFormatter(logging.Formatter):
         values['created'] = datetime.datetime.fromtimestamp(values['created'])
 
         # if there is an exception convert to string
-        values['exc_info'] = values['exc_info'] and repr(values['exc_info'])
+        if values['exc_info']:
+            exc_info = values['exc_info']
+            values['exc_info'] = exc_info and repr(exc_info)
+            values['traceback'] = ''.join(traceback.format_tb(exc_info[2]))
+        else:
+            values['traceback'] = None
 
         log_line = ' '.join('{key}={value}'.format(key=key, value=self.__escape_value(value))
                             for key, value
                             in values.items())
+
+        if values['traceback']:  # include traceback in human readable format
+            traceback.print_exc()
+
         return log_line
 
 
