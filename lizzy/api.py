@@ -59,7 +59,7 @@ def all_stacks() -> dict:
     GET /stacks/
     """
     stacks = [(_get_stack_dict(stack)) for stack in Stack.all()]
-    return {'stacks': stacks}
+    return stacks
 
 
 def new_stack() -> dict:
