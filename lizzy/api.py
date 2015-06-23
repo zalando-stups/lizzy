@@ -59,6 +59,7 @@ def all_stacks() -> dict:
     GET /stacks/
     """
     stacks = [(_get_stack_dict(stack)) for stack in Stack.all()]
+    stacks.sort(key=lambda stack: stack.creation_time)
     return stacks
 
 
