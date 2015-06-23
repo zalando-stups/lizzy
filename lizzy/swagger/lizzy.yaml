@@ -5,6 +5,11 @@ info:
   description: REST Service to deploy AWS CF templates using Senza
   version: "1.0"
 
+basePath: /api
+
+schemes:
+ - https
+
 consumes:
   - application/json
 

@@ -43,7 +43,7 @@ class KVPFormatter(logging.Formatter):
                             in values.items())
 
         if values['traceback']:  # include traceback in human readable format
-            traceback.print_exc()
+            log_line += '\n{traceback}'.format_map(values)
 
         return log_line
 
