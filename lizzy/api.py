@@ -131,7 +131,7 @@ def patch_stack(stack_id: str) -> dict:
 
     new_traffic = connexion.request.json.get('new_traffic')  # type: Optional[int]
 
-    if new_traffic:
+    if new_traffic is not None:
         stack.traffic = new_traffic
 
     stack.status = 'LIZZY:CHANGE'
