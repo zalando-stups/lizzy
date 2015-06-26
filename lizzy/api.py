@@ -148,8 +148,9 @@ def delete_stack(stack_id: str) -> dict:
     try:
         stack = Stack.get(stack_id)
     except KeyError:
-        connexion.abort(404)
+        # delete is idempotent, if the stack is not there it just doesn't do anything
+        return '', 202
 
     stack.status = 'LIZZY:DELETE'
     stack.save()
-    return _get_stack_dict(stack)
+    return '', 202

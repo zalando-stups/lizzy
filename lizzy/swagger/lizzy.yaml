@@ -110,11 +110,8 @@ paths:
       description: Marks the stack identified by stack id for deletion.
       operationId: lizzy.api.delete_stack
       responses:
-        200:
+        204:
           description: Stack to be deleted
-          schema:
-            type: string
-            $ref: '#/definitions/stack'
       security:
         - oauth:
             - "{{deployer_scope}}"

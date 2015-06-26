@@ -160,3 +160,15 @@ def test_get_stack(app, oauth_requests):
 def test_get_stack_404(app, oauth_requests):
     request = app.get('/api/stacks/stack404', headers=GOOD_HEADERS)
     assert request.status_code == 404
+
+
+def test_delete(app, oauth_requests):
+    request = app.delete('/api/stacks/stack1', headers=GOOD_HEADERS)
+    assert request.status_code == 202
+
+    # delete is idempotent
+    request = app.delete('/api/stacks/stack1', headers=GOOD_HEADERS)
+    assert request.status_code == 202
+
+    request = app.delete('/api/stacks/stack404', headers=GOOD_HEADERS)
+    assert request.status_code == 202
