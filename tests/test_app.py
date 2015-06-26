@@ -131,4 +131,4 @@ def test_new_stack(app, oauth_requests):
             'senza_yaml': 'SenzaInfo:\n  StackName: abc'}
 
     request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
-    assert request.status_code == 200
+    assert request.status_code == 201

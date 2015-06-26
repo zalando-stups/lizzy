@@ -103,7 +103,7 @@ def new_stack() -> dict:
                   senza_yaml=senza_yaml,
                   stack_name=stack_name)
     stack.save()
-    return _get_stack_dict(stack)
+    return _get_stack_dict(stack), 201
 
 
 def get_stack(stack_id: str) -> dict:

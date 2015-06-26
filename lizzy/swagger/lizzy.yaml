@@ -48,10 +48,14 @@ paths:
         Adds a new stack to be created by lizzy and returns the information needed to keep track of deployment
       operationId: lizzy.api.new_stack
       responses:
-        200:
+        201:
           description: Stack to be created
           schema:
             $ref: '#/definitions/stack'
+        400:
+          description: Stack was not created because request was invalid
+          schema:
+            $ref: '#/definitions/problem'
       security:
         - oauth:
             - "{{deployer_scope}}"
@@ -178,3 +182,31 @@ definitions:
         description: Percentage of the traffic to be routed to stack
         minimum: 0
         maximum: 100
+  problem:
+    description: |
+      Provides information about an error of some kind the service has encountered.
+    required:
+      - type
+      - title
+      - detail
+    properties:
+      type:
+        type: string
+        format: uri
+        description: |
+          An URI that identifies the type of problem represented by this object. Dereferencing this URI may or may
+          not provide a human-readable description about the type of problem.
+      title:
+        type: string
+        description: |
+          A short human-readable description of the type of problem represented by this object. Does not contain
+          information specific to the given occurrence of the problem, and will not change between different
+          occurrences of the same type.
+      status:
+        type: integer
+        description: |
+          The HTTP status code associated with the type of problem represented by this object.
+      detail:
+        type: string
+        description: |
+          A human-readable description of the specific occurrence of the project represented by this object.
