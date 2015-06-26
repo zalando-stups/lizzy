@@ -149,8 +149,8 @@ def delete_stack(stack_id: str) -> dict:
         stack = Stack.get(stack_id)
     except KeyError:
         # delete is idempotent, if the stack is not there it just doesn't do anything
-        return '', 202
+        return '', 204
 
     stack.status = 'LIZZY:DELETE'
     stack.save()
-    return '', 202
+    return '', 204
