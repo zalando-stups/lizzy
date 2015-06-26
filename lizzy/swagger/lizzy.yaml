@@ -42,6 +42,11 @@ paths:
             type: array
             items:
               $ref: '#/definitions/stack'
+        401:
+          description: |
+            Stacks were not retrieved because the access token was not provided or was not valid for this operation
+          schema:
+            $ref: '#/definitions/problem'
     post:
       summary: Create new stack
       description: |
@@ -54,6 +59,11 @@ paths:
             $ref: '#/definitions/stack'
         400:
           description: Stack was not created because request was invalid
+          schema:
+            $ref: '#/definitions/problem'
+        401:
+          description: |
+            Stack was not created because the access token was not provided or was not valid for this operation
           schema:
             $ref: '#/definitions/problem'
       security:
