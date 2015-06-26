@@ -1,4 +1,4 @@
-FROM zalando/ubuntu:14.04.1-3
+FROM os-registry.stups.zalan.do/stups/zmon-worker:0.1.7
 
 EXPOSE 8080
 
@@ -10,3 +10,4 @@ RUN pip3 install --no-index --find-links=/data/wheelhouse /data/dist/*.whl
 
 ADD scm-source.json /
 CMD python3 -m lizzy
+

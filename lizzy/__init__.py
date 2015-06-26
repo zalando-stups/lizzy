@@ -1,1 +1,1 @@
-from lizzy.lizzy import main
+from .lizzy import main  # noqa

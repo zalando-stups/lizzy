@@ -18,7 +18,6 @@ import yaml
 
 from lizzy.models.stack import Stack
 
-
 logger = logging.getLogger('lizzy.api')
 
 
@@ -75,8 +74,8 @@ def new_stack() -> dict:
         senza_yaml = connexion.request.json['senza_yaml']
     except KeyError as e:
         missing_property = str(e)
-        logger.error("Missing property on request.", extra={'missing_property': missing_property})
-        raise connexion.exceptions.BadRequest("Missing property: {}".format(missing_property))
+        logger.error("Missing property on request", extra={'missing_property': missing_property})
+        return connexion.problem(400, 'Invalid stack', "Missing property: {}".format(missing_property))
 
     try:
         senza_definition = yaml.safe_load(senza_yaml)
@@ -84,10 +83,10 @@ def new_stack() -> dict:
             raise TypeError
     except yaml.YAMLError:
         logger.exception("Couldn't parse senza yaml.", extra={'senza_yaml': repr(senza_yaml)})
-        raise connexion.exceptions.BadRequest("Invalid senza yaml")
+        return connexion.problem(400, 'Invalid senza yaml', "Couldn't parse senza yaml.")
     except TypeError:
         logger.exception("Senza yaml is not a dict.", extra={'senza_yaml': repr(senza_yaml)})
-        raise connexion.exceptions.BadRequest("Invalid senza yaml")
+        return connexion.problem(400, 'Invalid senza yaml', "Senza yaml is not a dict.")
 
     try:
         stack_name = senza_definition['SenzaInfo']['StackName']
@@ -95,7 +94,8 @@ def new_stack() -> dict:
     except KeyError as e:
         logger.error("Couldn't get stack name from definition.", extra={'senza_yaml': repr(senza_definition)})
         missing_property = str(e)
-        raise connexion.exceptions.BadRequest("Missing property in senza yaml: {}".format(missing_property))
+        return connexion.problem(400, 'Invalid senza yaml',
+                                 "Missing property in senza yaml: {}".format(missing_property))
 
     stack = Stack(keep_stacks=keep_stacks,
                   traffic=new_traffic,

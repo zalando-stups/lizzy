@@ -35,16 +35,17 @@ class KVPFormatter(logging.Formatter):
             exc_info = values['exc_info']
             values['exc_info'] = exc_info and repr(exc_info)
             values['traceback'] = ''.join(traceback.format_tb(exc_info[2]))
+            values['exception'] = exc_info[1]
         else:
             values['traceback'] = None
+            values['exception'] = None
 
         log_line = ' '.join('{key}={value}'.format(key=key, value=self.__escape_value(value))
                             for key, value
                             in values.items())
 
         if values['traceback']:  # include traceback in human readable format
-            log_line += '\n{traceback}'.format_map(values)
-
+            log_line += '\n{traceback}{exception}'.format_map(values)
         return log_line
 
 
