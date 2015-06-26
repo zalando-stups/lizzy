@@ -83,17 +83,28 @@ paths:
       security:
         - oauth:
             - "{{deployer_scope}}"
-      responses:
-        200:
-          description: Stack information
-          schema:
-            $ref: '#/definitions/stack'
       parameters:
         - name: stack-id
           in: path
           description: Stack Id
           required: true
           type: string
+      responses:
+        200:
+          description: Stack information
+          schema:
+            $ref: '#/definitions/stack'
+        401:
+          description: |
+            Stack was not retrieved because the access token was not provided or was not valid for this operation
+          schema:
+            $ref: '#/definitions/problem'
+        404:
+          description: |
+            Stack was not found. It's possible for a stack to exist on an AWS account and not be found by lizzy
+            because lizzy only handles stacks created by itself.
+          schema:
+            $ref: '#/definitions/problem'
     delete:
       summary: Delete a lizzy stack
       description: Marks the stack identified by stack id for deletion.

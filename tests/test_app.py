@@ -1,4 +1,5 @@
 import connexion
+import datetime
 import flask
 import json
 import pytest
@@ -9,6 +10,16 @@ from lizzy.models.stack import Stack
 from lizzy.lizzy import setup_webapp
 
 GOOD_HEADERS = {'Authorization': 'Bearer 100', 'Content-type': 'application/json'}
+
+STACKS = {'stack1': {'stack_id': None,
+                     'creation_time': None,
+                     'keep_stacks': 1,
+                     'traffic': 100,
+                     'image_version': 'version',
+                     'senza_yaml': 'yaml',
+                     'stack_name': 'stackno1',
+                     'stack_version': 'v1',
+                     'status': 'LIZZY:NEW', }}
 
 
 class FakeConfig:
@@ -51,7 +62,8 @@ class FakeStack(Stack):
 
     @classmethod
     def get(cls, uid):
-        raise KeyError
+        stack = STACKS[uid]
+        return cls(**stack)
 
     def save(self):
         pass
@@ -132,3 +144,19 @@ def test_new_stack(app, oauth_requests):
 
     request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
     assert request.status_code == 201
+
+
+def test_get_stack(app, oauth_requests):
+    parameters = ['stack_version', 'stack_name', 'senza_yaml', 'creation_time', 'image_version', 'status', 'stack_id']
+
+    request = app.get('/api/stacks/stack1', headers=GOOD_HEADERS)
+    assert request.status_code == 200
+    response = json.loads(request.data.decode())  # type: dict
+    keys = response.keys()
+    for parameter in parameters:
+        assert parameter in keys
+
+
+def test_get_stack_404(app, oauth_requests):
+    request = app.get('/api/stacks/stack404', headers=GOOD_HEADERS)
+    assert request.status_code == 404
