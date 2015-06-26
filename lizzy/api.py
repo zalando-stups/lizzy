@@ -136,7 +136,7 @@ def patch_stack(stack_id: str) -> dict:
 
     stack.status = 'LIZZY:CHANGE'
     stack.save()
-    return _get_stack_dict(stack)
+    return _get_stack_dict(stack), 202
 
 
 def delete_stack(stack_id: str) -> dict:

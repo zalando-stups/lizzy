@@ -172,3 +172,20 @@ def test_delete(app, oauth_requests):
 
     request = app.delete('/api/stacks/stack404', headers=GOOD_HEADERS)
     assert request.status_code == 204
+
+
+def test_patch(app, oauth_requests):
+    data = {'new_traffic': 50}
+
+    request = app.patch('/api/stacks/stack1', headers=GOOD_HEADERS, data=json.dumps(data))
+    assert request.status_code == 202
+
+    request = app.patch('/api/stacks/stack1', headers=GOOD_HEADERS, data=json.dumps({}))
+    assert request.status_code == 202
+
+
+def test_patch404(app, oauth_requests):
+    data = {'new_traffic': 50, }
+
+    request = app.patch('/api/stacks/stack404', headers=GOOD_HEADERS, data=json.dumps(data))
+    assert request.status_code == 404
