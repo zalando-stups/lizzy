@@ -44,7 +44,7 @@ def _get_stack_dict(stack: Stack) -> dict:
         description: Cloud formation stack status
     """
     stack_dict = {'stack_id': stack.stack_id,
-                  'creation_time': stack.creation_time.isoformat(),
+                  'creation_time': '{:%FT%T%z}'.format(stack.creation_time),
                   'image_version': stack.image_version,
                   'senza_yaml': stack.senza_yaml,
                   'stack_name': stack.stack_name,

@@ -171,9 +171,11 @@ definitions:
         description: Docker image version to deploy
       keep_stacks:
         type: integer
+        format: int32
         description: Number of older stacks to keep
       new_traffic:
         type: integer
+        format: int32
         description: Percentage of the traffic to be routed to new version
       senza_yaml:
         type: string
@@ -192,7 +194,7 @@ definitions:
       creation_time:
         type: string
         format: dateTime
-        example: 2015-06-22T12:22:19.903938+00:00
+        example: 2015-07-08T12:53:58+0000
         description: Date and time of stack creation on lizzy in ISO 8601 format
       image_version:
         type: string
@@ -200,10 +202,10 @@ definitions:
       senza_yaml:
         type: string
         description: YAML to provide to senza
-      stackName:
+      stack_name:
         type: string
         description: Cloud formation stack name prefix
-      stackVersion:
+      stack_version:
         type: string
         description: Cloud formation stack version
       status:
@@ -214,6 +216,7 @@ definitions:
     properties:
       new_traffic:
         type: integer
+        format: int32
         description: Percentage of the traffic to be routed to stack
         minimum: 0
         maximum: 100
@@ -224,6 +227,7 @@ definitions:
       - type
       - title
       - detail
+      - status
     properties:
       type:
         type: string
@@ -239,6 +243,7 @@ definitions:
           occurrences of the same type.
       status:
         type: integer
+        format: int32
         description: |
           The HTTP status code associated with the type of problem represented by this object.
       detail:
