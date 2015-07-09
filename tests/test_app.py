@@ -112,8 +112,7 @@ def test_empty_new_stack(monkeypatch, app, oauth_requests):
     request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
     assert request.status_code == 400
     response = json.loads(request.data.decode())
-    assert response['title'] == 'Invalid stack'
-    assert response['detail'] == "Missing property: 'keep_stacks'"
+    assert response['title'] == 'Bad Request'
 
 
 def test_bad_senza_yaml(app, oauth_requests):

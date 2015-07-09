@@ -51,7 +51,7 @@ setup(
     author='Zalando SE',
     url='https://github.com/zalando/lizzy',
     license='Apache License Version 2.0',
-    install_requires=['APScheduler', 'connexion>=0.4.2', 'environmental', 'pyyaml', 'rod', 'stups-senza', 'pytz'],
+    install_requires=['APScheduler', 'connexion>=0.7.0', 'environmental', 'pyyaml', 'rod', 'stups-senza', 'pytz'],
     tests_require=['pytest-cov', 'pytest'],
     cmdclass={'test': PyTest},
     classifiers=[

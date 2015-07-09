@@ -67,15 +67,10 @@ def new_stack() -> dict:
     POST /stacks/
     """
 
-    try:
-        keep_stacks = connexion.request.json['keep_stacks']
-        new_traffic = connexion.request.json['new_traffic']
-        image_version = connexion.request.json['image_version']
-        senza_yaml = connexion.request.json['senza_yaml']
-    except KeyError as e:
-        missing_property = str(e)
-        logger.error("Missing property on request", extra={'missing_property': missing_property})
-        return connexion.problem(400, 'Invalid stack', "Missing property: {}".format(missing_property))
+    keep_stacks = connexion.request.json['keep_stacks']
+    new_traffic = connexion.request.json['new_traffic']
+    image_version = connexion.request.json['image_version']
+    senza_yaml = connexion.request.json['senza_yaml']
 
     try:
         senza_definition = yaml.safe_load(senza_yaml)
