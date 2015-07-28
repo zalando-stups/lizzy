@@ -1,4 +1,4 @@
-FROM os-registry.stups.zalan.do/stups/zmon-worker:0.1.7
+FROM zalando/python:3.4.0-2
 
 EXPOSE 8080
 

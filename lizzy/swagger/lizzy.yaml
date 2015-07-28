@@ -112,7 +112,7 @@ paths:
       operationId: lizzy.api.delete_stack
       responses:
         204:
-          description: Stack was\will be deleted
+          description: Stack was/will be deleted
         401:
           description: |
             Stack was not deleted because the access token was not provided or was not valid for this operation
