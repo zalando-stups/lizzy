@@ -1,4 +1,5 @@
 import connexion
+import connexion.decorators.security
 import datetime
 import flask
 import json
@@ -79,21 +80,22 @@ def app(monkeypatch):
     return app_client
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def oauth_requests(monkeypatch: '_pytest.monkeypatch.monkeypatch'):
-    def fake_get(url: str, params: dict=None):
-        params = params or {}
-        if url == "https://ouath.example/token_info":
-            token = params['access_token']
-            if token == "100":
-                return FakeResponse(200, '{"scope": ["myscope"]}')
-            if token == "200":
-                return FakeResponse(200, '{"scope": ["wrongscope"]}')
-            if token == "300":
-                return FakeResponse(404, '')
-        return url
+    class Session(requests.Session):
+        def get(self, url: str, params: dict=None, timeout=0):
+            params = params or {}
+            if url == "https://ouath.example/token_info":
+                token = params['access_token']
+                if token == "100":
+                    return FakeResponse(200, '{"scope": ["myscope"]}')
+                if token == "200":
+                    return FakeResponse(200, '{"scope": ["wrongscope"]}')
+                if token == "300":
+                    return FakeResponse(404, '')
+            return url
 
-    monkeypatch.setattr(requests, 'get', fake_get)
+    monkeypatch.setattr('connexion.decorators.security.session', Session())
 
 
 def test_security(app, oauth_requests):
