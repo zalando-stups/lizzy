@@ -2,126 +2,180 @@ swagger: "2.0"
 
 info:
   title: Lizzy
+  description: REST Service to deploy AWS CF templates using Senza
   version: "1.0"
+
+basePath: /api
+
+schemes:
+ - https
+
+consumes:
+  - application/json
 
 produces:
   - application/json
 
-
 securityDefinitions:
-    greendale:
-        type: oauth2
-        flow: password
-        tokenUrl: {{token_url}}
-        x-tokenInfoUrl: {{token_info_url}}
-        scopes:
-            {{deployer_scope}}: Can deploy and change stacks
+  oauth:
+    type: oauth2
+    flow: password
+    tokenUrl: "{{token_url}}"
+    x-tokenInfoUrl: "{{token_info_url}}"
+    scopes:
+        "{{deployer_scope}}": Can deploy and change stacks
 
 paths:
-  /stacks/:
+  /stacks:
     get:
       summary: List all stacks
+      description: |
+        Lists all stacks created by lizzy.
       operationId: lizzy.api.all_stacks
       security:
-        greendale:
-            - {{deployer_scope}}
-    post:
-      summary: Create new stack
-      operationId: lizzy.api.new_stack
+        - oauth:
+            - "{{deployer_scope}}"
       responses:
         200:
+          description: List of stacks
           schema:
-            type: string
+            type: array
+            items:
+              $ref: '#/definitions/stack'
+        401:
+          description: |
+            Stacks were not retrieved because the access token was not provided or was not valid for this operation
+          schema:
+            $ref: '#/definitions/problem'
+    post:
+      summary: Create new stack
+      description: |
+        Adds a new stack to be created by lizzy and returns the information needed to keep track of deployment
+      operationId: lizzy.api.new_stack
+      responses:
+        201:
+          description: |
+            Stack to be created. The CloudFormation Stack creation can still fail if it's rejected by senza or AWS CF.
+          schema:
             $ref: '#/definitions/stack'
+        400:
+          description: Stack was not created because request was invalid
+          schema:
+            $ref: '#/definitions/problem'
+        401:
+          description: |
+            Stack was not created because the access token was not provided or was not valid for this operation
+          schema:
+            $ref: '#/definitions/problem'
       security:
-        greendale:
-            - {{deployer_scope}}
+        - oauth:
+            - "{{deployer_scope}}"
       parameters:
         - name: new_stack
           required: true
-          type: string
           in: body
           schema:
             $ref: '#/definitions/new_stack'
-  /stacks/{stack_id}:
+  /stacks/{stack-id}:
     get:
-      summary: Get a stack
-      description: Gets a stack.by id.
+      summary: Retrieves a lizzy stack
+      description: Retrieves a lizzy stack by stack id
       operationId: lizzy.api.get_stack
       security:
-        greendale:
-            - uid
-      responses:
-        200:
-          description: greeting response
-          schema:
-            type: string
-            $ref: '#/definitions/stack'
-      security:
-        greendale:
-            - {{deployer_scope}}
+        - oauth:
+            - "{{deployer_scope}}"
       parameters:
-        - name: stack_id
+        - name: stack-id
           in: path
-          description: Deployment id
+          description: Stack Id
           required: true
           type: string
-    delete:
-      summary: Delete a stack
-      description: Deletes the stack.
-      operationId: lizzy.api.delete_stack
-      security:
-        greendale:
-            - uid
       responses:
         200:
-          description: greeting response
+          description: Stack information
           schema:
-            type: string
             $ref: '#/definitions/stack'
+        401:
+          description: |
+            Stack was not retrieved because the access token was not provided or was not valid for this operation
+          schema:
+            $ref: '#/definitions/problem'
+        404:
+          description: |
+            Stack was not found. It's possible for a stack to exist on an AWS account and not be found by lizzy
+            because lizzy only handles stacks created by itself.
+          schema:
+            $ref: '#/definitions/problem'
+    delete:
+      summary: Delete a lizzy stack
+      description: Marks the stack identified by stack id for deletion.
+      operationId: lizzy.api.delete_stack
+      responses:
+        204:
+          description: Stack was/will be deleted
+        401:
+          description: |
+            Stack was not deleted because the access token was not provided or was not valid for this operation
+          schema:
+            $ref: '#/definitions/problem'
       security:
-        greendale:
-            - {{deployer_scope}}
+        - oauth:
+            - "{{deployer_scope}}"
       parameters:
-        - name: stack_id
+        - name: stack-id
           in: path
-          description: Deployment id
+          description: Stack id
           required: true
           type: string
     patch:
       summary: Update stack
+      description: Update stack. Currently the only parameter that can be changed is the instance traffic.
       operationId: lizzy.api.patch_stack
       responses:
-        200:
+        202:
+          description: Changed stack
           schema:
-            type: string
+            type: object
             $ref: '#/definitions/stack'
-      security:
-        greendale:
-            - {{deployer_scope}}
-      parameters:
-        - name: stack_id
-          in: path
-          description: Deployment id
-          required: true
-          type: string
-        - name: stack_patch
-          required: true
-          type: string
-          in: body
+        401:
+          description: |
+            Stack will not be updated because the access token was not provided or was not valid for this operation
           schema:
-            $ref: '#/definitions/stack_patch'
+            $ref: '#/definitions/problem'
+        404:
+          description: |
+            Stack was not found. It's possible for a stack to exist on an AWS account and not be found by lizzy
+            because lizzy only handles stacks created by itself.
+          schema:
+            $ref: '#/definitions/problem'
+      security:
+        - oauth:
+            - "{{deployer_scope}}"
+      parameters:
+      - name: stack-id
+        in: path
+        description: Stack id
+        required: true
+        type: string
+      - name: stack_patch
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/stack_patch'
 definitions:
   new_stack:
+    type: object
     properties:
       image_version:
         type: string
         description: Docker image version to deploy
       keep_stacks:
         type: integer
+        format: int32
         description: Number of older stacks to keep
       new_traffic:
         type: integer
+        format: int32
         description: Percentage of the traffic to be routed to new version
       senza_yaml:
         type: string
@@ -132,16 +186,19 @@ definitions:
       - new_traffic
       - senza_yaml
   stack:
+    type: object
     properties:
       stack_id:
         type: string
-        description: Unique ID for the stack
+        description: Unique ID for the stack. Will be the same as the stack if the stack is successfully created.
       creation_time:
         type: string
+        format: dateTime
+        example: 2015-07-08T12:53:58+0000
         description: Date and time of stack creation on lizzy in ISO 8601 format
       image_version:
         type: string
-        description: Docker image deployed
+        description: Docker image version of the stack
       senza_yaml:
         type: string
         description: YAML to provide to senza
@@ -153,9 +210,43 @@ definitions:
         description: Cloud formation stack version
       status:
         type: string
-        description: Cloud formation stack status
+        description: Status of stack, can be be CF:STATUS_IN_CLOUD_FORMATION or some lizzy specific status
   stack_patch:
+    type: object
     properties:
       new_traffic:
         type: integer
+        format: int32
         description: Percentage of the traffic to be routed to stack
+        minimum: 0
+        maximum: 100
+  problem:
+    description: |
+      Provides information about an error of some kind the service has encountered.
+    required:
+      - type
+      - title
+      - detail
+      - status
+    properties:
+      type:
+        type: string
+        format: uri
+        description: |
+          An URI that identifies the type of problem represented by this object. Dereferencing this URI may or may
+          not provide a human-readable description about the type of problem.
+      title:
+        type: string
+        description: |
+          A short human-readable description of the type of problem represented by this object. Does not contain
+          information specific to the given occurrence of the problem, and will not change between different
+          occurrences of the same type.
+      status:
+        type: integer
+        format: int32
+        description: |
+          The HTTP status code associated with the type of problem represented by this object.
+      detail:
+        type: string
+        description: |
+          A human-readable description of the specific occurrence of the project represented by this object.

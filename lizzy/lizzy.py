@@ -13,8 +13,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
  language governing permissions and limitations under the License.
 """
 
-import logging
-
 import apscheduler.schedulers.background as scheduler_background
 import apscheduler.triggers.interval as scheduler_interval
 import connexion

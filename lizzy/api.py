@@ -18,7 +18,6 @@ import yaml
 
 from lizzy.models.stack import Stack
 
-
 logger = logging.getLogger('lizzy.api')
 
 
@@ -45,7 +44,7 @@ def _get_stack_dict(stack: Stack) -> dict:
         description: Cloud formation stack status
     """
     stack_dict = {'stack_id': stack.stack_id,
-                  'creation_time': stack.creation_time.isoformat(),
+                  'creation_time': '{:%FT%T%z}'.format(stack.creation_time),
                   'image_version': stack.image_version,
                   'senza_yaml': stack.senza_yaml,
                   'stack_name': stack.stack_name,
@@ -59,7 +58,8 @@ def all_stacks() -> dict:
     GET /stacks/
     """
     stacks = [(_get_stack_dict(stack)) for stack in Stack.all()]
-    return {'stacks': stacks}
+    stacks.sort(key=lambda stack: stack['creation_time'])
+    return stacks
 
 
 def new_stack() -> dict:
@@ -67,15 +67,10 @@ def new_stack() -> dict:
     POST /stacks/
     """
 
-    try:
-        keep_stacks = connexion.request.json['keep_stacks']
-        new_traffic = connexion.request.json['new_traffic']
-        image_version = connexion.request.json['image_version']
-        senza_yaml = connexion.request.json['senza_yaml']
-    except KeyError as e:
-        missing_property = str(e)
-        logger.error("Missing property on request.", extra={'missing_property': missing_property})
-        raise connexion.exceptions.BadRequest("Missing property: {}".format(missing_property))
+    keep_stacks = connexion.request.json['keep_stacks']
+    new_traffic = connexion.request.json['new_traffic']
+    image_version = connexion.request.json['image_version']
+    senza_yaml = connexion.request.json['senza_yaml']
 
     try:
         senza_definition = yaml.safe_load(senza_yaml)
@@ -83,10 +78,10 @@ def new_stack() -> dict:
             raise TypeError
     except yaml.YAMLError:
         logger.exception("Couldn't parse senza yaml.", extra={'senza_yaml': repr(senza_yaml)})
-        raise connexion.exceptions.BadRequest("Invalid senza yaml")
+        return connexion.problem(400, 'Invalid senza yaml', "Couldn't parse senza yaml.")
     except TypeError:
         logger.exception("Senza yaml is not a dict.", extra={'senza_yaml': repr(senza_yaml)})
-        raise connexion.exceptions.BadRequest("Invalid senza yaml")
+        return connexion.problem(400, 'Invalid senza yaml', "Senza yaml is not a dict.")
 
     try:
         stack_name = senza_definition['SenzaInfo']['StackName']
@@ -94,7 +89,8 @@ def new_stack() -> dict:
     except KeyError as e:
         logger.error("Couldn't get stack name from definition.", extra={'senza_yaml': repr(senza_definition)})
         missing_property = str(e)
-        raise connexion.exceptions.BadRequest("Missing property in senza yaml: {}".format(missing_property))
+        return connexion.problem(400, 'Invalid senza yaml',
+                                 "Missing property in senza yaml: {}".format(missing_property))
 
     stack = Stack(keep_stacks=keep_stacks,
                   traffic=new_traffic,
@@ -102,7 +98,7 @@ def new_stack() -> dict:
                   senza_yaml=senza_yaml,
                   stack_name=stack_name)
     stack.save()
-    return _get_stack_dict(stack)
+    return _get_stack_dict(stack), 201
 
 
 def get_stack(stack_id: str) -> dict:
@@ -130,12 +126,12 @@ def patch_stack(stack_id: str) -> dict:
 
     new_traffic = connexion.request.json.get('new_traffic')  # type: Optional[int]
 
-    if new_traffic:
+    if new_traffic is not None:
         stack.traffic = new_traffic
 
     stack.status = 'LIZZY:CHANGE'
     stack.save()
-    return _get_stack_dict(stack)
+    return _get_stack_dict(stack), 202
 
 
 def delete_stack(stack_id: str) -> dict:
@@ -147,8 +143,9 @@ def delete_stack(stack_id: str) -> dict:
     try:
         stack = Stack.get(stack_id)
     except KeyError:
-        connexion.abort(404)
+        # delete is idempotent, if the stack is not there it just doesn't do anything
+        return '', 204
 
     stack.status = 'LIZZY:DELETE'
     stack.save()
-    return _get_stack_dict(stack)
+    return '', 204

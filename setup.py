@@ -4,7 +4,7 @@
 
 import sys
 
-from setuptools import setup, find_packages, Command
+from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 
 
@@ -29,7 +29,7 @@ class PyTest(TestCommand):
     def initialize_options(self):
         TestCommand.initialize_options(self)
         self.cov = None
-        self.pytest_args = ['--cov', 'environmental', '--cov-report', 'term-missing']
+        self.pytest_args = ['--cov', 'lizzy', '--cov-report', 'term-missing']
 
     def finalize_options(self):
         TestCommand.finalize_options(self)
@@ -51,7 +51,7 @@ setup(
     author='Zalando SE',
     url='https://github.com/zalando/lizzy',
     license='Apache License Version 2.0',
-    install_requires=['APScheduler', 'connexion>=0.3.1', 'environmental', 'pyyaml', 'rod', 'stups-senza', 'pytz'],
+    install_requires=['APScheduler', 'connexion>=0.7.0', 'environmental', 'pyyaml', 'rod', 'stups-senza', 'pytz'],
     tests_require=['pytest-cov', 'pytest'],
     cmdclass={'test': PyTest},
     classifiers=[
