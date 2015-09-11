@@ -33,6 +33,11 @@ def _get_stack_dict(stack: Stack) -> dict:
       image_version:
         type: string
         description: Docker image version to deploy
+      parameters:
+        type: array
+        description: List of parameters passed to senza
+        items:
+          type: string
       senza_yaml:
         type: string
         description: YAML to provide to senza
@@ -46,6 +51,7 @@ def _get_stack_dict(stack: Stack) -> dict:
     stack_dict = {'stack_id': stack.stack_id,
                   'creation_time': '{:%FT%T%z}'.format(stack.creation_time),
                   'image_version': stack.image_version,
+                  'parameters': stack.parameters,
                   'senza_yaml': stack.senza_yaml,
                   'stack_name': stack.stack_name,
                   'stack_version': stack.stack_version,
@@ -71,6 +77,7 @@ def new_stack() -> dict:
     new_traffic = connexion.request.json['new_traffic']
     image_version = connexion.request.json['image_version']
     senza_yaml = connexion.request.json['senza_yaml']
+    parameters = connexion.request.json.get('parameters', [])
 
     try:
         senza_definition = yaml.safe_load(senza_yaml)
@@ -96,7 +103,8 @@ def new_stack() -> dict:
                   traffic=new_traffic,
                   image_version=image_version,
                   senza_yaml=senza_yaml,
-                  stack_name=stack_name)
+                  stack_name=stack_name,
+                  parameters=parameters)
     stack.save()
     return _get_stack_dict(stack), 201
 
