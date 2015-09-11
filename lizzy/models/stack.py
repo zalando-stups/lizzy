@@ -18,23 +18,22 @@ import rod.model
 
 
 class Stack(rod.model.Model):
-
     prefix = 'lizzy_stack'
     key = 'stack_id'
     search_properties = ['stack_id']
 
     def __init__(self, *,
-                 stack_id: str=None,
-                 creation_time: datetime.datetime=None,
+                 stack_id: str = None,
+                 creation_time: datetime.datetime = None,
                  keep_stacks: int,  # How many stacks to keep
                  traffic: int,  # How much traffic to route to new stack
                  image_version: str,
                  senza_yaml: str,
                  stack_name: str,
-                 stack_version: str=None,
-                 status: str='LIZZY:NEW',
+                 stack_version: str = None,
+                 parameters: list = None,
+                 status: str = 'LIZZY:NEW',
                  **kwargs):
-
         self.stack_name = stack_name
         self.creation_time = creation_time or datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
         self.image_version = image_version
@@ -43,6 +42,7 @@ class Stack(rod.model.Model):
         self.keep_stacks = keep_stacks
         self.traffic = traffic
         self.senza_yaml = senza_yaml
+        self.parameters = parameters or []
         self.status = status  # status is cloud formation status or LIZZY_NEW
 
     @staticmethod
