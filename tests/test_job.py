@@ -1,12 +1,10 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, call
 import pytest
 import logging
 
 from lizzy.job import check_status
 from lizzy.senza_wrapper import ExecutionError
 from lizzy.models.stack import Stack
-
-logging.basicConfig(level=logging.DEBUG)
 
 STACKS = {'stack1': {'stack_id': None,
                      'creation_time': None,
@@ -55,7 +53,7 @@ def fake_senza_fail(monkeypatch):
     monkeypatch.setattr('lizzy.job.Senza', SenzaFail)
 
 
-def test_fail_get_list(monkeypatch, capfd):
+def test_fail_get_list(monkeypatch):
     mock_stack = MagicMock()
     mock_stack.all.return_value = []
     monkeypatch.setattr('lizzy.job.Stack', mock_stack)
@@ -64,12 +62,14 @@ def test_fail_get_list(monkeypatch, capfd):
     mock_senza.return_value = mock_senza
     mock_senza.list.side_effect = ExecutionError(1, 'error raised by test')
     monkeypatch.setattr('lizzy.job.Senza', mock_senza)
+
+    mock_log = MagicMock()
+    monkeypatch.setattr('lizzy.job.logger', mock_log)
+
     check_status('abc')
     assert mock_stack.all.called
     assert mock_senza.called
     assert mock_senza.list.called
-    _, log = capfd.readouterr()
 
-    assert 'In Job' in log
-    assert "Couldn't get CF stacks. Exiting Job." in log
-    assert "error raised by test" in log
+    assert mock_log.debug.call_args_list == [call('In Job')]
+    mock_log.exception.assert_any_call("Couldn't get CF stacks. Exiting Job.")
