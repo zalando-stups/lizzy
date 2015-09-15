@@ -1,3 +1,6 @@
+.. image:: https://coveralls.io/repos/zalando/lizzy/badge.svg?branch=master&service=github 
+   :target: https://coveralls.io/github/zalando/lizzy?branch=master
+
 Lizzy
 =====
 
