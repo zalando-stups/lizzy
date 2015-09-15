@@ -22,8 +22,8 @@ logger = logging.getLogger('lizzy.job')
 
 
 def check_status(region: str):
-    all_stacks = Stack.all()
     logger.debug('In Job')
+    all_stacks = Stack.all()  # Lizzy Stacks
 
     senza = Senza(region)
     try:
@@ -38,10 +38,11 @@ def check_status(region: str):
         stack_name = '{stack_name}-{version}'.format_map(cf_stack)
         try:
             lizzy_stack = Stack.get(stack_name)
-            logger.debug("Stack found.", extra={'lizzy.stack.id': lizzy_stack.stack_id})
+            logger.debug("Stack found.", extra={'lizzy.stack.id': stack_name})
             lizzy_stacks[lizzy_stack.stack_name][lizzy_stack.stack_version] = lizzy_stack
             cf_stacks[lizzy_stack.stack_name][lizzy_stack.stack_version] = cf_stack
         except KeyError:
+            # Stack no handled by lizzy
             pass
 
     for lizzy_stack in all_stacks:
