@@ -147,6 +147,19 @@ def test_new_stack(app, oauth_requests):
     assert request.status_code == 201
 
 
+def test_invalid_yaml(app, oauth_requests):
+    data = {'keep_stacks': 0,
+            'new_traffic': 100,
+            'image_version': '1.0',
+            'senza_yaml': '*invalid*yaml*file'}
+
+    request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
+    assert request.status_code == 400
+    response = json.loads(request.data.decode())  # type: dict
+    assert response['title'] == 'Invalid senza yaml'
+    assert response['detail'] == "Failed to parse senza yaml."
+
+
 def test_get_stack(app, oauth_requests):
     parameters = ['stack_version', 'stack_name', 'senza_yaml', 'creation_time', 'image_version', 'status', 'stack_id']
 

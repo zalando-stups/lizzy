@@ -85,7 +85,7 @@ def new_stack() -> dict:
             raise TypeError
     except yaml.YAMLError:
         logger.exception("Couldn't parse senza yaml.", extra={'senza_yaml': repr(senza_yaml)})
-        return connexion.problem(400, 'Invalid senza yaml', "Couldn't parse senza yaml.")
+        return connexion.problem(400, 'Invalid senza yaml', "Failed to parse senza yaml.")
     except TypeError:
         logger.exception("Senza yaml is not a dict.", extra={'senza_yaml': repr(senza_yaml)})
         return connexion.problem(400, 'Invalid senza yaml', "Senza yaml is not a dict.")

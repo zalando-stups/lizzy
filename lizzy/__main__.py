@@ -1,3 +1,3 @@
-from .lizzy import main
+from .lizzy import main  # pragma: no cover
 
-main()
+main()  # pragma: no cover
