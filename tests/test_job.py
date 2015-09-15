@@ -1,6 +1,4 @@
 from unittest.mock import MagicMock, call, ANY
-import pytest
-import logging
 
 from lizzy.job import check_status
 from lizzy.senza_wrapper import ExecutionError
