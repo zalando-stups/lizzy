@@ -177,6 +177,11 @@ definitions:
         type: integer
         format: int32
         description: Percentage of the traffic to be routed to new version
+      parameters:
+        type: array
+        description: List of parameters to pass to senza
+        items:
+          type: string
       senza_yaml:
         type: string
         description: YAML to provide to senza
@@ -199,6 +204,11 @@ definitions:
       image_version:
         type: string
         description: Docker image version of the stack
+      parameters:
+        type: array
+        description: List of parameters to passed to senza
+        items:
+          type: string
       senza_yaml:
         type: string
         description: YAML to provide to senza

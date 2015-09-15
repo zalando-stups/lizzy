@@ -60,8 +60,6 @@ class Deployer():
         longer exists.
         """
 
-        # TODO update traffic
-
         self.logger.debug("Updating stack status based on AWS CF.", extra=self.log_info)
         cloud_formation_status = self._get_stack_status()
         if cloud_formation_status is not None:
@@ -209,7 +207,8 @@ class Deployer():
         By default the stack is created
         """
         self.logger.info("Creating stack...", extra=self.log_info)
-        if self.senza.create(self.stack.senza_yaml, self.stack.stack_version, self.stack.image_version):
+        if self.senza.create(self.stack.senza_yaml, self.stack.stack_version, self.stack.image_version,
+                             self.stack.parameters):
             self.logger.info("Stack created.",  extra=self.log_info)
             new_status = 'LIZZY:DEPLOYING'
         else:

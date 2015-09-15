@@ -1,17 +1,6 @@
 #!/usr/bin/env python3
 
-"""
-Copyright 2015 Zalando SE
-
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the
-License. You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
- language governing permissions and limitations under the License.
-"""
+# The functions in this module all have `pragma: no cover` because they only setup stuff and don't do "real" work
 
 import apscheduler.schedulers.background as scheduler_background
 import apscheduler.triggers.interval as scheduler_interval
@@ -25,7 +14,7 @@ from lizzy.logging import init_logging
 logger = init_logging()
 
 
-def setup_scheduler(config: configuration.Configuration):
+def setup_scheduler(config: configuration.Configuration):  # pragma: no cover
     # configure scheduler
     scheduler = scheduler_background.BackgroundScheduler()
     interval = scheduler_interval.IntervalTrigger(seconds=config.job_interval)
@@ -33,7 +22,8 @@ def setup_scheduler(config: configuration.Configuration):
     return scheduler
 
 
-def setup_webapp(config: configuration.Configuration):
+def setup_webapp(config: configuration.Configuration):  # pragma: no cover
+
     arguments = {'deployer_scope': config.deployer_scope,
                  'token_url': config.token_url,
                  'token_info_url': config.token_info_url}
@@ -43,7 +33,7 @@ def setup_webapp(config: configuration.Configuration):
     return app
 
 
-def main():
+def main():  # pragma: no cover
     config = configuration.Configuration()
 
     logger.info('Connecting to Redis', extra={'redis_host': config.redis_host, 'redis_port': config.redis_port})
@@ -60,5 +50,5 @@ def main():
     app.run()
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     main()

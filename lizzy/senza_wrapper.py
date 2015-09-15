@@ -34,12 +34,12 @@ class Senza:
     def __init__(self, region: str):
         self.region = region
 
-    def create(self, senza_yaml: str, stack_version: str, image_version: str) -> bool:
+    def create(self, senza_yaml: str, stack_version: str, image_version: str, parameters: list) -> bool:
         with tempfile.NamedTemporaryFile() as temp_yaml:
             temp_yaml.write(senza_yaml.encode())
             temp_yaml.file.flush()
             try:
-                self._execute('create', '--force', temp_yaml.name, stack_version, image_version)
+                self._execute('create', '--force', temp_yaml.name, stack_version, image_version, *parameters)
                 return True
             except ExecutionError as e:
                 logger.error('Failed to create stack.', extra={'command.output': e.output})

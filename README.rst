@@ -1,7 +1,10 @@
 Lizzy
 =====
 
-REST Service to deploy AWS CF templates using Senza
+**DISCLAIMER: Lizzy is still in alpha state.**
+
+REST Service to deploy AWS CF templates using Senza.
+
 
 Configuration
 -------------

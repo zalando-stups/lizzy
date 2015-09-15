@@ -30,7 +30,7 @@ def check_status(region: str):
         senza_list = senza.list()  # All stacks in senza
     except ExecutionError:
         logger.exception("Couldn't get CF stacks. Exiting Job.")
-        return
+        return False
 
     lizzy_stacks = collections.defaultdict(dict)  # stacks managed by lizzy as they are on Redis
     cf_stacks = collections.defaultdict(dict)  # stacks as they are on CloudFormation
