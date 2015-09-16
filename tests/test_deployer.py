@@ -146,7 +146,6 @@ def test_default(monkeypatch, logger):
 
 def test_delete(monkeypatch, logger):
     mock_senza = MagicMock()
-    mock_senza.domains.return_value = ['test.example']
     mock_senza.return_value = mock_senza
     monkeypatch.setattr('lizzy.job.deployer.Senza', mock_senza)
 
@@ -158,3 +157,19 @@ def test_delete(monkeypatch, logger):
     assert deployer.handle() == 'CF:TEST'
 
     mock_senza.remove.assert_called_once_with('lizzy', '42')
+
+
+def test_change(monkeypatch, logger):
+    mock_senza = MagicMock()
+    mock_senza.domains.return_value = ['test.example']
+    mock_senza.return_value = mock_senza
+    monkeypatch.setattr('lizzy.job.deployer.Senza', mock_senza)
+
+    stack = Stack(stack_id='lizzy-42', creation_time='2015-09-16T09:48', keep_stacks=2, traffic=47,
+                  image_version='1.0', senza_yaml='senza:yaml', stack_name='lizzy', stack_version='42',
+                  parameters=[], status='LIZZY:CHANGE')
+
+    deployer = Deployer('region', LIZZY_STACKS, CF_STACKS, stack)
+    assert deployer.handle() == 'CF:TEST'
+
+    mock_senza.traffic.assert_called_once_with(percentage=47, stack_name='lizzy', stack_version='42')
