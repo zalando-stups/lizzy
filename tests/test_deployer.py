@@ -28,6 +28,14 @@ LIZZY_STACKS = {'stack-1': {'stack_id': 'stack-1',
 CF_STACKS = {'lizzy': {'42': {'status': 'TEST:STATE'}}}
 
 
+@pytest.fixture
+def logger(monkeypatch):
+    mock_log = MagicMock()
+    mock_log.return_value = mock_log
+    monkeypatch.setattr('logging.getLogger', mock_log)
+    return mock_log
+
+
 def test_log_info():
     stack = Stack(stack_id='lizzy-42', creation_time='2015-09-16T09:48', keep_stacks=2, traffic=7, image_version='1.0',
                   senza_yaml='senza:yaml', stack_name='lizzy', stack_version='42', parameters=[], status='LIZZY:TEST')
@@ -36,3 +44,25 @@ def test_log_info():
                                  'lizzy.stack.id': 'lizzy-42',
                                  'lizzy.stack.name': 'lizzy',
                                  'lizzy.stack.traffic': 7}
+
+    deployer_no_cf = Deployer('region', LIZZY_STACKS, {}, stack)
+    assert deployer_no_cf.log_info == {'lizzy.stack.id': 'lizzy-42',
+                                       'lizzy.stack.name': 'lizzy',
+                                       'lizzy.stack.traffic': 7}
+
+
+def test_new(monkeypatch, logger):
+    mock_senza = MagicMock()
+    mock_senza.return_value = mock_senza
+    monkeypatch.setattr('lizzy.job.deployer.Senza', mock_senza)
+
+    stack = Stack(stack_id='lizzy-42', creation_time='2015-09-16T09:48', keep_stacks=2, traffic=7, image_version='1.0',
+                  senza_yaml='senza:yaml', stack_name='lizzy', stack_version='42', parameters=[], status='LIZZY:NEW')
+
+    mock_senza.create.return_value = True
+    deployer = Deployer('region', LIZZY_STACKS, CF_STACKS, stack)
+    assert deployer.handle() == 'LIZZY:DEPLOYING'
+
+    mock_senza.create.return_value = False
+    deployer = Deployer('region', LIZZY_STACKS, CF_STACKS, stack)
+    assert deployer.handle() == 'LIZZY:ERROR'

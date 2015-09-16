@@ -19,7 +19,7 @@ from lizzy.models.stack import Stack
 _failed_to_get_domains = object()  # sentinel value for when we failed to get domains from senza
 
 
-class Deployer():
+class Deployer:
 
     logger = logging.getLogger('lizzy.job.deployer')
 
