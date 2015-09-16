@@ -121,3 +121,24 @@ def test_lizzy_error(monkeypatch, logger):
 
     deployer = Deployer('region', LIZZY_STACKS, CF_STACKS, stack)
     assert deployer.handle() == 'LIZZY:ERROR'
+
+
+def test_default(monkeypatch, logger):
+    mock_senza = MagicMock()
+    mock_senza.domains.return_value = ['test.example']
+    mock_senza.return_value = mock_senza
+    monkeypatch.setattr('lizzy.job.deployer.Senza', mock_senza)
+
+    stack = Stack(stack_id='nonexisting-42', creation_time='2015-09-16T09:48', keep_stacks=2, traffic=7,
+                  image_version='1.0', senza_yaml='senza:yaml', stack_name='nonexisting', stack_version='42',
+                  parameters=[], status='CF:TESTING')
+
+    deployer = Deployer('region', LIZZY_STACKS, CF_STACKS, stack)
+    assert deployer.handle() == 'LIZZY:REMOVED'
+
+    stack = Stack(stack_id='lizzy-42', creation_time='2015-09-16T09:48', keep_stacks=2, traffic=7,
+                  image_version='1.0', senza_yaml='senza:yaml', stack_name='lizzy', stack_version='42',
+                  parameters=[], status='LIZZY:TESTING')
+
+    deployer = Deployer('region', LIZZY_STACKS, CF_STACKS, stack)
+    assert deployer.handle() == 'CF:TEST'
