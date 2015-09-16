@@ -12,7 +12,17 @@ def logger(monkeypatch):
     return mock_log
 
 
-def test_create(monkeypatch, logger):
+@pytest.fixture
+def popen(monkeypatch):
+    mock_popen = MagicMock()
+    mock_popen.return_value = mock_popen
+    mock_popen.returncode = 0
+    mock_popen.communicate.return_value = b'{"stream": "stdout"}', b'stderr'
+    monkeypatch.setattr('subprocess.Popen', mock_popen)
+    return mock_popen
+
+
+def test_create(monkeypatch, logger, popen):
     mock_named_tempfile = MagicMock()
     mock_tempfile = MagicMock()
     mock_tempfile.name = 'filename'
@@ -20,19 +30,13 @@ def test_create(monkeypatch, logger):
     mock_named_tempfile.return_value = mock_named_tempfile
     monkeypatch.setattr('tempfile.NamedTemporaryFile', mock_named_tempfile)
 
-    mock_popen = MagicMock()
-    mock_popen.return_value = mock_popen
-    mock_popen.returncode = 0
-    mock_popen.communicate.return_value = b'{"stream": "stdout"}', b'stderr'
-    monkeypatch.setattr('subprocess.Popen', mock_popen)
-
     senza = Senza('region')
     senza.create('yaml: yaml', '10', '42', ['param1', 'param2'])
 
     mock_named_tempfile.assert_called_with()
     mock_tempfile.write.assert_called_with(b'yaml: yaml')
 
-    mock_popen.assert_called_with(
+    popen.assert_called_with(
         ['senza', 'create', '--region', 'region', '--force', 'filename', '10', '42', 'param1', 'param2'],
         stdout=-1,
         stderr=-2)
@@ -41,8 +45,44 @@ def test_create(monkeypatch, logger):
     logger.debug.assert_called_with('Executing senza.', extra={'command': cmd})
     assert not logger.error.called
 
-    mock_popen.returncode = 1
+    popen.returncode = 1
     logger.reset_mock()
 
     senza.create('yaml: yaml', '10', '42', ['param1', 'param2'])
     logger.error.assert_called_with('Failed to create stack.', extra={'command.output': '{"stream": "stdout"}'})
+
+
+def test_domain(monkeypatch, logger, popen):
+    senza = Senza('region')
+    senza.create('yaml: yaml', '10', '42', ['param1', 'param2'])
+    domains = senza.domains()
+
+    cmd = 'senza domains --region region -o json'
+    logger.debug.assert_called_with('Executing senza.', extra={'command': cmd})
+    assert not logger.error.called
+    assert not logger.exception.called
+
+    popen.assert_called_with(
+        ['senza', 'domains', '--region', 'region', '-o', 'json'],
+        stdout=-1,
+        stderr=-2)
+
+    assert domains == {'stream': 'stdout'}
+
+    logger.reset_mock()
+    popen.reset_mock()
+
+    popen.communicate.return_value = b'{"test": "domain2"}', b'stderr'
+    domains = senza.domains('lizzy')
+
+    cmd = 'senza domains --region region -o json lizzy'
+    logger.debug.assert_called_with('Executing senza.', extra={'command': cmd})
+    assert not logger.error.called
+    assert not logger.exception.called
+
+    popen.assert_called_with(
+        ['senza', 'domains', '--region', 'region', '-o', 'json', 'lizzy'],
+        stdout=-1,
+        stderr=-2)
+
+    assert domains == {'test': 'domain2'}
