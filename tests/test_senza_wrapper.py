@@ -54,7 +54,6 @@ def test_create(monkeypatch, logger, popen):
 
 def test_domain(monkeypatch, logger, popen):
     senza = Senza('region')
-    senza.create('yaml: yaml', '10', '42', ['param1', 'param2'])
     domains = senza.domains()
 
     cmd = 'senza domains --region region -o json'
@@ -80,9 +79,21 @@ def test_domain(monkeypatch, logger, popen):
     assert not logger.error.called
     assert not logger.exception.called
 
-    popen.assert_called_with(
-        ['senza', 'domains', '--region', 'region', '-o', 'json', 'lizzy'],
-        stdout=-1,
-        stderr=-2)
+    popen.assert_called_with(['senza', 'domains', '--region', 'region', '-o', 'json', 'lizzy'], stdout=-1, stderr=-2)
 
     assert domains == {'test': 'domain2'}
+
+
+def test_list(monkeypatch, logger, popen):
+    popen.communicate.return_value = b'["item1", "item2"]', b'stderr'
+    senza = Senza('region')
+    list = senza.list()
+
+    cmd = 'senza list --region region -o json'
+    logger.debug.assert_called_with('Executing senza.', extra={'command': cmd})
+    assert not logger.error.called
+    assert not logger.exception.called
+
+    popen.assert_called_with(['senza', 'list', '--region', 'region', '-o', 'json'], stdout=-1, stderr=-2)
+
+    assert list == ["item1", "item2"]
