@@ -16,7 +16,6 @@ import logging
 import subprocess
 import tempfile
 
-
 logger = logging.getLogger('lizzy.senza')
 
 
@@ -30,7 +29,6 @@ class ExecutionError(Exception):
 
 
 class Senza:
-
     def __init__(self, region: str):
         self.region = region
 
@@ -64,8 +62,8 @@ class Senza:
             self._execute('delete', stack_name, stack_version)
             return True
         except ExecutionError as e:
-                logger.error('Failed to delete stack.', extra={'command.output': e.output})
-                return False
+            logger.error('Failed to delete stack.', extra={'command.output': e.output})
+            return False
 
     def traffic(self, stack_name: str, stack_version: str, percentage: int):
         traffic_weights = self._execute('traffic', stack_name, stack_version, str(percentage), expect_json=True)

@@ -97,3 +97,21 @@ def test_list(monkeypatch, logger, popen):
     popen.assert_called_with(['senza', 'list', '--region', 'region', '-o', 'json'], stdout=-1, stderr=-2)
 
     assert list == ["item1", "item2"]
+
+
+def test_remove(monkeypatch, logger, popen):
+    senza = Senza('region')
+    senza.remove('lizzy', 'version')
+
+    popen.assert_called_with(['senza', 'delete', '--region', 'region', 'lizzy', 'version'], stdout=-1, stderr=-2)
+
+    cmd = 'senza delete --region region lizzy version'
+    logger.debug.assert_called_with('Executing senza.', extra={'command': cmd})
+    assert not logger.error.called
+    assert not logger.exception.called
+
+    popen.returncode = 1
+    logger.reset_mock()
+
+    senza.remove('lizzy', 'version')
+    logger.error.assert_called_with('Failed to delete stack.', extra={'command.output': '{"stream": "stdout"}'})
