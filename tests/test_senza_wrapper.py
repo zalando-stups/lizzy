@@ -1,8 +1,7 @@
-from unittest.mock import MagicMock, call, ANY, PropertyMock
+from unittest.mock import MagicMock
 import pytest
-import logging
 
-from lizzy.senza_wrapper import Senza
+from lizzy.senza_wrapper import Senza, ExecutionError
 
 
 @pytest.fixture
@@ -115,3 +114,27 @@ def test_remove(monkeypatch, logger, popen):
 
     senza.remove('lizzy', 'version')
     logger.error.assert_called_with('Failed to delete stack.', extra={'command.output': '{"stream": "stdout"}'})
+
+
+def test_traffic(monkeypatch, logger, popen):
+    senza = Senza('region')
+    traffic = senza.traffic('lizzy', 'version42', 25)
+
+    cmd = 'senza traffic --region region -o json lizzy version42 25'
+    logger.debug.assert_called_with('Executing senza.', extra={'command': cmd})
+    assert not logger.error.called
+    assert not logger.exception.called
+
+    popen.assert_called_with(
+        ['senza', 'traffic', '--region', 'region', '-o', 'json', 'lizzy', 'version42', '25'],
+        stdout=-1,
+        stderr=-2)
+
+    assert traffic == {'stream': 'stdout'}
+
+
+def test_exception():
+    try:
+        raise ExecutionError(20, '  Output         ')
+    except ExecutionError as e:
+        assert str(e) == '(20): Output'
