@@ -4,26 +4,12 @@ import pytest
 from lizzy.job.deployer import Deployer
 from lizzy.models.stack import Stack
 
-LIZZY_STACKS = {'stack-1': {'stack_id': 'stack-1',
-                            'creation_time': '2015-09-15',
-                            'keep_stacks': 1,
-                            'traffic': 100,
-                            'image_version': 'version',
-                            'senza_yaml': 'yaml',
-                            'stack_name': 'stackno1',
-                            'stack_version': 'v1',
-                            'status': 'LIZZY:NEW',
-                            'parameters': ['parameter1', 'parameter2']},
-                'lizzyremoved-1': {'stack_id': 'lizzyremoved-1',
-                                   'creation_time': '2015-09-15',
-                                   'keep_stacks': 1,
-                                   'traffic': 100,
-                                   'image_version': 'version',
-                                   'senza_yaml': 'yaml',
-                                   'stack_name': 'stackno1',
-                                   'stack_version': 'v1',
-                                   'status': 'LIZZY:REMOVED',
-                                   'parameters': ['parameter1', 'parameter2']}}
+LIZZY_STACKS = {'lizzy': {'1': {},
+                          '2': {},
+                          '3': {},
+                          '42': {},
+                          'inprog': {},
+                          'deployed': {}}}
 
 CF_STACKS = {'lizzy': {'42': {'status': 'TEST'},
                        'inprog': {'status': 'CREATE_IN_PROGRESS'},
@@ -102,3 +88,25 @@ def test_deploying(monkeypatch, logger):
 
     deployer = Deployer('region', LIZZY_STACKS, CF_STACKS, stack)
     assert deployer.handle() == 'CF:TEST'
+
+
+def test_deployed(monkeypatch, logger):
+    mock_senza = MagicMock()
+    mock_senza.return_value = mock_senza
+    monkeypatch.setattr('lizzy.job.deployer.Senza', mock_senza)
+
+    stack = Stack(stack_id='nonexisting-42', creation_time='2015-09-16T09:48', keep_stacks=2, traffic=7,
+                  image_version='1.0', senza_yaml='senza:yaml', stack_name='nonexisting', stack_version='42',
+                  parameters=[], status='LIZZY:DEPLOYED')
+
+    deployer = Deployer('region', LIZZY_STACKS, CF_STACKS, stack)
+    assert deployer.handle() == 'LIZZY:REMOVED'
+
+    stack = Stack(stack_id='lizzy-42', creation_time='2015-09-16T09:48', keep_stacks=2, traffic=7,
+                  image_version='1.0', senza_yaml='senza:yaml', stack_name='lizzy', stack_version='42',
+                  parameters=[], status='LIZZY:DEPLOYED')
+
+    deployer = Deployer('region', LIZZY_STACKS, CF_STACKS, stack)
+    assert deployer.handle() == 'CF:TEST'
+
+    assert mock_senza.remove.call_count == 3
