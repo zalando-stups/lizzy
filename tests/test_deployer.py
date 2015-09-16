@@ -92,6 +92,7 @@ def test_deploying(monkeypatch, logger):
 
 def test_deployed(monkeypatch, logger):
     mock_senza = MagicMock()
+    mock_senza.domains.return_value = ['test.example']
     mock_senza.return_value = mock_senza
     monkeypatch.setattr('lizzy.job.deployer.Senza', mock_senza)
 
@@ -110,3 +111,13 @@ def test_deployed(monkeypatch, logger):
     assert deployer.handle() == 'CF:TEST'
 
     assert mock_senza.remove.call_count == 3
+    mock_senza.traffic.assert_called_once_with(stack_name='lizzy', percentage=7, stack_version='42')
+
+
+def test_lizzy_error(monkeypatch, logger):
+    stack = Stack(stack_id='nonexisting-42', creation_time='2015-09-16T09:48', keep_stacks=2, traffic=7,
+                  image_version='1.0', senza_yaml='senza:yaml', stack_name='nonexisting', stack_version='42',
+                  parameters=[], status='LIZZY:ERROR')
+
+    deployer = Deployer('region', LIZZY_STACKS, CF_STACKS, stack)
+    assert deployer.handle() == 'LIZZY:ERROR'
