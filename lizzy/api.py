@@ -12,10 +12,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
 """
 
 import logging
-
 import connexion
 import yaml
-
 from lizzy.models.stack import Stack
 
 logger = logging.getLogger('lizzy.api')
@@ -68,16 +66,12 @@ def all_stacks() -> dict:
     return stacks
 
 
-def new_stack() -> dict:
+def new_stack(keep_stacks: int, new_traffic: int, image_version: str, senza_yaml: str, parameters: list = None) -> dict:
     """
     POST /stacks/
     """
 
-    keep_stacks = connexion.request.json['keep_stacks']
-    new_traffic = connexion.request.json['new_traffic']
-    image_version = connexion.request.json['image_version']
-    senza_yaml = connexion.request.json['senza_yaml']
-    parameters = connexion.request.json.get('parameters', [])
+    parameters = parameters or []
 
     try:
         senza_definition = yaml.safe_load(senza_yaml)
@@ -91,7 +85,7 @@ def new_stack() -> dict:
         return connexion.problem(400, 'Invalid senza yaml', "Senza yaml is not a dict.")
 
     try:
-        stack_name = senza_definition['SenzaInfo']['StackName']
+        stack_name = senza_definition['SenzaInfo']['StackName']  # type: str
         # TODO validate stack name
     except KeyError as e:
         logger.error("Couldn't get stack name from definition.", extra={'senza_yaml': repr(senza_definition)})
@@ -121,7 +115,7 @@ def get_stack(stack_id: str) -> dict:
     return _get_stack_dict(stack)
 
 
-def patch_stack(stack_id: str) -> dict:
+def patch_stack(stack_id: str, new_traffic: int = None) -> dict:
     """
     PATCH /stacks/{id}
 
@@ -131,8 +125,6 @@ def patch_stack(stack_id: str) -> dict:
         stack = Stack.get(stack_id)
     except KeyError:
         connexion.abort(404)
-
-    new_traffic = connexion.request.json.get('new_traffic')  # type: Optional[int]
 
     if new_traffic is not None:
         stack.traffic = new_traffic
