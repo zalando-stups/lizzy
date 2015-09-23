@@ -66,7 +66,7 @@ def all_stacks() -> dict:
     return stacks
 
 
-def new_stack(keep_stacks: int, new_traffic: int, image_version: str, senza_yaml: str, parameters: list = None) -> dict:
+def new_stack(keep_stacks: int, new_traffic: int, image_version: str, senza_yaml: str, parameters: list=None) -> dict:
     """
     POST /stacks/
     """
@@ -115,7 +115,7 @@ def get_stack(stack_id: str) -> dict:
     return _get_stack_dict(stack)
 
 
-def patch_stack(stack_id: str, new_traffic: int = None) -> dict:
+def patch_stack(stack_id: str, new_traffic: int=None) -> dict:
     """
     PATCH /stacks/{id}
 
