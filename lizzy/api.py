@@ -66,12 +66,16 @@ def all_stacks() -> dict:
     return stacks
 
 
-def new_stack(keep_stacks: int, new_traffic: int, image_version: str, senza_yaml: str, parameters: list=None) -> dict:
+def create_stack(new_stack: dict) -> dict:
     """
     POST /stacks/
     """
 
-    parameters = parameters or []
+    keep_stacks = new_stack['keep_stacks']  # type: int
+    new_traffic = new_stack['new_traffic']  # type: int
+    image_version = new_stack['image_version']  # type: str
+    senza_yaml = new_stack['senza_yaml']  # type: str
+    parameters = new_stack.get('parameters', [])
 
     try:
         senza_definition = yaml.safe_load(senza_yaml)
@@ -115,7 +119,7 @@ def get_stack(stack_id: str) -> dict:
     return _get_stack_dict(stack)
 
 
-def patch_stack(stack_id: str, new_traffic: int=None) -> dict:
+def patch_stack(stack_id: str, stack_patch: dict) -> dict:
     """
     PATCH /stacks/{id}
 
@@ -125,6 +129,8 @@ def patch_stack(stack_id: str, new_traffic: int=None) -> dict:
         stack = Stack.get(stack_id)
     except KeyError:
         connexion.abort(404)
+
+    new_traffic = stack_patch.get('new_traffic')  # type: int
 
     if new_traffic is not None:
         stack.traffic = new_traffic

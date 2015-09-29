@@ -51,7 +51,7 @@ paths:
       summary: Create new stack
       description: |
         Adds a new stack to be created by lizzy and returns the information needed to keep track of deployment
-      operationId: lizzy.api.new_stack
+      operationId: lizzy.api.create_stack
       responses:
         201:
           description: |
