@@ -5,6 +5,7 @@
 import connexion
 import rod.connection
 import lizzy.configuration as configuration
+import uwsgi_metrics
 from lizzy.logging import init_logging
 
 logger = init_logging('dev')
@@ -30,6 +31,8 @@ def main(run=True):  # pragma: no cover
 
     logger.info('Starting web app')
     app = setup_webapp(config)
+    # initialization for /metrics endpoint (ZMON support)
+    uwsgi_metrics.initialize()
     if run:
         app.run()
     else:

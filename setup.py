@@ -52,7 +52,7 @@ setup(
     url='https://github.com/zalando/lizzy',
     license='Apache License Version 2.0',
     install_requires=['uwsgi', 'connexion>=0.11.1',
-                      'environmental', 'pyyaml', 'rod', 'stups-senza', 'pytz', 'tornado'],
+                      'environmental', 'pyyaml', 'rod', 'stups-senza', 'pytz', 'tornado', 'uwsgi_metrics3'],
     tests_require=['pytest-cov', 'pytest'],
     cmdclass={'test': PyTest},
     classifiers=[
