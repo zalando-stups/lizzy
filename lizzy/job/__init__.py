@@ -11,12 +11,15 @@ Unless required by applicable law or agreed to in writing, software distributed 
  language governing permissions and limitations under the License.
 """
 
-import collections
-import logging
-
+from threading import Thread
 from lizzy.senza_wrapper import Senza, ExecutionError
 from lizzy.job.deployer import Deployer
 from lizzy.models.stack import Stack
+import collections
+import logging
+import rod
+import time
+import lizzy.configuration as configuration
 
 logger = logging.getLogger('lizzy.job')
 
@@ -58,3 +61,21 @@ def check_status(region: str):
                 lizzy_stack.save()
             finally:
                 lizzy_stack.unlock()
+
+
+def main_loop():
+    config = configuration.Configuration()
+    print(config.job_interval)
+    logger.info('Connecting to Redis in job',
+                extra={'redis_host': config.redis_host, 'redis_port': config.redis_port})  # TODO include uswgi info
+    rod.connection.setup(redis_host=config.redis_host, port=config.redis_port)
+    logger.info('Connected to Redis in job')
+    while True:
+        t = Thread(target=check_status, args=(config.region,))
+        t.daemon = True
+        t.start()
+        time.sleep(config.job_interval)
+
+
+if __name__ == '__main__':
+    main_loop()

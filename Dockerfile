@@ -9,5 +9,6 @@ ADD .docker_data /data
 RUN pip3 install --no-index --find-links=/data/wheelhouse /data/dist/*.whl
 
 ADD scm-source.json /
-CMD python3 -m lizzy
+ADD job.py /
+CMD uwsgi -s@nil --mule=job.py --http :8080  -w lizzy.wsgi
 

@@ -8,7 +8,7 @@ import requests
 
 import lizzy.api
 from lizzy.models.stack import Stack
-from lizzy.lizzy import setup_webapp
+from lizzy.service import setup_webapp
 
 GOOD_HEADERS = {'Authorization': 'Bearer 100', 'Content-type': 'application/json'}
 

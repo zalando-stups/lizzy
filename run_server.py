@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
 
-import lizzy
+import lizzy.wsgi
 
-lizzy.main()
+lizzy.wsgi.application.run()
