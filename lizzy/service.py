@@ -16,7 +16,7 @@ def setup_webapp(config: configuration.Configuration):  # pragma: no cover
                  'token_url': config.token_url,
                  'token_info_url': config.token_info_url}
     logger.debug('Webapp Parameters', extra=arguments)
-    app = connexion.App(__name__, specification_dir='swagger/', server='tornado', arguments=arguments)
+    app = connexion.App(__name__, specification_dir='swagger/', arguments=arguments)
     app.add_api('lizzy.yaml')
     return app
 
@@ -33,7 +33,7 @@ def main(run=True):  # pragma: no cover
     if run:
         app.run()
     else:
-        return app
+        return app.app
 
 
 if __name__ == '__main__':  # pragma: no cover
