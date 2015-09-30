@@ -7,7 +7,7 @@ import rod.connection
 import lizzy.configuration as configuration
 from lizzy.logging import init_logging
 
-logger = init_logging()
+logger = init_logging('dev')
 
 
 def setup_webapp(config: configuration.Configuration):  # pragma: no cover
