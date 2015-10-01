@@ -3,10 +3,8 @@
 
 
 import sys
-
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
-
 
 VERSION_MAJOR = 1
 VERSION_MINOR = 0
@@ -25,7 +23,6 @@ def get_long_description():
 
 
 class PyTest(TestCommand):
-
     def initialize_options(self):
         TestCommand.initialize_options(self)
         self.cov = None

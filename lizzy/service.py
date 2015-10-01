@@ -3,12 +3,12 @@
 # The functions in this module all have `pragma: no cover` because they only setup stuff and don't do "real" work
 
 import connexion
+import logging
 import rod.connection
-import lizzy.configuration as configuration
 import uwsgi_metrics
-from lizzy.logging import init_logging
+import lizzy.configuration as configuration
 
-logger = init_logging('dev')
+logger = logging.getLogger('lizzy')
 
 
 def setup_webapp(config: configuration.Configuration):  # pragma: no cover

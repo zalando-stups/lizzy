@@ -17,6 +17,7 @@ import environmental
 class Configuration:
     deployer_scope = environmental.Str('DEPLOYER_SCOPE')  # OAUTH scope needed to deploy
     job_interval = environmental.Int('JOB_INTERVAL', 15)  # how many seconds to wait between job runs
+    log_format = environmental.Str('LOG_FORMAT', 'json')
     redis_host = environmental.Str('REDIS_HOST', 'localhost')
     redis_port = environmental.Int('REDIS_PORT', 6379)
     region = environmental.Str('REGION', 'eu-west-1')  # AWS Region

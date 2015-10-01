@@ -19,9 +19,9 @@ class JsonFormatter(logging.Formatter):
         record_values = vars(record)
 
         values = OrderedDict()
+        values['time'] = datetime.datetime.fromtimestamp(record.created).isoformat()
         values['logger'] = record.name  # The name of the logger used to log the event represented
         values['log_level'] = record.levelname  # Text logging level for the message
-        values['time'] = datetime.datetime.fromtimestamp(record.created).isoformat()
         values['function'] = '{}.{}'.format(record.module, record.funcName)
         values['line'] = record.lineno
         try:
@@ -87,11 +87,7 @@ def init_logging(format='json'):
     sh = logging.StreamHandler()
     if format == 'json':
         sh.setFormatter(JsonFormatter())
-    elif format == 'dev':
+    elif format == 'human':
         sh.setFormatter(DebugFormatter())
     root_logger.addHandler(sh)
     root_logger.setLevel(logging.DEBUG)
-
-    logger = logging.getLogger('lizzy')
-
-    return logger
