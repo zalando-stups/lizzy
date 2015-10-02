@@ -7,3 +7,5 @@ scm-source.json
 build.py
 .eggs
 .cache
+.venv
+run.sh
