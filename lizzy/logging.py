@@ -70,7 +70,9 @@ class DebugFormatter(logging.Formatter):
         if record.exc_info:
             tb = '\n'.join(traceback.format_tb(record.exc_info[2]))
             exception = str(record.exc_info[1])
-            exception_lines = [self.format_kv('Traceback', tb, True), self.format_kv('Exception', exception, True)]
+            exception_lines = [self.format_kv('Traceback', tb, True)]
+            if exception:
+                exception_lines.append(self.format_kv('Exception', exception, True))
         else:
             exception_lines = []
 
