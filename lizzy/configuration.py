@@ -15,6 +15,7 @@ import environmental
 
 
 class Configuration:
+    allowed_users = environmental.List('ALLOWED_USERS', None)
     deployer_scope = environmental.Str('DEPLOYER_SCOPE')  # OAUTH scope needed to deploy
     job_interval = environmental.Int('JOB_INTERVAL', 15)  # how many seconds to wait between job runs
     log_format = environmental.Str('LOG_FORMAT', 'json')

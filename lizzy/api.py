@@ -12,9 +12,12 @@ Unless required by applicable law or agreed to in writing, software distributed 
 """
 
 import logging
+
 import connexion
 import yaml
+
 from lizzy.models.stack import Stack
+from lizzy.security import bouncer
 
 logger = logging.getLogger('lizzy.api')
 
@@ -57,6 +60,7 @@ def _get_stack_dict(stack: Stack) -> dict:
     return stack_dict
 
 
+@bouncer
 def all_stacks() -> dict:
     """
     GET /stacks/
@@ -66,6 +70,7 @@ def all_stacks() -> dict:
     return stacks
 
 
+@bouncer
 def create_stack(new_stack: dict) -> dict:
     """
     POST /stacks/
@@ -107,6 +112,7 @@ def create_stack(new_stack: dict) -> dict:
     return _get_stack_dict(stack), 201
 
 
+@bouncer
 def get_stack(stack_id: str) -> dict:
     """
     GET /stacks/{id}
@@ -119,6 +125,7 @@ def get_stack(stack_id: str) -> dict:
     return _get_stack_dict(stack)
 
 
+@bouncer
 def patch_stack(stack_id: str, stack_patch: dict) -> dict:
     """
     PATCH /stacks/{id}
@@ -140,6 +147,7 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
     return _get_stack_dict(stack), 202
 
 
+@bouncer
 def delete_stack(stack_id: str) -> dict:
     """
     DELETE /stacks/{id}
