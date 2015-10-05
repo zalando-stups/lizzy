@@ -88,9 +88,9 @@ def oauth_requests(monkeypatch: '_pytest.monkeypatch.monkeypatch'):
             if url == "https://ouath.example/token_info":
                 token = params['access_token']
                 if token == "100":
-                    return FakeResponse(200, '{"scope": ["myscope"]}')
+                    return FakeResponse(200, '{"scope": ["myscope"], "uid": ["test_user"]}')
                 if token == "200":
-                    return FakeResponse(200, '{"scope": ["wrongscope"]}')
+                    return FakeResponse(200, '{"scope": ["wrongscope"], , "uid": ["test_user"]}')
                 if token == "300":
                     return FakeResponse(404, '')
             return url

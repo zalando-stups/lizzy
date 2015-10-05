@@ -1,8 +1,10 @@
 import connexion
 import decorator
+import logging
 
 from lizzy import Configuration
-from lizzy.api import logger
+
+logger = logging.getLogger('lizzy.security')
 
 
 @decorator.decorator

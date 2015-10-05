@@ -1,4 +1,4 @@
-.. image:: https://coveralls.io/repos/zalando/lizzy/badge.svg?branch=master&service=github 
+.. image:: https://coveralls.io/repos/zalando/lizzy/badge.svg?branch=master&service=github
    :target: https://coveralls.io/github/zalando/lizzy?branch=master
 
 Lizzy
@@ -16,6 +16,8 @@ Lizzy uses the following environment variables for configuration:
 +----------------+----------------------------------------+-----------+
 | NAME           | DESCRIPTION                            | DEFAULT   |
 +================+========================================+===========+
+| ALLOWED_USERS  | List of users that can use Lizzy       |           |
++----------------+----------------------------------------+-----------+
 | DEPLOYER_SCOPE | OAUTH scope needed to deploy           |           |
 +----------------+----------------------------------------+-----------+
 | JOB_INTERVAL   | Interval between executions of the job | 15        |
