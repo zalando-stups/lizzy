@@ -12,15 +12,21 @@ Unless required by applicable law or agreed to in writing, software distributed 
 """
 
 import logging
-
 import connexion
 import yaml
-
 from lizzy.models.stack import Stack
 from lizzy.security import bouncer
+from lizzy.version import VERSION
 
 logger = logging.getLogger('lizzy.api')
 
+
+def _make_headers() -> dict:
+    headers = {'X-Lizzy-Version': VERSION}
+    return headers
+
+
+# TODO: add some way to include some headers on abort or global headers
 
 def _get_stack_dict(stack: Stack) -> dict:
     """
@@ -67,7 +73,7 @@ def all_stacks() -> dict:
     """
     stacks = [(_get_stack_dict(stack)) for stack in Stack.all()]
     stacks.sort(key=lambda stack: stack['creation_time'])
-    return stacks
+    return stacks, 200, _make_headers()
 
 
 @bouncer
@@ -88,10 +94,10 @@ def create_stack(new_stack: dict) -> dict:
             raise TypeError
     except yaml.YAMLError:
         logger.exception("Couldn't parse senza yaml.", extra={'senza_yaml': repr(senza_yaml)})
-        return connexion.problem(400, 'Invalid senza yaml', "Failed to parse senza yaml.")
+        return connexion.problem(400, 'Invalid senza yaml', "Failed to parse senza yaml.", headers=_make_headers())
     except TypeError:
         logger.exception("Senza yaml is not a dict.", extra={'senza_yaml': repr(senza_yaml)})
-        return connexion.problem(400, 'Invalid senza yaml', "Senza yaml is not a dict.")
+        return connexion.problem(400, 'Invalid senza yaml', "Senza yaml is not a dict.", headers=_make_headers())
 
     try:
         stack_name = senza_definition['SenzaInfo']['StackName']  # type: str
@@ -99,8 +105,10 @@ def create_stack(new_stack: dict) -> dict:
     except KeyError as e:
         logger.error("Couldn't get stack name from definition.", extra={'senza_yaml': repr(senza_definition)})
         missing_property = str(e)
-        return connexion.problem(400, 'Invalid senza yaml',
-                                 "Missing property in senza yaml: {}".format(missing_property))
+        problem = connexion.problem(400, 'Invalid senza yaml',
+                                    "Missing property in senza yaml: {}".format(missing_property),
+                                    headers=_make_headers())
+        return problem
 
     stack = Stack(keep_stacks=keep_stacks,
                   traffic=new_traffic,
@@ -109,7 +117,7 @@ def create_stack(new_stack: dict) -> dict:
                   stack_name=stack_name,
                   parameters=parameters)
     stack.save()
-    return _get_stack_dict(stack), 201
+    return _get_stack_dict(stack), 201, _make_headers()
 
 
 @bouncer
@@ -120,9 +128,12 @@ def get_stack(stack_id: str) -> dict:
     try:
         stack = Stack.get(stack_id)
     except KeyError:
-        connexion.abort(404)
+        problem = connexion.problem(404, 'Not Found',
+                                    "Stack not found: {}".format(stack_id),
+                                    headers=_make_headers())
+        return problem
 
-    return _get_stack_dict(stack)
+    return _get_stack_dict(stack), 200, _make_headers()
 
 
 @bouncer
@@ -135,7 +146,10 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
     try:
         stack = Stack.get(stack_id)
     except KeyError:
-        connexion.abort(404)
+        problem = connexion.problem(404, 'Not Found',
+                                    "Stack not found: {}".format(stack_id),
+                                    headers=_make_headers())
+        return problem
 
     new_traffic = stack_patch.get('new_traffic')  # type: int
 
@@ -144,7 +158,7 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
 
     stack.status = 'LIZZY:CHANGE'
     stack.save()
-    return _get_stack_dict(stack), 202
+    return _get_stack_dict(stack), 202, _make_headers()
 
 
 @bouncer
@@ -158,8 +172,8 @@ def delete_stack(stack_id: str) -> dict:
         stack = Stack.get(stack_id)
     except KeyError:
         # delete is idempotent, if the stack is not there it just doesn't do anything
-        return '', 204
+        return '', 204, _make_headers()
 
     stack.status = 'LIZZY:DELETE'
     stack.save()
-    return '', 204
+    return '', 204, _make_headers()

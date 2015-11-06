@@ -48,7 +48,7 @@ setup(
     author='Zalando SE',
     url='https://github.com/zalando/lizzy',
     license='Apache License Version 2.0',
-    install_requires=['connexion>=0.11.1',
+    install_requires=['connexion>=0.13',
                       'environmental>=1.1',
                       'decorator',
                       'pytz',

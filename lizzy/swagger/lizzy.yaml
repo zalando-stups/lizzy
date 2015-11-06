@@ -38,6 +38,10 @@ paths:
       responses:
         200:
           description: List of stacks
+          headers:
+            X-Lizzy-Version:
+              description: Lizzy Version
+              type: string
           schema:
             type: array
             items:
@@ -45,6 +49,10 @@ paths:
         401:
           description: |
             Stacks were not retrieved because the access token was not provided or was not valid for this operation
+          headers:
+            X-Lizzy-Version:
+              description: Lizzy Version
+              type: string
           schema:
             $ref: '#/definitions/problem'
     post:
@@ -58,13 +66,25 @@ paths:
             Stack to be created. The CloudFormation Stack creation can still fail if it's rejected by senza or AWS CF.
           schema:
             $ref: '#/definitions/stack'
+          headers:
+            X-Lizzy-Version:
+              description: Lizzy Version
+              type: string
         400:
           description: Stack was not created because request was invalid
+          headers:
+            X-Lizzy-Version:
+              description: Lizzy Version
+              type: string
           schema:
             $ref: '#/definitions/problem'
         401:
           description: |
             Stack was not created because the access token was not provided or was not valid for this operation
+          headers:
+            X-Lizzy-Version:
+              description: Lizzy Version
+              type: string
           schema:
             $ref: '#/definitions/problem'
       security:
@@ -93,6 +113,10 @@ paths:
       responses:
         200:
           description: Stack information
+          headers:
+            X-Lizzy-Version:
+              description: Lizzy Version
+              type: string
           schema:
             $ref: '#/definitions/stack'
         401:
@@ -116,6 +140,10 @@ paths:
         401:
           description: |
             Stack was not deleted because the access token was not provided or was not valid for this operation
+          headers:
+            X-Lizzy-Version:
+              description: Lizzy Version
+              type: string
           schema:
             $ref: '#/definitions/problem'
       security:
@@ -134,18 +162,30 @@ paths:
       responses:
         202:
           description: Changed stack
+          headers:
+            X-Lizzy-Version:
+              description: Lizzy Version
+              type: string
           schema:
             type: object
             $ref: '#/definitions/stack'
         401:
           description: |
             Stack will not be updated because the access token was not provided or was not valid for this operation
+          headers:
+            X-Lizzy-Version:
+              description: Lizzy Version
+              type: string
           schema:
             $ref: '#/definitions/problem'
         404:
           description: |
             Stack was not found. It's possible for a stack to exist on an AWS account and not be found by lizzy
             because lizzy only handles stacks created by itself.
+          headers:
+            X-Lizzy-Version:
+              description: Lizzy Version
+              type: string
           schema:
             $ref: '#/definitions/problem'
       security:
