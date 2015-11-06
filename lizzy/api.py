@@ -26,8 +26,6 @@ def _make_headers() -> dict:
     return headers
 
 
-# TODO: add some way to include some headers on abort or global headers
-
 def _get_stack_dict(stack: Stack) -> dict:
     """
     From lizzy.v1.yaml:
