@@ -1,6 +1,3 @@
-import connexion
-import connexion.decorators.security
-import datetime
 import flask
 import json
 import pytest
@@ -9,6 +6,8 @@ import requests
 import lizzy.api
 from lizzy.models.stack import Stack
 from lizzy.service import setup_webapp
+
+CURRENT_VERSION = '0.1.20151103'
 
 GOOD_HEADERS = {'Authorization': 'Bearer 100', 'Content-type': 'application/json'}
 
@@ -102,11 +101,12 @@ def test_security(app, oauth_requests):
     get_swagger = app.get('/api/swagger.json')  # type:flask.Response
     assert get_swagger.status_code == 200
 
-    get_swagger_no_auth = app.get('/api/stacks')  # type:flask.Response
-    assert get_swagger_no_auth.status_code == 401
+    get_stacks_no_auth = app.get('/api/stacks')  # type:flask.Response
+    assert get_stacks_no_auth.status_code == 401
 
-    get_swagger = app.get('/api/stacks', headers=GOOD_HEADERS)
-    assert get_swagger.status_code == 200
+    get_stacks = app.get('/api/stacks', headers=GOOD_HEADERS)
+    assert get_stacks.status_code == 200
+    assert get_stacks.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
 
 def test_empty_new_stack(monkeypatch, app, oauth_requests):
@@ -128,6 +128,7 @@ def test_bad_senza_yaml(app, oauth_requests):
     response = json.loads(request.data.decode())
     assert response['title'] == 'Invalid senza yaml'
     assert response['detail'] == "Missing property in senza yaml: 'SenzaInfo'"
+    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
     data['senza_yaml'] = '[]'
     request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
@@ -135,6 +136,7 @@ def test_bad_senza_yaml(app, oauth_requests):
     response = json.loads(request.data.decode())
     assert response['title'] == 'Invalid senza yaml'
     assert response['detail'] == "Senza yaml is not a dict."
+    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
 
 def test_new_stack(app, oauth_requests):
@@ -145,6 +147,7 @@ def test_new_stack(app, oauth_requests):
 
     request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
     assert request.status_code == 201
+    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
 
 def test_invalid_yaml(app, oauth_requests):
@@ -158,13 +161,14 @@ def test_invalid_yaml(app, oauth_requests):
     response = json.loads(request.data.decode())  # type: dict
     assert response['title'] == 'Invalid senza yaml'
     assert response['detail'] == "Failed to parse senza yaml."
+    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
 
 def test_get_stack(app, oauth_requests):
     parameters = ['stack_version', 'stack_name', 'senza_yaml', 'creation_time', 'image_version', 'status', 'stack_id']
 
     request = app.get('/api/stacks/stack1', headers=GOOD_HEADERS)
-    assert request.status_code == 200
+    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
     response = json.loads(request.data.decode())  # type: dict
     keys = response.keys()
     for parameter in parameters:
@@ -174,18 +178,22 @@ def test_get_stack(app, oauth_requests):
 def test_get_stack_404(app, oauth_requests):
     request = app.get('/api/stacks/stack404', headers=GOOD_HEADERS)
     assert request.status_code == 404
+    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
 
 def test_delete(app, oauth_requests):
     request = app.delete('/api/stacks/stack1', headers=GOOD_HEADERS)
     assert request.status_code == 204
+    #assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
     # delete is idempotent
     request = app.delete('/api/stacks/stack1', headers=GOOD_HEADERS)
     assert request.status_code == 204
+    #assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
     request = app.delete('/api/stacks/stack404', headers=GOOD_HEADERS)
     assert request.status_code == 204
+    #assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
 
 def test_patch(app, oauth_requests):
@@ -193,9 +201,11 @@ def test_patch(app, oauth_requests):
 
     request = app.patch('/api/stacks/stack1', headers=GOOD_HEADERS, data=json.dumps(data))
     assert request.status_code == 202
+    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
     request = app.patch('/api/stacks/stack1', headers=GOOD_HEADERS, data=json.dumps({}))
     assert request.status_code == 202
+    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
 
 def test_patch404(app, oauth_requests):
@@ -203,3 +213,4 @@ def test_patch404(app, oauth_requests):
 
     request = app.patch('/api/stacks/stack404', headers=GOOD_HEADERS, data=json.dumps(data))
     assert request.status_code == 404
+    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
