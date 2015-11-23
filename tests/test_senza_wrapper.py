@@ -78,7 +78,7 @@ def test_domain(monkeypatch, logger, popen):
     assert not logger.error.called
     assert not logger.exception.called
 
-    popen.assert_called_with(['senza', 'domains', '--region', 'region', '-o', 'json', 'lizzy'], stdout=-1, stderr=-2)
+    popen.assert_called_with(['senza', 'domains', '--region', 'region', '-o', 'json', 'lizzy'], stdout=-1, stderr=-1)
 
     assert domains == {'test': 'domain2'}
 
