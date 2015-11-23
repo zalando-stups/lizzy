@@ -19,6 +19,7 @@ import collections
 import logging
 import rod
 import time
+import uwsgi
 import lizzy.configuration as configuration
 
 logger = logging.getLogger('lizzy.job')
@@ -64,16 +65,17 @@ def check_status(region: str):
 
 
 def main_loop():
+    uwsgi.signal_wait()
     config = configuration.Configuration()
     print(config.job_interval)
     logger.info('Connecting to Redis in job',
                 extra={'redis_host': config.redis_host, 'redis_port': config.redis_port})  # TODO include uswgi info
     rod.connection.setup(redis_host=config.redis_host, port=config.redis_port)
-    logger.info('Connected to Redis in job')
     while True:
         t = Thread(target=check_status, args=(config.region,))
         t.daemon = True
         t.start()
+        logger.debug('Waiting %d seconds to run the job again.', config.job_interval)
         time.sleep(config.job_interval)
 
 
