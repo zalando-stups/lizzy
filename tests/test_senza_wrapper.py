@@ -63,7 +63,7 @@ def test_domain(monkeypatch, logger, popen):
     popen.assert_called_with(
         ['senza', 'domains', '--region', 'region', '-o', 'json'],
         stdout=-1,
-        stderr=-2)
+        stderr=-1)
 
     assert domains == {'stream': 'stdout'}
 
@@ -78,7 +78,7 @@ def test_domain(monkeypatch, logger, popen):
     assert not logger.error.called
     assert not logger.exception.called
 
-    popen.assert_called_with(['senza', 'domains', '--region', 'region', '-o', 'json', 'lizzy'], stdout=-1, stderr=-2)
+    popen.assert_called_with(['senza', 'domains', '--region', 'region', '-o', 'json', 'lizzy'], stdout=-1, stderr=-1)
 
     assert domains == {'test': 'domain2'}
 
@@ -93,7 +93,7 @@ def test_list(monkeypatch, logger, popen):
     assert not logger.error.called
     assert not logger.exception.called
 
-    popen.assert_called_with(['senza', 'list', '--region', 'region', '-o', 'json'], stdout=-1, stderr=-2)
+    popen.assert_called_with(['senza', 'list', '--region', 'region', '-o', 'json'], stdout=-1, stderr=-1)
 
     assert list == ["item1", "item2"]
 
@@ -128,7 +128,7 @@ def test_traffic(monkeypatch, logger, popen):
     popen.assert_called_with(
         ['senza', 'traffic', '--region', 'region', '-o', 'json', 'lizzy', 'version42', '25'],
         stdout=-1,
-        stderr=-2)
+        stderr=-1)
 
     assert traffic == {'stream': 'stdout'}
 
