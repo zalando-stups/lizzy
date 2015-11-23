@@ -3,5 +3,5 @@ uwsgi:
     http: 0.0.0.0:8080
     mule: job.py
     module: lizzy.wsgi
-    logformat : %(ltime) UWSGI │ %(method) %(uri) → %(status)
+    logformat : UWSGI: %(method) %(uri) -> %(status)
     threads: 4

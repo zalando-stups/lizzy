@@ -21,6 +21,14 @@ import rod
 import time
 import lizzy.configuration as configuration
 
+try:
+    # From http://uwsgi-docs.readthedocs.org/en/latest/PythonModule.html
+    # "The uWSGI server automagically adds a uwsgi module into your Python apps."
+    # This means the module doesn't exist during testing
+    import uwsgi
+except ImportError:
+    uwsgi = None
+
 logger = logging.getLogger('lizzy.job')
 
 
@@ -64,16 +72,18 @@ def check_status(region: str):
 
 
 def main_loop():
+    if uwsgi:
+        uwsgi.signal_wait()
     config = configuration.Configuration()
     print(config.job_interval)
     logger.info('Connecting to Redis in job',
                 extra={'redis_host': config.redis_host, 'redis_port': config.redis_port})  # TODO include uswgi info
     rod.connection.setup(redis_host=config.redis_host, port=config.redis_port)
-    logger.info('Connected to Redis in job')
     while True:
         t = Thread(target=check_status, args=(config.region,))
         t.daemon = True
         t.start()
+        logger.debug('Waiting %d seconds to run the job again.', config.job_interval)
         time.sleep(config.job_interval)
 
 
