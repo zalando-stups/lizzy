@@ -83,7 +83,7 @@ class Senza:
             if expect_json:
                 try:
                     return json.loads(output)
-                except json.JSONDecodeError:
+                except ValueError:
                     raise ExecutionError('JSON ERROR', output)
             else:
                 return output
