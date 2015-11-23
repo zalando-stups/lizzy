@@ -81,7 +81,10 @@ class Senza:
         output = stdout.decode()
         if process.returncode == 0:
             if expect_json:
-                return json.loads(output)
+                try:
+                    return json.loads(output)
+                except json.JSONDecodeError:
+                    raise ExecutionError('JSON ERROR', output)
             else:
                 return output
         else:

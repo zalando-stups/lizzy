@@ -1,45 +1,51 @@
-from collections import OrderedDict
 from pprint import pformat
 import datetime
-import json
 import logging
 import traceback
 
-# the following keys will be ignored unless specifically added
+# the following keys will be ignored
 DEFAULT_LOG_RECORD_KEYS = (
     'filename', 'levelno', 'lineno', 'msecs', 'threadName', 'exc_text', 'msg', 'name', 'processName', 'thread',
     'relativeCreated', 'process', 'exc_info', 'args', 'created', 'pathname', 'funcName', 'levelname', 'module',
     'stack_info')
 
 
-class JsonFormatter(logging.Formatter):
-    need_quoting = [' ', '/', '"', '\'']
+class DefaultFormatter(logging.Formatter):
+
+    @staticmethod
+    def format_kv(key, value, error=False):
+        if not isinstance(value, str):
+            value = pformat(value, width=100)  # type: str
+        value_lines = value.splitlines()
+        first_value_line = value_lines.pop(0)
+        lines = ['\n     > {key}: {value}'.format(key=key, value=first_value_line)]
+        for line in value_lines:
+            spaces = ' ' * (9+len(key))
+            lines.append('\n{spaces}{line}'.format(spaces=spaces, line=line))
+
+        return ''.join(lines)
 
     def format(self, record: logging.LogRecord):
         record_values = vars(record)
+        msg = str(record.msg) % record.args
+        message = '{level:>5}: {msg}'.format(level=record.levelname, msg=msg)
 
-        values = OrderedDict()
-        values['time'] = datetime.datetime.fromtimestamp(record.created).isoformat()
-        values['logger'] = record.name  # The name of the logger used to log the event represented
-        values['log_level'] = record.levelname  # Text logging level for the message
-        values['function'] = '{}.{}'.format(record.module, record.funcName)
-        values['line'] = record.lineno
-        try:
-            values['msg'] = str(record.msg) % record.args
-        except Exception as e:  # pragma: no cover
-            values['LOGGING_ERROR'] = str(e)
-
-        # if there is an exception convert to string
-        if vars(record)['exc_info']:
-            exc_info = record_values['exc_info']
-            values['traceback'] = ''.join(traceback.format_tb(exc_info[2]))
-            values['exception'] = str(exc_info[1]).strip()
-
-        # extra
         extra = {key: value for key, value in record_values.items() if key not in DEFAULT_LOG_RECORD_KEYS}
-        values.update(extra)
+        extra_lines = [self.format_kv(key, value) for key, value in extra.items()]
 
-        log_line = json.dumps(values, default=repr)
+        if record.exc_info:
+            tb = '\n'.join(traceback.format_tb(record.exc_info[2]))
+            exception = str(record.exc_info[1])
+            exception_lines = [self.format_kv('Traceback', tb, True)]
+            if exception:
+                exception_lines.append(self.format_kv('Exception', exception, True))
+        else:
+            exception_lines = []
+
+        components = [message]
+        components.extend(extra_lines)
+        components.extend(exception_lines)
+        log_line = ''.join(components)
 
         return log_line
 
@@ -84,11 +90,11 @@ class DebugFormatter(logging.Formatter):
         return log_line
 
 
-def init_logging(format='json'):
+def init_logging(format='default'):
     root_logger = logging.getLogger('')
     sh = logging.StreamHandler()
-    if format == 'json':
-        sh.setFormatter(JsonFormatter())
+    if format == 'default':
+        sh.setFormatter(DefaultFormatter())
     elif format == 'human':
         sh.setFormatter(DebugFormatter())
     root_logger.addHandler(sh)
