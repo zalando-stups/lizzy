@@ -74,9 +74,12 @@ class Senza:
         command += ['--region', self.region]
         if expect_json:
             command += ['-o', 'json']
+            stderr_to = subprocess.PIPE
+        else:
+            stderr_to = subprocess.STDOUT
         command += args
         logger.debug('Executing senza.', extra={'command': ' '.join(command)})
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=stderr_to)
         stdout, _ = process.communicate()
         output = stdout.decode()
         if process.returncode == 0:
