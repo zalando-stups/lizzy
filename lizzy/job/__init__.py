@@ -19,8 +19,15 @@ import collections
 import logging
 import rod
 import time
-import uwsgi
 import lizzy.configuration as configuration
+
+try:
+    # From http://uwsgi-docs.readthedocs.org/en/latest/PythonModule.html
+    # "The uWSGI server automagically adds a uwsgi module into your Python apps."
+    # This means the module doesn't exist during testing
+    import uwsgi
+except ImportError:
+    uwsgi = None
 
 logger = logging.getLogger('lizzy.job')
 
@@ -65,7 +72,8 @@ def check_status(region: str):
 
 
 def main_loop():
-    uwsgi.signal_wait()
+    if uwsgi:
+        uwsgi.signal_wait()
     config = configuration.Configuration()
     print(config.job_interval)
     logger.info('Connecting to Redis in job',
