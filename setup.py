@@ -54,6 +54,7 @@ setup(
                       'pytz',
                       'pyyaml',
                       'rod',
+                      'stups-kio',
                       'stups-senza',
                       'uwsgi',
                       'uwsgi_metrics3'],
