@@ -8,18 +8,18 @@ logger = logging.getLogger('lizzy.kio')
 
 
 class Kio:
-    def __init__(self, region: str):
-        self.region = region
 
-    def versions_create(self, application_id: str, version: str, artifact: str) -> bool:
+    @classmethod
+    def versions_create(cls, application_id: str, version: str, artifact: str) -> bool:
         try:
-            self._execute('versions', 'create', '-m', '"Created by Lizzy"', application_id, version, artifact)
+            cls._execute('versions', 'create', '-m', '"Created by Lizzy"', application_id, version, artifact)
             return True
         except ExecutionError as e:
             logger.error('Failed to create version.', extra={'command.output': e.output})
             return False
 
-    def _execute(self, subcommand, *args, expect_json: bool=False):
+    @staticmethod
+    def _execute(subcommand, *args, expect_json: bool=False):
         command = ['kio', subcommand]
         if expect_json:
             command += ['-o', 'json']
