@@ -1,13 +1,15 @@
 from unittest.mock import MagicMock
+
 import pytest
 
-from lizzy.senza_wrapper import Senza, ExecutionError
+from lizzy.apps.senza import Senza
+from lizzy.apps.common import ExecutionError
 
 
 @pytest.fixture
 def logger(monkeypatch):
     mock_log = MagicMock()
-    monkeypatch.setattr('lizzy.senza_wrapper.logger', mock_log)
+    monkeypatch.setattr('lizzy.apps.senza.logger', mock_log)
     return mock_log
 
 
