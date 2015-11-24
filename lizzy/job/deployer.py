@@ -1,6 +1,8 @@
 import logging
 
-from lizzy.apps.senza import Senza, ExecutionError
+from lizzy.apps.common import ExecutionError
+from lizzy.apps.kio import Kio
+from lizzy.apps.senza import Senza
 from lizzy.models.stack import Stack
 
 _failed_to_get_domains = object()  # sentinel value for when we failed to get domains from senza
@@ -194,6 +196,15 @@ class Deployer:
         By default the stack is created
         """
         self.logger.info("Creating stack...", extra=self.log_info)
+        self.logger.info("Registering version on kio...", extra=self.log_info)
+
+        # TODO get artifact name
+        artifact_name = "image:{}".format(self.stack.image_version)
+        if Kio.versions_create(self.stack.stack_name, self.stack.stack_version, artifact_name):
+            self.logger.info("Version registered in Kio.",  extra=self.log_info)
+        else:
+            self.logger.error("Error registering version in Kio.",  extra=self.log_info)
+
         if self.senza.create(self.stack.senza_yaml, self.stack.stack_version, self.stack.image_version,
                              self.stack.parameters):
             self.logger.info("Stack created.",  extra=self.log_info)
