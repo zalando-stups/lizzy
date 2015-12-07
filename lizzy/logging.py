@@ -16,6 +16,8 @@ class DefaultFormatter(logging.Formatter):
     def format_kv(key, value, error=False):
         if not isinstance(value, str):
             value = pformat(value, width=100)  # type: str
+        if not value:
+            return '\n     > {key}: ************ EMPTY ************'.format(key=key)
         value_lines = value.splitlines()
         first_value_line = value_lines.pop(0)
         lines = ['\n     > {key}: {value}'.format(key=key, value=first_value_line)]
@@ -56,6 +58,8 @@ class DebugFormatter(logging.Formatter):
         color = 31 if error else 32
         if not isinstance(value, str):
             value = pformat(value, width=120)  # type: str
+        if not value:
+            return '\n{: >32} │ \033[{}m************ EMPTY ************\033[0m'.format(key, color)
         value_lines = value.splitlines()
         first_value_line = value_lines.pop(0)
         lines = ['\n{: >32} │ \033[{}m{}\033[0m'.format(key, color, first_value_line)]
