@@ -6,6 +6,8 @@ from .common import ExecutionError
 
 logger = logging.getLogger('lizzy.kio')
 
+# TODO TEST
+# TODO add url option to kio-cli (and change this back to receive url)
 
 class Kio:
 
