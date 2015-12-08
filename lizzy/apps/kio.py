@@ -6,11 +6,11 @@ from .common import ExecutionError
 
 logger = logging.getLogger('lizzy.kio')
 
+
 # TODO TEST
 # TODO add url option to kio-cli (and change this back to receive url)
 
 class Kio:
-
     @classmethod
     def versions_create(cls, application_id: str, version: str, artifact: str) -> bool:
         try:
