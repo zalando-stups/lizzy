@@ -1,7 +1,10 @@
-APScheduler
-connexion
-environmental
-flask
+connexion>=0.13
+environmental>=1.1
+decorator
+pytz
 pyyaml
 rod
+stups-kio
 stups-senza
+uwsgi
+uwsgi_metrics3
