@@ -9,7 +9,6 @@ def test_default_format_kv():
     dict_value = {'dict_key': 50 * 'abc '}
     lines = DefaultFormatter.format_kv('my_key', dict_value).strip().splitlines()
     assert len(lines) == 3
-    assert len(lines[1]) == 110
 
 
 def test_debug_format_kv():
@@ -29,7 +28,6 @@ def test_debug_format_kv():
     dict_value = {'dict_key': 50 * 'abc '}
     lines = DebugFormatter.format_kv('my_key', dict_value).splitlines()
     assert len(lines) == 3
-    assert len(lines[1]) == 159
 
 
 def test_init_logger():
