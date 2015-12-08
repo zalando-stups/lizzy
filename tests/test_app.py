@@ -7,7 +7,7 @@ import lizzy.api
 from lizzy.models.stack import Stack
 from lizzy.service import setup_webapp
 
-CURRENT_VERSION = '0.1.20151103'
+CURRENT_VERSION = '2015-11-24'
 
 GOOD_HEADERS = {'Authorization': 'Bearer 100', 'Content-type': 'application/json'}
 
@@ -184,16 +184,16 @@ def test_get_stack_404(app, oauth_requests):
 def test_delete(app, oauth_requests):
     request = app.delete('/api/stacks/stack1', headers=GOOD_HEADERS)
     assert request.status_code == 204
-    #assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    # assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
     # delete is idempotent
     request = app.delete('/api/stacks/stack1', headers=GOOD_HEADERS)
     assert request.status_code == 204
-    #assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    # assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
     request = app.delete('/api/stacks/stack404', headers=GOOD_HEADERS)
     assert request.status_code == 204
-    #assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    # assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
 
 def test_patch(app, oauth_requests):

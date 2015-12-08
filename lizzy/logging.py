@@ -1,4 +1,5 @@
 from pprint import pformat
+from typing import Any, Union
 import datetime
 import logging
 import traceback
@@ -11,21 +12,22 @@ DEFAULT_LOG_RECORD_KEYS = (
 
 
 class DefaultFormatter(logging.Formatter):
-
     @staticmethod
-    def format_kv(key, value, error=False):
+    def format_kv(key: str, value: Any, error: bool=False) -> str:
         if not isinstance(value, str):
             value = pformat(value, width=100)  # type: str
+        if not value:
+            return '\n     > {key}: ************ EMPTY ************'.format(key=key)
         value_lines = value.splitlines()
         first_value_line = value_lines.pop(0)
         lines = ['\n     > {key}: {value}'.format(key=key, value=first_value_line)]
         for line in value_lines:
-            spaces = ' ' * (9+len(key))
+            spaces = ' ' * (9 + len(key))
             lines.append('\n{spaces}{line}'.format(spaces=spaces, line=line))
 
         return ''.join(lines)
 
-    def format(self, record: logging.LogRecord):
+    def format(self, record: logging.LogRecord) -> str:
         record_values = vars(record)
         msg = str(record.msg) % record.args
         message = '{level:>5}: {msg}'.format(level=record.levelname, msg=msg)
@@ -52,10 +54,12 @@ class DefaultFormatter(logging.Formatter):
 
 class DebugFormatter(logging.Formatter):
     @staticmethod
-    def format_kv(key, value, error=False):
+    def format_kv(key: str, value: Any, error: bool=False) -> str:
         color = 31 if error else 32
         if not isinstance(value, str):
             value = pformat(value, width=120)  # type: str
+        if not value:
+            return '\n{: >32} │ \033[{}m************ EMPTY ************\033[0m'.format(key, color)
         value_lines = value.splitlines()
         first_value_line = value_lines.pop(0)
         lines = ['\n{: >32} │ \033[{}m{}\033[0m'.format(key, color, first_value_line)]
@@ -64,7 +68,7 @@ class DebugFormatter(logging.Formatter):
 
         return ''.join(lines)
 
-    def format(self, record: logging.LogRecord):
+    def format(self, record: logging.LogRecord) -> str:
         record_values = vars(record)
         date_time = '\033[1m\033[34m{}\033[0m'.format(datetime.datetime.fromtimestamp(record.created).isoformat())
         log_level = '\033[1m {: <5} │ \033[0m'.format(record.levelname)
@@ -90,12 +94,24 @@ class DebugFormatter(logging.Formatter):
         return log_line
 
 
-def init_logging(format='default'):
+def init_logging(format: str='default') -> Union[DefaultFormatter, DebugFormatter]:
+    """
+    Initializes the logging.
+
+    Format can be either 'default' for a simple formatter and 'human' for
+
+    :param format: Selected format
+    :return: Selected Formatter
+    """
     root_logger = logging.getLogger('')
-    sh = logging.StreamHandler()
+    stream_handler = logging.StreamHandler()
     if format == 'default':
-        sh.setFormatter(DefaultFormatter())
+        formatter = DefaultFormatter
     elif format == 'human':
-        sh.setFormatter(DebugFormatter())
-    root_logger.addHandler(sh)
+        formatter = DebugFormatter
+    else:
+        raise ValueError('Unrecognized Format: {}'.format(format))
+    stream_handler.setFormatter(formatter())
+    root_logger.addHandler(stream_handler)
     root_logger.setLevel(logging.DEBUG)
+    return formatter

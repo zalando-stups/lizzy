@@ -1,4 +1,4 @@
-FROM zalando/python:3.4.0-4
+FROM zalando/python:3.5.0-3
 
 EXPOSE 8080
 
