@@ -55,8 +55,15 @@ class Stack(rod.model.Model):
 
     @staticmethod
     def generate_version(creation_time: datetime, version: str) -> str:
-        # TODO handle _
-        version = version.lower().replace('-snapshot', 's').replace('.', 'o')
+        """
+        Generates a version for the stack based on the image version and timestamp.
+        It replaces `.`s with `o`s and removes `_`s to return a valid Cloud Formation Identification
+
+        :param creation_time:  Date and time of stack creation
+        :param version: Docker image version to deploy
+        :return: CF stack version
+        """
+        version = version.lower().replace('-snapshot', 's').replace('.', 'o').replace('_', '')
         return '{version}T{time:%Y%m%d%H%M%S}'.format(version=version, time=creation_time)
 
     def generate_id(self) -> str:
