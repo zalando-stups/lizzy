@@ -22,6 +22,8 @@ Lizzy uses the following environment variables for configuration:
 +----------------+----------------------------------------+-----------+
 | JOB_INTERVAL   | Interval between executions of the job | 15        |
 +----------------+----------------------------------------+-----------+
+| KIO_URL        | Kio's URL                              |           |
++----------------+----------------------------------------+-----------+
 | PORT           | TCP port to use for lizzy              | 8080      |
 +----------------+----------------------------------------+-----------+
 | REDIS_HOST     | Hostname of the Redis Server           | localhost |

@@ -1,3 +1,4 @@
+from typing import Iterable
 import json
 import logging
 import subprocess
@@ -6,9 +7,6 @@ from .common import ExecutionError
 
 logger = logging.getLogger('lizzy.kio')
 
-
-# TODO TEST
-# TODO add url option to kio-cli (and change this back to receive url)
 
 class Kio:
     @classmethod
@@ -21,7 +19,7 @@ class Kio:
             return False
 
     @staticmethod
-    def _execute(subcommand, *args, expect_json: bool=False):
+    def _execute(subcommand: str, *args: Iterable[str], expect_json: bool=False):
         command = ['kio', subcommand]
         if expect_json:
             command += ['-o', 'json']
