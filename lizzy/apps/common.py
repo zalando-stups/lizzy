@@ -11,4 +11,4 @@ class ExecutionError(Exception):
         self.output = output.strip()
 
     def __str__(self):
-        return '({error_code}): {output}'.format_map(vars(self))
+        return '({error}): {output}'.format_map(vars(self))
