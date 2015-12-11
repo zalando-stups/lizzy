@@ -1,12 +1,9 @@
-import logging
-
 from .common import ExecutionError, Application
 
-logger = logging.getLogger('lizzy.kio')
 
+# TODO test in app
 
 class Kio(Application):
-
     def __init__(self):
         super().__init__('kio')
 
@@ -23,5 +20,5 @@ class Kio(Application):
             self._execute('versions', 'create', '-m', '"Created by Lizzy"', application_id, version, artifact)
             return True
         except ExecutionError as e:
-            logger.error('Failed to create version.', extra={'command.output': e.output})
+            self.logger.error('Failed to create version.', extra={'command.output': e.output})
             return False

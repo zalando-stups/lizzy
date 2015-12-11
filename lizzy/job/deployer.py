@@ -200,7 +200,8 @@ class Deployer:
             self.logger.info("Registering version on kio...", extra=self.log_info)
             # TODO get artifact name
             artifact_name = "image:{}".format(self.stack.image_version)
-            if Kio.versions_create(self.stack.stack_name, self.stack.stack_version, artifact_name):
+            kio = Kio()
+            if kio.versions_create(self.stack.stack_name, self.stack.stack_version, artifact_name):
                 self.logger.info("Version registered in Kio.",  extra=self.log_info)
             else:
                 self.logger.error("Error registering version in Kio.",  extra=self.log_info)
