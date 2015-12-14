@@ -74,7 +74,7 @@ def check_status(region: str):
                 lizzy_stack.unlock()
 
 
-def main_loop():
+def main_loop():  # pragma: no cover
     if uwsgi:
         uwsgi.signal_wait()
     config = configuration.Configuration()
@@ -90,5 +90,5 @@ def main_loop():
         time.sleep(config.job_interval)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     main_loop()
