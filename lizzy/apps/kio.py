@@ -19,6 +19,6 @@ class Kio(Application):
         try:
             self._execute('versions', 'create', '-m', '"Created by Lizzy"', application_id, version, artifact)
             return True
-        except ExecutionError as e:
-            self.logger.error('Failed to create version.', extra={'command.output': e.output})
+        except ExecutionError as exception:
+            self.logger.error('Failed to create version.', extra={'command.output': exception.output})
             return False

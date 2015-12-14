@@ -9,7 +9,6 @@ _failed_to_get_domains = object()  # sentinel value for when we failed to get do
 
 
 class Deployer:
-
     logger = logging.getLogger('lizzy.job.deployer')
 
     def __init__(self, region: str, lizzy_stacks: dict, cf_stacks: dict, stack: Stack):
@@ -105,13 +104,13 @@ class Deployer:
         if not domains:
             self.logger.info("App doesn't have a domain so traffic will not be switched.", extra=self.log_info)
         elif domains is not _failed_to_get_domains:
-            self.logger.info("Switching app traffic.",  extra=self.log_info)
+            self.logger.info("Switching app traffic.", extra=self.log_info)
             try:
                 self.senza.traffic(stack_name=self.stack.stack_name,
                                    stack_version=self.stack.stack_version,
                                    percentage=self.stack.traffic)
             except ExecutionError:
-                self.logger.exception("Failed to switch app traffic.",  extra=self.log_info)
+                self.logger.exception("Failed to switch app traffic.", extra=self.log_info)
 
         all_versions = sorted(self.lizzy_stacks[self.stack.stack_name].keys())
         self.logger.debug("Existing versions: %s", all_versions, extra=self.log_info)
@@ -147,13 +146,13 @@ class Deployer:
         if not domains:
             self.logger.info("App doesn't have a domain so traffic will not be switched.", extra=self.log_info)
         elif domains is not _failed_to_get_domains:
-            self.logger.info("Switching app traffic to stack.",  extra=self.log_info)
+            self.logger.info("Switching app traffic to stack.", extra=self.log_info)
             try:
                 self.senza.traffic(stack_name=self.stack.stack_name,
                                    stack_version=self.stack.stack_version,
                                    percentage=self.stack.traffic)
             except ExecutionError:
-                self.logger.exception("Failed to switch app traffic.",  extra=self.log_info)
+                self.logger.exception("Failed to switch app traffic.", extra=self.log_info)
 
         return self.default()
 
@@ -202,16 +201,16 @@ class Deployer:
             artifact_name = "image:{}".format(self.stack.image_version)
             kio = Kio()
             if kio.versions_create(self.stack.stack_name, self.stack.stack_version, artifact_name):
-                self.logger.info("Version registered in Kio.",  extra=self.log_info)
+                self.logger.info("Version registered in Kio.", extra=self.log_info)
             else:
-                self.logger.error("Error registering version in Kio.",  extra=self.log_info)
+                self.logger.error("Error registering version in Kio.", extra=self.log_info)
 
         if self.senza.create(self.stack.senza_yaml, self.stack.stack_version, self.stack.image_version,
                              self.stack.parameters):
-            self.logger.info("Stack created.",  extra=self.log_info)
+            self.logger.info("Stack created.", extra=self.log_info)
             new_status = 'LIZZY:DEPLOYING'
         else:
-            self.logger.error("Error creating stack.",  extra=self.log_info)
+            self.logger.error("Error creating stack.", extra=self.log_info)
             new_status = 'LIZZY:ERROR'
 
         return new_status

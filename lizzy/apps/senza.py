@@ -24,8 +24,8 @@ class Senza(Application):
             try:
                 self._execute('create', '--force', temp_yaml.name, stack_version, image_version, *parameters)
                 return True
-            except ExecutionError as e:
-                self.logger.error('Failed to create stack.', extra={'command.output': e.output})
+            except ExecutionError as exception:
+                self.logger.error('Failed to create stack.', extra={'command.output': exception.output})
                 return False
 
     def domains(self, stack_name: Optional[str]=None) -> List[Dict[str, str]]:
@@ -60,8 +60,8 @@ class Senza(Application):
         try:
             self._execute('delete', stack_name, stack_version)
             return True
-        except ExecutionError as e:
-            self.logger.error('Failed to delete stack.', extra={'command.output': e.output})
+        except ExecutionError as exception:
+            self.logger.error('Failed to delete stack.', extra={'command.output': exception.output})
             return False
 
     def traffic(self, stack_name: str, stack_version: str, percentage: int) -> List[Dict]:

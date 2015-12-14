@@ -107,9 +107,9 @@ def create_stack(new_stack: dict) -> dict:
     try:
         stack_name = senza_definition['SenzaInfo']['StackName']  # type: str
         # TODO validate stack name
-    except KeyError as e:
+    except KeyError as exception:
         logger.error("Couldn't get stack name from definition.", extra={'senza_yaml': repr(senza_definition)})
-        missing_property = str(e)
+        missing_property = str(exception)
         problem = connexion.problem(400, 'Invalid senza yaml',
                                     "Missing property in senza yaml: {}".format(missing_property),
                                     headers=_make_headers())

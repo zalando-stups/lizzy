@@ -13,7 +13,7 @@ DEFAULT_LOG_RECORD_KEYS = (
 
 class DefaultFormatter(logging.Formatter):
     @staticmethod
-    def format_kv(key: str, value: Any, error: bool=False) -> str:
+    def format_kv(key: str, value: Any) -> str:
         if not isinstance(value, str):
             value = pformat(value, width=100)  # type: str
         if not value:
@@ -36,11 +36,11 @@ class DefaultFormatter(logging.Formatter):
         extra_lines = [self.format_kv(key, value) for key, value in extra.items()]
 
         if record.exc_info:
-            tb = '\n'.join(traceback.format_tb(record.exc_info[2]))
+            trace = '\n'.join(traceback.format_tb(record.exc_info[2]))
             exception = str(record.exc_info[1])
-            exception_lines = [self.format_kv('Traceback', tb, True)]
+            exception_lines = [self.format_kv('Traceback', trace)]
             if exception:
-                exception_lines.append(self.format_kv('Exception', exception, True))
+                exception_lines.append(self.format_kv('Exception', exception))
         else:
             exception_lines = []
 
@@ -78,9 +78,9 @@ class DebugFormatter(logging.Formatter):
         extra_lines = [self.format_kv(key, value) for key, value in extra.items()]
 
         if record.exc_info:
-            tb = '\n'.join(traceback.format_tb(record.exc_info[2]))
+            trace = '\n'.join(traceback.format_tb(record.exc_info[2]))
             exception = str(record.exc_info[1])
-            exception_lines = [self.format_kv('Traceback', tb, True)]
+            exception_lines = [self.format_kv('Traceback', trace, True)]
             if exception:
                 exception_lines.append(self.format_kv('Exception', exception, True))
         else:
