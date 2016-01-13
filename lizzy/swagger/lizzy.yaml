@@ -217,6 +217,9 @@ definitions:
       image_version:
         type: string
         description: Docker image version to deploy
+      application_version:
+        type: string
+        description: Version of the application to use for stack name and kio
       keep_stacks:
         type: integer
         format: int32
@@ -269,6 +272,9 @@ definitions:
       status:
         type: string
         description: Status of stack, can be be CF:STATUS_IN_CLOUD_FORMATION or some lizzy specific status
+      application_version:
+        type: string
+        description: Version of the application used for stack name and kio
   stack_patch:
     type: object
     properties:

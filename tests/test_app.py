@@ -53,6 +53,8 @@ class FakeRequest:
 class FakeStack(Stack):
     # TODO Implement some stacks
 
+    last_save = {}
+
     @classmethod
     def all(cls):
         return []
@@ -66,7 +68,7 @@ class FakeStack(Stack):
         return cls(**stack)
 
     def save(self):
-        pass
+        FakeStack.last_save = vars(self)
 
 
 @pytest.fixture
@@ -148,6 +150,53 @@ def test_new_stack(app, oauth_requests):
     request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
     assert request.status_code == 201
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    stack_version = FakeStack.last_save['stack_version']
+    assert FakeStack.last_save['application_version'] is None
+    assert FakeStack.last_save['image_version'] == '1.0'
+    assert FakeStack.last_save['keep_stacks'] == 0
+    assert FakeStack.last_save['parameters'] == []
+    assert FakeStack.last_save['stack_id'] == 'abc-'+stack_version
+    assert FakeStack.last_save['stack_name'] == 'abc'
+    assert FakeStack.last_save['status'] == 'LIZZY:NEW'
+    assert FakeStack.last_save['traffic'] == 100
+
+    data = {'keep_stacks': 0,
+            'new_traffic': 100,
+            'image_version': '1.0',
+            'senza_yaml': 'SenzaInfo:\n  StackName: abc',
+            'parameters': ['abc', 'def']}
+
+    request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
+    assert request.status_code == 201
+    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    stack_version = FakeStack.last_save['stack_version']
+    assert FakeStack.last_save['application_version'] is None
+    assert FakeStack.last_save['image_version'] == '1.0'
+    assert FakeStack.last_save['keep_stacks'] == 0
+    assert FakeStack.last_save['parameters'] == ['abc', 'def']
+    assert FakeStack.last_save['stack_id'] == 'abc-'+stack_version
+    assert FakeStack.last_save['stack_name'] == 'abc'
+    assert FakeStack.last_save['status'] == 'LIZZY:NEW'
+    assert FakeStack.last_save['traffic'] == 100
+
+    data = {'keep_stacks': 0,
+            'new_traffic': 100,
+            'image_version': '1.0',
+            'senza_yaml': 'SenzaInfo:\n  StackName: abc',
+            'parameters': ['abc', 'def'],
+            'application_version': '42'}
+
+    request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
+    assert request.status_code == 201
+    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    assert FakeStack.last_save['application_version'] == '42'
+    assert FakeStack.last_save['image_version'] == '1.0'
+    assert FakeStack.last_save['keep_stacks'] == 0
+    assert FakeStack.last_save['parameters'] == ['abc', 'def']
+    assert FakeStack.last_save['stack_id'] == 'abc-42'
+    assert FakeStack.last_save['stack_name'] == 'abc'
+    assert FakeStack.last_save['status'] == 'LIZZY:NEW'
+    assert FakeStack.last_save['traffic'] == 100
 
 
 def test_invalid_yaml(app, oauth_requests):

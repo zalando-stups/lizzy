@@ -21,7 +21,6 @@ def test_debug_format_kv():
                          '\n                                 │ \x1b[32mb\x1b[0m'
     expected_multiline_error = '\n                          my_key │ \x1b[31ma\x1b[0m' \
                                '\n                                 │ \x1b[31mb\x1b[0m'
-    print(repr(DebugFormatter.format_kv('my_key', 'a\nb')))
     assert DebugFormatter.format_kv('my_key', 'a\nb') == expected_multiline
     assert DebugFormatter.format_kv('my_key', 'a\nb', True) == expected_multiline_error
 

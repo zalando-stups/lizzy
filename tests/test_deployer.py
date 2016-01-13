@@ -56,6 +56,50 @@ def test_new(monkeypatch, logger):
     assert deployer.handle() == 'LIZZY:ERROR'
 
 
+def test_new_with_version(monkeypatch, logger):
+    mock_senza = MagicMock()
+    mock_senza.return_value = mock_senza
+    monkeypatch.setattr('lizzy.job.deployer.Senza', mock_senza)
+    mock_kio = MagicMock()
+    mock_kio.return_value = mock_kio
+    monkeypatch.setattr('lizzy.job.deployer.Kio', mock_kio)
+
+    stack = Stack(creation_time='2015-09-16T09:48', keep_stacks=2, traffic=7, image_version='1.0',
+                  senza_yaml='senza:yaml', stack_name='lizzy', stack_version='42', parameters=[], status='LIZZY:NEW',
+                  application_version='42')
+
+    mock_senza.create.return_value = True
+    mock_kio.versions_create.return_value = True
+    deployer = Deployer('region', LIZZY_STACKS, CF_STACKS, stack)
+    assert stack.application_version == '42'
+    assert deployer.handle() == 'LIZZY:DEPLOYING'
+    mock_kio.assert_called_once_with()
+    mock_kio.versions_create.assert_called_once_with('lizzy', '42', 'image:1.0')
+
+    # kio version creation doesn't affect the rest of the process
+    mock_kio.versions_create.reset_mock()
+    mock_kio.versions_create.return_value = False
+    deployer = Deployer('region', LIZZY_STACKS, CF_STACKS, stack)
+    assert stack.application_version == '42'
+    assert deployer.handle() == 'LIZZY:DEPLOYING'
+    mock_kio.versions_create.assert_called_once_with('lizzy', '42', 'image:1.0')
+
+
+def test_new_parameters(monkeypatch, logger):
+    mock_senza = MagicMock()
+    mock_senza.return_value = mock_senza
+    monkeypatch.setattr('lizzy.job.deployer.Senza', mock_senza)
+
+    stack = Stack(stack_id='lizzy-42', creation_time='2015-09-16T09:48', keep_stacks=2, traffic=7, image_version='1.0',
+                  senza_yaml='senza:yaml', stack_name='lizzy', stack_version='42', parameters=['abc', 'def'],
+                  status='LIZZY:NEW')
+
+    mock_senza.create.return_value = True
+    deployer = Deployer('region', LIZZY_STACKS, CF_STACKS, stack)
+    assert deployer.handle() == 'LIZZY:DEPLOYING'
+    mock_senza.create.assert_called_once_with('senza:yaml', '42', '1.0', ['abc', 'def'])
+
+
 def test_deploying(monkeypatch, logger):
     mock_senza = MagicMock()
     mock_senza.return_value = mock_senza

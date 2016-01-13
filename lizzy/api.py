@@ -52,11 +52,15 @@ def _get_stack_dict(stack: Stack) -> dict:
       status:
         type: string
         description: Cloud formation stack status
+      application_version:
+        type: string
+        description: Version of the application used for stack name and kio
     """
     stack_dict = {'stack_id': stack.stack_id,
                   'creation_time': '{:%FT%T%z}'.format(stack.creation_time),
                   'image_version': stack.image_version,
                   'parameters': stack.parameters,
+                  'application_version': stack.application_version,
                   'senza_yaml': stack.senza_yaml,
                   'stack_name': stack.stack_name,
                   'stack_version': stack.stack_version,
@@ -78,11 +82,14 @@ def all_stacks() -> dict:
 def create_stack(new_stack: dict) -> dict:
     """
     POST /stacks/
+
+    :param new_stack: New stack
     """
 
     keep_stacks = new_stack['keep_stacks']  # type: int
     new_traffic = new_stack['new_traffic']  # type: int
     image_version = new_stack['image_version']  # type: str
+    application_version = new_stack.get('application_version')  # type Optional[str]
     senza_yaml = new_stack['senza_yaml']  # type: str
     parameters = new_stack.get('parameters', [])
 
@@ -100,9 +107,9 @@ def create_stack(new_stack: dict) -> dict:
     try:
         stack_name = senza_definition['SenzaInfo']['StackName']  # type: str
         # TODO validate stack name
-    except KeyError as e:
+    except KeyError as exception:
         logger.error("Couldn't get stack name from definition.", extra={'senza_yaml': repr(senza_definition)})
-        missing_property = str(e)
+        missing_property = str(exception)
         problem = connexion.problem(400, 'Invalid senza yaml',
                                     "Missing property in senza yaml: {}".format(missing_property),
                                     headers=_make_headers())
@@ -113,6 +120,7 @@ def create_stack(new_stack: dict) -> dict:
                   image_version=image_version,
                   senza_yaml=senza_yaml,
                   stack_name=stack_name,
+                  application_version=application_version,
                   parameters=parameters)
     stack.save()
     return _get_stack_dict(stack), 201, _make_headers()

@@ -11,15 +11,18 @@ Unless required by applicable law or agreed to in writing, software distributed 
  language governing permissions and limitations under the License.
 """
 
-from threading import Thread
-from lizzy.senza_wrapper import Senza, ExecutionError
-from lizzy.job.deployer import Deployer
-from lizzy.models.stack import Stack
 import collections
 import logging
-import rod
 import time
+from threading import Thread
+
+import rod
+
 import lizzy.configuration as configuration
+from lizzy.apps.senza import Senza
+from lizzy.apps.common import ExecutionError
+from lizzy.job.deployer import Deployer
+from lizzy.models.stack import Stack
 
 try:
     # From http://uwsgi-docs.readthedocs.org/en/latest/PythonModule.html
@@ -71,7 +74,7 @@ def check_status(region: str):
                 lizzy_stack.unlock()
 
 
-def main_loop():
+def main_loop():  # pragma: no cover
     if uwsgi:
         uwsgi.signal_wait()
     config = configuration.Configuration()
@@ -87,5 +90,5 @@ def main_loop():
         time.sleep(config.job_interval)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     main_loop()
