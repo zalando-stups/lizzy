@@ -7,7 +7,7 @@ import lizzy.api
 from lizzy.models.stack import Stack
 from lizzy.service import setup_webapp
 
-CURRENT_VERSION = '2015-11-24'
+CURRENT_VERSION = '2016-01-14'
 
 GOOD_HEADERS = {'Authorization': 'Bearer 100', 'Content-type': 'application/json'}
 
