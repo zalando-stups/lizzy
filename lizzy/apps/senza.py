@@ -1,5 +1,7 @@
 from typing import Optional, List, Dict
+import pystache
 import tempfile
+import yaml
 
 from .common import ExecutionError, Application
 
@@ -7,6 +9,26 @@ from .common import ExecutionError, Application
 class Senza(Application):
     def __init__(self, region: str):
         super().__init__('senza', extra_parameters=['--region', region])
+
+    @staticmethod
+    def generate_definition(definition: str, version: str, parameters: List[str]) -> dict:
+        # TODO: error handling
+        raw_definition = yaml.load(definition)  # type: dict
+        senza_info = raw_definition['SenzaInfo']  # type: dict
+        senza_paramaters = senza_info['Parameters']  # type: List[Dict[str, Dict[str, str]]]
+
+        # TODO support default
+        # TODO support named parameters
+        parameter_map = {}
+        for value in parameters:
+            definition_parameter = senza_paramaters.pop(0)
+            name = list(definition_parameter.keys()).pop()
+            default = definition_parameter[name].get('default', None)  # TODO sentinel
+            parameter_map[name] = value
+
+        render = pystache.Renderer(missing_tags='strict')
+        final_defintion = render.render(definition, {'Arguments': parameter_map})
+        return yaml.load(final_defintion)
 
     def create(self, senza_yaml: str, stack_version: str, image_version: str, parameters: List[str]) -> bool:
         """

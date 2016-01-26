@@ -51,6 +51,7 @@ setup(
     install_requires=['connexion>=0.13',
                       'environmental>=1.1',
                       'decorator',
+                      'pystache',
                       'pytz',
                       'pyyaml',
                       'rod',
