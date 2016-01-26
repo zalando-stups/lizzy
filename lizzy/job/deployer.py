@@ -195,6 +195,7 @@ class Deployer:
         By default the stack is created
         """
         self.logger.info("Creating stack...", extra=self.log_info)
+        final_definition = self.stack.generate_definition()
         if self.stack.application_version:
             self.logger.info("Registering version on kio...", extra=self.log_info)
             # TODO get artifact name

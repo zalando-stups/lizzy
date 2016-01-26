@@ -1,7 +1,9 @@
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
+import pystache
 import pytz
 import rod.model
+import yaml
 
 
 class Stack(rod.model.Model):
@@ -71,3 +73,23 @@ class Stack(rod.model.Model):
         The id will be the same as the stack name on aws
         """
         return '{name}-{version}'.format(name=self.stack_name, version=self.stack_version)
+
+    def generate_definition(self) -> dict:
+        # TODO: error handling
+        raw_definition = yaml.load(self.senza_yaml)  # type: dict
+        senza_info = raw_definition['SenzaInfo']  # type: dict
+        senza_paramaters = senza_info['Parameters']  # type: List[Dict[str, Dict[str, str]]]
+
+        # TODO support default
+        # TODO support named parameters
+        parameter_map = {}
+        for value in self.parameters:
+            print('PARAM:', senza_paramaters, self.senza_yaml, value)
+            definition_parameter = senza_paramaters.pop(0)
+            name = list(definition_parameter.keys()).pop()
+            default = definition_parameter[name].get('default', None)  # TODO sentinel
+            parameter_map[name] = value
+
+        render = pystache.Renderer(missing_tags='strict')
+        final_defintion = render.render(self.senza_yaml, {'Arguments': parameter_map})
+        return yaml.load(final_defintion)
