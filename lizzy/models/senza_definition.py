@@ -10,7 +10,6 @@ class SenzaDefinition:
     """
 
     def __init__(self, definition_yaml: str, arguments: List[str]):
-        # TODO add app_version to the arguments
         # TODO support named parameters
         # TODO: error handling
         self.definition = yaml.load(definition_yaml)
@@ -37,7 +36,7 @@ class SenzaDefinition:
             if 'AppServer' in component:
                 return component['AppServer']
         else:
-            raise ValueError("Couldn't find _AppServer_")
+            return {}
 
     @property
     def environment(self) -> dict:
@@ -49,7 +48,7 @@ class SenzaDefinition:
 
     @property
     def senza_components(self) -> list:
-        return self.definition['SenzaComponents']
+        return self.definition.get('SenzaComponents', [])
 
     @property
     def stack_name(self) -> str:

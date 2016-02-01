@@ -195,11 +195,11 @@ class Deployer:
         By default the stack is created
         """
         self.logger.info("Creating stack...", extra=self.log_info)
-        final_definition = self.stack.generate_definition()
+        definition = self.stack.generate_definition()
         if self.stack.application_version:
             self.logger.info("Registering version on kio...", extra=self.log_info)
-            # TODO get artifact name
-            artifact_name = "image:{}".format(self.stack.image_version)
+            taupage_config = definition.app_server.get('TaupageConfig', {})  # type: Dict[str, str]
+            artifact_name = taupage_config.get('source', '')
             kio = Kio()
             if kio.versions_create(self.stack.stack_name, self.stack.stack_version, artifact_name):
                 self.logger.info("Version registered in Kio.", extra=self.log_info)
