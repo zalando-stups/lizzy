@@ -37,6 +37,13 @@ Lizzy uses the following environment variables for configuration:
 | TOKEN_INFO_URL | URL to validate the token              |           |
 +----------------+----------------------------------------+-----------+
 
+Limitations
+-----------
+Currently Lizzy doesn't support:
+
+- senza definitions with more than one AppServer;
+- parameters specified by name;
+
 License
 -------
 Copyright 2015 Zalando SE
