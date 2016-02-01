@@ -16,4 +16,4 @@ def test_definition_generator():
 
     definition1 = stack.generate_definition()
 
-    assert definition1['Test'] == 'lizzy:version42'
+    assert definition1.definition['Test'] == 'lizzy:version42'

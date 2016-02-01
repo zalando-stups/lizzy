@@ -5,6 +5,8 @@ import pytz
 import rod.model
 import yaml
 
+from .senza_definition import SenzaDefinition
+
 
 class Stack(rod.model.Model):
     prefix = 'lizzy_stack'
@@ -74,23 +76,5 @@ class Stack(rod.model.Model):
         """
         return '{name}-{version}'.format(name=self.stack_name, version=self.stack_version)
 
-    def generate_definition(self) -> dict:
-        # TODO: error handling
-        raw_definition = yaml.load(self.senza_yaml)  # type: dict
-        senza_info = raw_definition.get('SenzaInfo', {})  # type: dict
-        senza_paramaters = senza_info.get('Parameters', [])  # type: List[Dict[str, Dict[str, str]]]
-        keys = []
-        parameter_map = {}
-        for parameter in senza_paramaters:
-            name = list(parameter.keys()).pop()
-            keys.append(name)
-            if 'Default' in parameter:
-                # Add the defaults to the parameter map
-                parameter_map[name] = parameter['Default']
-
-        parameter_map.update(dict(zip(keys, self.parameters)))  # add provided values
-        # TODO support named parameters
-
-        render = pystache.Renderer(missing_tags='strict')
-        final_defintion = render.render(self.senza_yaml, {'Arguments': parameter_map})
-        return yaml.load(final_defintion)
+    def generate_definition(self) -> SenzaDefinition:
+        return SenzaDefinition(self.senza_yaml, self.parameters)
