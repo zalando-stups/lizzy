@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List  # NOQA
 from datetime import datetime
 import pystache
 import pytz
@@ -77,18 +77,19 @@ class Stack(rod.model.Model):
     def generate_definition(self) -> dict:
         # TODO: error handling
         raw_definition = yaml.load(self.senza_yaml)  # type: dict
-        senza_info = raw_definition['SenzaInfo']  # type: dict
-        senza_paramaters = senza_info['Parameters']  # type: List[Dict[str, Dict[str, str]]]
-
-        # TODO support default
-        # TODO support named parameters
+        senza_info = raw_definition.get('SenzaInfo', {})  # type: dict
+        senza_paramaters = senza_info.get('Parameters', [])  # type: List[Dict[str, Dict[str, str]]]
+        keys = []
         parameter_map = {}
-        for value in self.parameters:
-            print('PARAM:', senza_paramaters, self.senza_yaml, value)
-            definition_parameter = senza_paramaters.pop(0)
-            name = list(definition_parameter.keys()).pop()
-            default = definition_parameter[name].get('default', None)  # TODO sentinel
-            parameter_map[name] = value
+        for parameter in senza_paramaters:
+            name = list(parameter.keys()).pop()
+            keys.append(name)
+            if 'Default' in parameter:
+                # Add the defaults to the parameter map
+                parameter_map[name] = parameter['Default']
+
+        parameter_map.update(dict(zip(keys, self.parameters)))  # add provided values
+        # TODO support named parameters
 
         render = pystache.Renderer(missing_tags='strict')
         final_defintion = render.render(self.senza_yaml, {'Arguments': parameter_map})
