@@ -1,8 +1,6 @@
 from .common import ExecutionError, Application
 
 
-# TODO test in app
-
 class Kio(Application):
     def __init__(self):
         super().__init__('kio')

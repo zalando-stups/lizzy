@@ -3,6 +3,7 @@ environmental>=1.1
 decorator
 pytz
 pyyaml
+pystache
 rod
 stups-kio
 stups-senza

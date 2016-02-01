@@ -9,6 +9,9 @@ logger = logging.getLogger('lizzy.security')
 
 @decorator.decorator
 def bouncer(endpoint, *args, **kwargs):
+    """
+    Checks if the user making request is in the predefined list of allowed users
+    """
     config = Configuration()
     if config.allowed_users is not None:
         logger.debug('Checking if user is allowed',

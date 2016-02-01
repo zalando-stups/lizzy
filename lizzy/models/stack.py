@@ -1,7 +1,9 @@
-from typing import Optional
+from typing import Optional  # NOQA
 from datetime import datetime
 import pytz
 import rod.model
+
+from .senza_definition import SenzaDefinition
 
 
 class Stack(rod.model.Model):
@@ -41,7 +43,6 @@ class Stack(rod.model.Model):
         self.stack_name = stack_name
         self.creation_time = creation_time or datetime.utcnow().replace(tzinfo=pytz.utc)  # type: datetime
         self.image_version = image_version
-        # TODO test application_version
         self.stack_version = (stack_version or
                               application_version or
                               self.generate_version(self.creation_time, image_version))
@@ -71,3 +72,8 @@ class Stack(rod.model.Model):
         The id will be the same as the stack name on aws
         """
         return '{name}-{version}'.format(name=self.stack_name, version=self.stack_version)
+
+    def generate_definition(self) -> SenzaDefinition:
+        parameters = [self.image_version]
+        parameters.extend(self.parameters)
+        return SenzaDefinition(self.senza_yaml, parameters)
