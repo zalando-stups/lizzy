@@ -96,6 +96,11 @@ def test_list(monkeypatch, popen):
 
     assert list == ["item1", "item2"]
 
+    # Test invalid json
+    popen.communicate.return_value = b'"', b'stderr'
+    with pytest.raises(ExecutionError):
+        senza.list()
+
 
 def test_remove(monkeypatch, popen):
     senza = Senza('region')

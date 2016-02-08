@@ -94,13 +94,14 @@ class DebugFormatter(logging.Formatter):
         return log_line
 
 
-def init_logging(format: str='default') -> Union[DefaultFormatter, DebugFormatter]:
+def init_logging(format: str='default', level: str='INFO') -> Union[DefaultFormatter, DebugFormatter]:
     """
     Initializes the logging.
 
-    Format can be either 'default' for a simple formatter and 'human' for
+    Format can be either 'default' for a simple formatter and 'human' for a colorful format.
 
     :param format: Selected format
+    :param level: Log level
     :return: Selected Formatter
     """
     root_logger = logging.getLogger('')
@@ -113,5 +114,5 @@ def init_logging(format: str='default') -> Union[DefaultFormatter, DebugFormatte
         raise ValueError('Unrecognized Format: {}'.format(format))
     stream_handler.setFormatter(formatter())
     root_logger.addHandler(stream_handler)
-    root_logger.setLevel(logging.DEBUG)
+    root_logger.setLevel(level)
     return formatter
