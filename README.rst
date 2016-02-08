@@ -22,7 +22,7 @@ Lizzy uses the following environment variables for configuration:
 +----------------+----------------------------------------+-----------+
 | JOB_INTERVAL   | Interval between executions of the job | 15        |
 +----------------+----------------------------------------+-----------+
-| LOG_LEVEL      | Sets the minumum log level             | INFO      |
+| LOG_LEVEL      | Sets the minimum log level             | INFO      |
 +----------------+----------------------------------------+-----------+
 | LOG_FORMAT     | Sets the log format (human or default) | default   |
 +----------------+----------------------------------------+-----------+
