@@ -8,6 +8,7 @@ class Configuration:
     allowed_users = environmental.List('ALLOWED_USERS', None)
     deployer_scope = environmental.Str('DEPLOYER_SCOPE')  # OAUTH scope needed to deploy
     job_interval = environmental.Int('JOB_INTERVAL', 15)  # how many seconds to wait between job runs
+    log_level = environmental.Str('LOG_LEVEL', 'INFO')
     log_format = environmental.Str('LOG_FORMAT', 'default')
     redis_host = environmental.Str('REDIS_HOST', 'localhost')
     redis_port = environmental.Int('REDIS_PORT', 6379)
