@@ -3,7 +3,7 @@ swagger: "2.0"
 info:
   title: Lizzy
   description: REST Service to deploy AWS CF templates using Senza
-  version: "1.0"
+  version: "1.1"
 
 basePath: /api
 

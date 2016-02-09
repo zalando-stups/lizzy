@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 
 VERSION_MAJOR = 1
-VERSION_MINOR = 0
+VERSION_MINOR = 1
 VERSION = '{VERSION_MAJOR}.{VERSION_MINOR}'.format_map(locals())
 
 
