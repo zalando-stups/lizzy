@@ -236,6 +236,9 @@ definitions:
       senza_yaml:
         type: string
         description: YAML to provide to senza
+      disable_rollback:
+        type: boolean
+        description: Disable stack rollback on error
     required:
       - image_version
       - keep_stacks

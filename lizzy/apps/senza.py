@@ -8,7 +8,8 @@ class Senza(Application):
     def __init__(self, region: str):
         super().__init__('senza', extra_parameters=['--region', region])
 
-    def create(self, senza_yaml: str, stack_version: str, image_version: str, parameters: List[str]) -> bool:
+    def create(self, senza_yaml: str, stack_version: str, image_version: str, parameters: List[str],
+               disable_rollback: bool) -> bool:
         """
         Create a new stack
 
@@ -22,7 +23,10 @@ class Senza(Application):
             temp_yaml.write(senza_yaml.encode())
             temp_yaml.file.flush()
             try:
-                self._execute('create', '--force', temp_yaml.name, stack_version, image_version, *parameters)
+                args = ['--force']
+                if disable_rollback:
+                    args.append('--disable-rollback')
+                self._execute('create', *args, temp_yaml.name, stack_version, image_version, *parameters)
                 return True
             except ExecutionError as exception:
                 self.logger.error('Failed to create stack.', extra={'command.output': exception.output})

@@ -82,6 +82,7 @@ def create_stack(new_stack: dict) -> dict:
     application_version = new_stack.get('application_version')  # type Optional[str]
     senza_yaml = new_stack['senza_yaml']  # type: str
     parameters = new_stack.get('parameters', [])
+    disable_rollback = new_stack.get('disable_rollback', False)
 
     try:
         senza_definition = yaml.safe_load(senza_yaml)
@@ -130,7 +131,7 @@ def create_stack(new_stack: dict) -> dict:
     stack_extra = {'stack_name': stack_name, 'stack_version': stack.stack_version,
                    'image_version': stack.image_version, 'parameters': stack.parameters}
     if senza.create(stack.senza_yaml, stack.stack_version, stack.image_version,
-                    stack.parameters):
+                    stack.parameters, disable_rollback):
         logger.info("Stack created.", extra=stack_extra)
         stack.status = 'LIZZY:DEPLOYING'
         stack.save()
