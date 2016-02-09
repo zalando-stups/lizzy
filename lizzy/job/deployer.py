@@ -1,7 +1,6 @@
 import logging
 
 from lizzy.apps.common import ExecutionError
-from lizzy.apps.kio import Kio
 from lizzy.apps.senza import Senza
 from lizzy.models.stack import Stack
 
@@ -174,9 +173,8 @@ class Deployer:
         """
         Does the right step for deployment status
         """
-        if self.stack.status == 'LIZZY:NEW':
-            return self.new()
-        elif self.stack.status == 'LIZZY:DEPLOYING':
+
+        if self.stack.status == 'LIZZY:DEPLOYING':
             return self.deploying()
         elif self.stack.status == 'LIZZY:DEPLOYED':
             return self.deployed()
@@ -188,30 +186,3 @@ class Deployer:
             return self.delete()
         else:
             return self.default()
-
-    def new(self) -> str:
-        """
-        Handler for when deployment status=='LIZZY:NEW'
-        By default the stack is created
-        """
-        self.logger.info("Creating stack...", extra=self.log_info)
-        definition = self.stack.generate_definition()
-        if self.stack.application_version:
-            self.logger.info("Registering version on kio...", extra=self.log_info)
-            taupage_config = definition.app_server.get('TaupageConfig', {})  # type: Dict[str, str]
-            artifact_name = taupage_config.get('source', '')
-            kio = Kio()
-            if kio.versions_create(self.stack.stack_name, self.stack.stack_version, artifact_name):
-                self.logger.info("Version registered in Kio.", extra=self.log_info)
-            else:
-                self.logger.error("Error registering version in Kio.", extra=self.log_info)
-
-        if self.senza.create(self.stack.senza_yaml, self.stack.stack_version, self.stack.image_version,
-                             self.stack.parameters):
-            self.logger.info("Stack created.", extra=self.log_info)
-            new_status = 'LIZZY:DEPLOYING'
-        else:
-            self.logger.error("Error creating stack.", extra=self.log_info)
-            new_status = 'LIZZY:ERROR'
-
-        return new_status

@@ -3,7 +3,7 @@ swagger: "2.0"
 info:
   title: Lizzy
   description: REST Service to deploy AWS CF templates using Senza
-  version: "1.0"
+  version: "1.1"
 
 basePath: /api
 
@@ -63,7 +63,7 @@ paths:
       responses:
         201:
           description: |
-            Stack to be created. The CloudFormation Stack creation can still fail if it's rejected by senza or AWS CF.
+            Stack to be created. The CloudFormation Stack creation can still fail later.
           schema:
             $ref: '#/definitions/stack'
           headers:
@@ -71,7 +71,7 @@ paths:
               description: Lizzy Version
               type: string
         400:
-          description: Stack was not created because request was invalid
+          description: Stack was not created because request was invalid or because the deployment failed.
           headers:
             X-Lizzy-Version:
               description: Lizzy Version
@@ -236,6 +236,9 @@ definitions:
       senza_yaml:
         type: string
         description: YAML to provide to senza
+      disable_rollback:
+        type: boolean
+        description: Disable stack rollback on error
     required:
       - image_version
       - keep_stacks

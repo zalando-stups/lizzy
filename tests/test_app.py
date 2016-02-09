@@ -1,3 +1,4 @@
+from unittest.mock import MagicMock, ANY
 import flask
 import json
 import pytest
@@ -7,7 +8,7 @@ import lizzy.api
 from lizzy.models.stack import Stack
 from lizzy.service import setup_webapp
 
-CURRENT_VERSION = '2016-01-14'
+CURRENT_VERSION = '2016-02-09'
 
 GOOD_HEADERS = {'Authorization': 'Bearer 100', 'Content-type': 'application/json'}
 
@@ -42,7 +43,7 @@ class FakeResponse:
 
 class FakeRequest:
     def __init__(self, status_code: int, text: str):
-        self.status_code = status_code
+        self.status_code = status_code0
         self.text = text
         self.ok = status_code == 200
 
@@ -141,13 +142,24 @@ def test_bad_senza_yaml(app, oauth_requests):
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
 
-def test_new_stack(app, oauth_requests):
+def test_new_stack(monkeypatch, app, oauth_requests):
     data = {'keep_stacks': 0,
             'new_traffic': 100,
             'image_version': '1.0',
             'senza_yaml': 'SenzaInfo:\n  StackName: abc'}
 
+    mock_senza = MagicMock()
+    mock_senza.return_value = mock_senza
+    monkeypatch.setattr('lizzy.api.Senza', mock_senza)
+    mock_kio = MagicMock()
+    mock_kio.return_value = mock_kio
+    monkeypatch.setattr('lizzy.api.Kio', mock_kio)
+
+    mock_senza.create.return_value = True
     request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
+    mock_kio.assert_not_called()
+    mock_senza.assert_called_with('eu-west-1')
+    mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc', ANY, '1.0', [], False)
     assert request.status_code == 201
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
     stack_version = FakeStack.last_save['stack_version']
@@ -155,9 +167,9 @@ def test_new_stack(app, oauth_requests):
     assert FakeStack.last_save['image_version'] == '1.0'
     assert FakeStack.last_save['keep_stacks'] == 0
     assert FakeStack.last_save['parameters'] == []
-    assert FakeStack.last_save['stack_id'] == 'abc-'+stack_version
+    assert FakeStack.last_save['stack_id'] == 'abc-' + stack_version
     assert FakeStack.last_save['stack_name'] == 'abc'
-    assert FakeStack.last_save['status'] == 'LIZZY:NEW'
+    assert FakeStack.last_save['status'] == 'LIZZY:DEPLOYING'
     assert FakeStack.last_save['traffic'] == 100
 
     data = {'keep_stacks': 0,
@@ -167,6 +179,9 @@ def test_new_stack(app, oauth_requests):
             'parameters': ['abc', 'def']}
 
     request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
+    mock_kio.assert_not_called()
+    mock_senza.assert_called_with('eu-west-1')
+    mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc', ANY, '1.0', ['abc', 'def'], False)
     assert request.status_code == 201
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
     stack_version = FakeStack.last_save['stack_version']
@@ -174,9 +189,9 @@ def test_new_stack(app, oauth_requests):
     assert FakeStack.last_save['image_version'] == '1.0'
     assert FakeStack.last_save['keep_stacks'] == 0
     assert FakeStack.last_save['parameters'] == ['abc', 'def']
-    assert FakeStack.last_save['stack_id'] == 'abc-'+stack_version
+    assert FakeStack.last_save['stack_id'] == 'abc-' + stack_version
     assert FakeStack.last_save['stack_name'] == 'abc'
-    assert FakeStack.last_save['status'] == 'LIZZY:NEW'
+    assert FakeStack.last_save['status'] == 'LIZZY:DEPLOYING'
     assert FakeStack.last_save['traffic'] == 100
 
     data = {'keep_stacks': 0,
@@ -185,8 +200,13 @@ def test_new_stack(app, oauth_requests):
             'senza_yaml': 'SenzaInfo:\n  StackName: abc',
             'parameters': ['abc', 'def'],
             'application_version': '42'}
-
+    mock_senza.reset_mock()
+    mock_kio.versions_create.return_value = True
     request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
+    mock_senza.assert_called_with('eu-west-1')
+    mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc', ANY, '1.0', ['abc', 'def'], False)
+    mock_kio.assert_called_with()
+    mock_kio.versions_create.assert_called_once_with('abc', '42', '')
     assert request.status_code == 201
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
     assert FakeStack.last_save['application_version'] == '42'
@@ -195,8 +215,56 @@ def test_new_stack(app, oauth_requests):
     assert FakeStack.last_save['parameters'] == ['abc', 'def']
     assert FakeStack.last_save['stack_id'] == 'abc-42'
     assert FakeStack.last_save['stack_name'] == 'abc'
-    assert FakeStack.last_save['status'] == 'LIZZY:NEW'
+    assert FakeStack.last_save['status'] == 'LIZZY:DEPLOYING'
     assert FakeStack.last_save['traffic'] == 100
+
+    mock_kio.reset_mock()
+    mock_senza.reset_mock()
+    data = {'keep_stacks': 0,
+            'new_traffic': 100,
+            'image_version': '1.0',
+            'senza_yaml': 'SenzaInfo:\n  StackName: abc',
+            'parameters': ['abc', 'def'],
+            'application_version': '42',
+            'disable_rollback': True}
+
+    mock_kio.versions_create.return_value = True
+    request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
+    mock_senza.assert_called_with('eu-west-1')
+    mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc', ANY, '1.0', ['abc', 'def'], True)
+    mock_kio.assert_called_with()
+    mock_kio.versions_create.assert_called_once_with('abc', '42', '')
+    assert request.status_code == 201
+    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    assert FakeStack.last_save['application_version'] == '42'
+    assert FakeStack.last_save['image_version'] == '1.0'
+    assert FakeStack.last_save['keep_stacks'] == 0
+    assert FakeStack.last_save['parameters'] == ['abc', 'def']
+    assert FakeStack.last_save['stack_id'] == 'abc-42'
+    assert FakeStack.last_save['stack_name'] == 'abc'
+    assert FakeStack.last_save['status'] == 'LIZZY:DEPLOYING'
+    assert FakeStack.last_save['traffic'] == 100
+
+    # kio version creation doesn't affect the rest of the process
+    mock_kio.versions_create.reset_mock()
+    mock_kio.versions_create.return_value = False
+    request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
+    mock_kio.assert_called_with()
+    mock_kio.versions_create.assert_called_once_with('abc', '42', '')
+    assert request.status_code == 201
+    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    assert FakeStack.last_save['application_version'] == '42'
+    assert FakeStack.last_save['image_version'] == '1.0'
+    assert FakeStack.last_save['keep_stacks'] == 0
+    assert FakeStack.last_save['parameters'] == ['abc', 'def']
+    assert FakeStack.last_save['stack_id'] == 'abc-42'
+    assert FakeStack.last_save['stack_name'] == 'abc'
+    assert FakeStack.last_save['status'] == 'LIZZY:DEPLOYING'
+    assert FakeStack.last_save['traffic'] == 100
+
+    mock_senza.create.return_value = False
+    request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
+    assert request.status_code == 400
 
 
 def test_invalid_yaml(app, oauth_requests):

@@ -1,19 +1,9 @@
-"""
-Copyright 2015 Zalando SE
-
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the
-License. You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
- language governing permissions and limitations under the License.
-"""
-
 import logging
 import connexion
 import yaml
+from lizzy import config
+from lizzy.apps.kio import Kio
+from lizzy.apps.senza import Senza
 from lizzy.models.stack import Stack
 from lizzy.security import bouncer
 from lizzy.version import VERSION
@@ -92,6 +82,7 @@ def create_stack(new_stack: dict) -> dict:
     application_version = new_stack.get('application_version')  # type Optional[str]
     senza_yaml = new_stack['senza_yaml']  # type: str
     parameters = new_stack.get('parameters', [])
+    disable_rollback = new_stack.get('disable_rollback', False)
 
     try:
         senza_definition = yaml.safe_load(senza_yaml)
@@ -115,6 +106,8 @@ def create_stack(new_stack: dict) -> dict:
                                     headers=_make_headers())
         return problem
 
+    # Create the Stack
+    logger.info("Creating stack %s...", stack_name)
     stack = Stack(keep_stacks=keep_stacks,
                   traffic=new_traffic,
                   image_version=image_version,
@@ -122,8 +115,30 @@ def create_stack(new_stack: dict) -> dict:
                   stack_name=stack_name,
                   application_version=application_version,
                   parameters=parameters)
-    stack.save()
-    return _get_stack_dict(stack), 201, _make_headers()
+    definition = stack.generate_definition()
+    if stack.application_version:
+        kio_extra = {'stack_name': stack_name, 'version': application_version}
+        logger.info("Registering version on kio...", extra=kio_extra)
+        taupage_config = definition.app_server.get('TaupageConfig', {})  # type: Dict[str, str]
+        artifact_name = taupage_config.get('source', '')
+        kio = Kio()
+        if kio.versions_create(stack.stack_name, stack.stack_version, artifact_name):
+            logger.info("Version registered in Kio.", extra=kio_extra)
+        else:
+            logger.error("Error registering version in Kio.", extra=kio_extra)
+
+    senza = Senza(config.region)
+    stack_extra = {'stack_name': stack_name, 'stack_version': stack.stack_version,
+                   'image_version': stack.image_version, 'parameters': stack.parameters}
+    if senza.create(stack.senza_yaml, stack.stack_version, stack.image_version,
+                    stack.parameters, disable_rollback):
+        logger.info("Stack created.", extra=stack_extra)
+        stack.status = 'LIZZY:DEPLOYING'
+        stack.save()
+        return _get_stack_dict(stack), 201, _make_headers()
+    else:
+        logger.error("Error creating stack.", extra=stack_extra)
+        return connexion.problem(400, 'Deployment Failed', "Senza create command failed.", headers=_make_headers())
 
 
 @bouncer
