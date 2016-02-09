@@ -63,7 +63,7 @@ paths:
       responses:
         201:
           description: |
-            Stack to be created. The CloudFormation Stack creation can still fail if it's rejected by senza or AWS CF.
+            Stack to be created. The CloudFormation Stack creation can still fail later.
           schema:
             $ref: '#/definitions/stack'
           headers:
@@ -71,7 +71,7 @@ paths:
               description: Lizzy Version
               type: string
         400:
-          description: Stack was not created because request was invalid
+          description: Stack was not created because request was invalid or because the deployment failed.
           headers:
             X-Lizzy-Version:
               description: Lizzy Version
