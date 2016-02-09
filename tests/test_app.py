@@ -8,7 +8,7 @@ import lizzy.api
 from lizzy.models.stack import Stack
 from lizzy.service import setup_webapp
 
-CURRENT_VERSION = '2016-01-14'
+CURRENT_VERSION = '2016-02-09'
 
 GOOD_HEADERS = {'Authorization': 'Bearer 100', 'Content-type': 'application/json'}
 
@@ -43,7 +43,7 @@ class FakeResponse:
 
 class FakeRequest:
     def __init__(self, status_code: int, text: str):
-        self.status_code = status_code
+        self.status_code = status_code0
         self.text = text
         self.ok = status_code == 200
 
