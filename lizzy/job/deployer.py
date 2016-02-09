@@ -1,7 +1,6 @@
 import logging
 
 from lizzy.apps.common import ExecutionError
-from lizzy.apps.kio import Kio
 from lizzy.apps.senza import Senza
 from lizzy.models.stack import Stack
 
