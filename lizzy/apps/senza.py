@@ -39,12 +39,16 @@ class Senza(Application):
 
         :param stack_name: Name of the application stack
         :return: Route53 Domains
+        :raises SenzaDomainError: when a ExecutionError is thrown to allow more specific error handing.
         """
-        if stack_name:
-            stack_domains = self._execute('domains', stack_name, expect_json=True)
-        else:
-            stack_domains = self._execute('domains', expect_json=True)
-        return stack_domains
+        try:
+            if stack_name:
+                stack_domains = self._execute('domains', stack_name, expect_json=True)
+            else:
+                stack_domains = self._execute('domains', expect_json=True)
+            return stack_domains
+        except ExecutionError as e:
+            raise SenzaDomainError(e.error, e.output)
 
     def list(self) -> List[Dict]:
         """
@@ -76,6 +80,18 @@ class Senza(Application):
         :param stack_version: Name of the application version that will be changed
         :param percentage: New percentage
         :return: Traffic weights for the application
+        :raises SenzaTrafficError: when a ExecutionError is thrown to allow more specific error handing.
         """
-        traffic_weights = self._execute('traffic', stack_name, stack_version, str(percentage), expect_json=True)
-        return traffic_weights
+        try:
+            traffic_weights = self._execute('traffic', stack_name, stack_version, str(percentage), expect_json=True)
+            return traffic_weights
+        except ExecutionError as e:
+            raise SenzaTrafficError(e.error, e.output)
+
+
+class SenzaDomainsError(ExecutionError):
+    pass
+
+
+class SenzaTrafficError(ExecutionError):
+    pass

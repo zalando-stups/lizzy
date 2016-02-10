@@ -1,50 +1,25 @@
 import logging
 import connexion
 import yaml
+from decorator import decorator
 from lizzy import config
 from lizzy.apps.kio import Kio
 from lizzy.apps.senza import Senza
 from lizzy.models.stack import Stack
 from lizzy.security import bouncer
 from lizzy.version import VERSION
+from lizzy.models.exceptions import ObjectNotFoundException
 
 logger = logging.getLogger('lizzy.api')
 
 
 def _make_headers() -> dict:
-    headers = {'X-Lizzy-Version': VERSION}
-    return headers
+    return {'X-Lizzy-Version': VERSION}
 
 
 def _get_stack_dict(stack: Stack) -> dict:
     """
-    From lizzy.v1.yaml:
-      stack_id:
-        type: string
-        description: Unique ID for the stack
-      creation_time:
-        type: string
-        description: Date and time of stack creation on lizzy in ISO 8601 format
-      image_version:
-        type: string
-        description: Docker image version to deploy
-      parameters:
-        type: array
-        description: List of parameters passed to senza
-        items:
-          type: string
-      senza_yaml:
-        type: string
-        description: YAML to provide to senza
-      stack_name:
-        type: string
-        description: Cloud formation stack name prefix
-      status:
-        type: string
-        description: Cloud formation stack status
-      application_version:
-        type: string
-        description: Version of the application used for stack name and kio
+    .. seealso:: lizzy/swagger/lizzy.yaml#/definitions/stack
     """
     stack_dict = {'stack_id': stack.stack_id,
                   'creation_time': '{:%FT%T%z}'.format(stack.creation_time),
@@ -56,6 +31,17 @@ def _get_stack_dict(stack: Stack) -> dict:
                   'stack_version': stack.stack_version,
                   'status': stack.status}
     return stack_dict
+
+
+@decorator
+def exception_to_connexion_problem(func, *args, **kwargs):
+    try:
+        return func(*args, **kwargs)
+    except ObjectNotFoundException as e:
+        problem = connexion.problem(404, 'Not Found',
+                                    "Stack not found: {}".format(e.uid),
+                                    headers=_make_headers())
+        return problem
 
 
 @bouncer
@@ -142,43 +128,31 @@ def create_stack(new_stack: dict) -> dict:
 
 
 @bouncer
+@exception_to_connexion_problem
 def get_stack(stack_id: str) -> dict:
     """
     GET /stacks/{id}
     """
-    try:
-        stack = Stack.get(stack_id)
-    except KeyError:
-        problem = connexion.problem(404, 'Not Found',
-                                    "Stack not found: {}".format(stack_id),
-                                    headers=_make_headers())
-        return problem
-
+    stack = Stack.get(stack_id)
     return _get_stack_dict(stack), 200, _make_headers()
 
 
 @bouncer
+@exception_to_connexion_problem
 def patch_stack(stack_id: str, stack_patch: dict) -> dict:
     """
     PATCH /stacks/{id}
 
-    Update traffic
+    Update traffic and Taupage image
     """
-    try:
-        stack = Stack.get(stack_id)
-    except KeyError:
-        problem = connexion.problem(404, 'Not Found',
-                                    "Stack not found: {}".format(stack_id),
-                                    headers=_make_headers())
-        return problem
+    stack_patch = {key: val for key, val in stack_patch.items() if val is not None}
 
-    new_traffic = stack_patch.get('new_traffic')  # type: int
-
-    if new_traffic is not None:
-        stack.traffic = new_traffic
-
+    stack = Stack.get(stack_id)
+    stack.traffic = stack_patch.get('new_traffic', stack.traffic)  # type: int
+    stack.aim_image = stack_patch.get('new_aim_image', stack.aim_image) # type: str
     stack.status = 'LIZZY:CHANGE'
     stack.save()
+
     return _get_stack_dict(stack), 202, _make_headers()
 
 
@@ -191,10 +165,10 @@ def delete_stack(stack_id: str) -> dict:
     """
     try:
         stack = Stack.get(stack_id)
-    except KeyError:
+    except ObjectNotFoundException:
         # delete is idempotent, if the stack is not there it just doesn't do anything
-        return '', 204, _make_headers()
-
-    stack.status = 'LIZZY:DELETE'
-    stack.save()
+        pass
+    else:
+        stack.status = 'LIZZY:DELETE'
+        stack.save()
     return '', 204, _make_headers()

@@ -1,7 +1,7 @@
 import logging
 
 from lizzy.apps.common import ExecutionError
-from lizzy.apps.senza import Senza
+from lizzy.apps.senza import Senza, SenzaDomainsError, SenzaTrafficError
 from lizzy.models.stack import Stack
 
 _failed_to_get_domains = object()  # sentinel value for when we failed to get domains from senza
@@ -131,27 +131,24 @@ class Deployer:
 
     def change(self) -> str:
         """
-        Update stack. Currently this only changes the traffic.
+        Update stack. Currently this only changes the traffic and Toupage instance.
 
         Returns the cloud formation status
         """
 
         try:
             domains = self.senza.domains(self.stack.stack_name)
-        except ExecutionError:
-            self.logger.exception("Failed to get domains. Traffic will no be switched.", extra=self.log_info)
-            domains = _failed_to_get_domains
-
-        if not domains:
-            self.logger.info("App doesn't have a domain so traffic will not be switched.", extra=self.log_info)
-        elif domains is not _failed_to_get_domains:
-            self.logger.info("Switching app traffic to stack.", extra=self.log_info)
-            try:
+            if domains:
+                self.logger.info("Switching app traffic to stack.", extra=self.log_info)
                 self.senza.traffic(stack_name=self.stack.stack_name,
-                                   stack_version=self.stack.stack_version,
-                                   percentage=self.stack.traffic)
-            except ExecutionError:
-                self.logger.exception("Failed to switch app traffic.", extra=self.log_info)
+                                stack_version=self.stack.stack_version,
+                                percentage=self.stack.traffic)
+            else:
+                self.logger.info("App does not have a domain so traffic will not be switched.", extra=self.log_info)
+        except SenzaDomainsError:
+            self.logger.exception("Failed to get domains. Traffic will not be switched.", extra=self.log_info)
+        except SenzaTrafficError:
+            self.logger.exception("Failed to switch app traffic.", extra=self.log_info)
 
         return self.default()
 
@@ -173,16 +170,12 @@ class Deployer:
         """
         Does the right step for deployment status
         """
-
-        if self.stack.status == 'LIZZY:DEPLOYING':
-            return self.deploying()
-        elif self.stack.status == 'LIZZY:DEPLOYED':
-            return self.deployed()
-        elif self.stack.status == 'LIZZY:ERROR':
-            return 'LIZZY:ERROR'  # This is hardcoded because there is nothing more that can be done about it
-        elif self.stack.status == 'LIZZY:CHANGE':
-            return self.change()
-        elif self.stack.status == 'LIZZY:DELETE':
-            return self.delete()
-        else:
-            return self.default()
+        action_by_status = {
+            'LIZZY:DEPLOYING': self.deploying,
+            'LIZZY:DEPLOYED': self.deployed,
+            'LIZZY:ERROR': lambda: 'LIZZY:ERROR',
+            'LIZZY:CHANGE': self.change,
+            'LIZZY:DELETE': self.delete
+        }
+        handler = action_by_status.get(self.stack.status, self.default)
+        return handler()

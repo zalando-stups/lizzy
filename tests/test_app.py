@@ -6,6 +6,7 @@ import requests
 
 import lizzy.api
 from lizzy.models.stack import Stack
+from lizzy.models.exceptions import ObjectNotFoundException
 from lizzy.service import setup_webapp
 
 CURRENT_VERSION = '2016-02-09'
@@ -17,6 +18,7 @@ STACKS = {'stack1': {'stack_id': None,
                      'keep_stacks': 1,
                      'traffic': 100,
                      'image_version': 'version',
+                     'aim_image': 'latest',
                      'senza_yaml': 'yaml',
                      'stack_name': 'stackno1',
                      'stack_version': 'v1',
@@ -65,6 +67,9 @@ class FakeStack(Stack):
 
     @classmethod
     def get(cls, uid):
+        if uid not in STACKS:
+            raise ObjectNotFoundException(uid)
+
         stack = STACKS[uid]
         return cls(**stack)
 
@@ -323,6 +328,14 @@ def test_patch(app, oauth_requests):
     request = app.patch('/api/stacks/stack1', headers=GOOD_HEADERS, data=json.dumps({}))
     assert request.status_code == 202
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+
+    update_image = {'new_aim_image': 'aim-2323'}
+
+    request = app.patch('/api/stacks/stack1', headers=GOOD_HEADERS, data=json.dumps(update_image))
+    assert request.status_code == 202
+    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    assert FakeStack.last_save['status'] == 'LIZZY:CHANGE'
+    assert FakeStack.last_save['aim_image'] == 'aim-2323'
 
 
 def test_patch404(app, oauth_requests):

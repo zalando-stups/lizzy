@@ -157,7 +157,7 @@ paths:
           type: string
     patch:
       summary: Update stack
-      description: Update stack. Currently the only parameter that can be changed is the instance traffic.
+      description: Update stack. Currently the only parameters that can be changed are the instance traffic and Taupage image.
       operationId: lizzy.api.patch_stack
       responses:
         202:
@@ -287,6 +287,10 @@ definitions:
         description: Percentage of the traffic to be routed to stack
         minimum: 0
         maximum: 100
+      new_aim_image:
+        type: string
+        description: "Use specified image (AMI ID or \"latest\")"
+        example: latest
   problem:
     description: |
       Provides information about an error of some kind the service has encountered.
