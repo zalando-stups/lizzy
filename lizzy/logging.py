@@ -4,6 +4,9 @@ import datetime
 import logging
 import traceback
 
+
+ROOT_LOGGER = logging.getLogger('')
+
 # the following keys will be ignored
 DEFAULT_LOG_RECORD_KEYS = (
     'filename', 'levelno', 'lineno', 'msecs', 'threadName', 'exc_text', 'msg', 'name', 'processName', 'thread',
@@ -104,7 +107,6 @@ def init_logging(format: str='default', level: str='INFO') -> Union[DefaultForma
     :param level: Log level
     :return: Selected Formatter
     """
-    root_logger = logging.getLogger('')
     stream_handler = logging.StreamHandler()
     if format == 'default':
         formatter = DefaultFormatter
@@ -113,6 +115,12 @@ def init_logging(format: str='default', level: str='INFO') -> Union[DefaultForma
     else:
         raise ValueError('Unrecognized Format: {}'.format(format))
     stream_handler.setFormatter(formatter())
-    root_logger.addHandler(stream_handler)
-    root_logger.setLevel(level)
+    ROOT_LOGGER.addHandler(stream_handler)
+    ROOT_LOGGER.setLevel(level)
     return formatter
+
+
+def logger(name):
+    logger_instance = logging.getLogger(name)
+    logger_instance.parent = ROOT_LOGGER
+    return logger_instance

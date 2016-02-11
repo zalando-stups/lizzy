@@ -8,7 +8,10 @@ from lizzy.apps.senza import Senza
 from lizzy.models.stack import Stack
 from lizzy.security import bouncer
 from lizzy.version import VERSION
-from lizzy.models.exceptions import ObjectNotFoundException
+from lizzy.exceptions import ObjectNotFound, AIMImageNotUpdated
+from lizzy.deployer import InstantDeployer
+from lizzy.util import filter_empty_values
+
 
 logger = logging.getLogger('lizzy.api')
 
@@ -37,7 +40,7 @@ def _get_stack_dict(stack: Stack) -> dict:
 def exception_to_connexion_problem(func, *args, **kwargs):
     try:
         return func(*args, **kwargs)
-    except ObjectNotFoundException as e:
+    except ObjectNotFound as e:
         problem = connexion.problem(404, 'Not Found',
                                     "Stack not found: {}".format(e.uid),
                                     headers=_make_headers())
@@ -145,11 +148,21 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
 
     Update traffic and Taupage image
     """
-    stack_patch = {key: val for key, val in stack_patch.items() if val is not None}
+    stack_patch = filter_empty_values(stack_patch)
 
     stack = Stack.get(stack_id)
+    deployer = InstantDeployer(stack)
+
+    if 'new_aim_image' in stack_patch:
+        new_aim_image = stack_patch['new_aim_image']
+        try:
+            deployer.update_aim_image(new_aim_image)
+            stack.aim_image = new_aim_image
+        except AIMImageNotUpdated as e:
+            return connexion.problem(400, 'Image update failed', e.message,
+                                     headers=_make_headers())
+
     stack.traffic = stack_patch.get('new_traffic', stack.traffic)  # type: int
-    stack.aim_image = stack_patch.get('new_aim_image', stack.aim_image) # type: str
     stack.status = 'LIZZY:CHANGE'
     stack.save()
 
@@ -165,8 +178,9 @@ def delete_stack(stack_id: str) -> dict:
     """
     try:
         stack = Stack.get(stack_id)
-    except ObjectNotFoundException:
-        # delete is idempotent, if the stack is not there it just doesn't do anything
+    except ObjectNotFound:
+        # delete is idempotent, if the stack is not there it just
+        # doesn't do anything.
         pass
     else:
         stack.status = 'LIZZY:DELETE'

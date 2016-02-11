@@ -1,7 +1,9 @@
 from typing import Optional, List, Dict
 import tempfile
 
-from .common import ExecutionError, Application
+from .common import Application
+from ..exceptions import (ExecutionError, SenzaDomainsError, SenzaTrafficError,
+                          SenzaRespawnInstancesError, SenzaPatchError)
 
 
 class Senza(Application):
@@ -48,14 +50,13 @@ class Senza(Application):
                 stack_domains = self._execute('domains', expect_json=True)
             return stack_domains
         except ExecutionError as e:
-            raise SenzaDomainError(e.error, e.output)
+            raise SenzaDomainsError(e.error, e.output)
 
     def list(self) -> List[Dict]:
         """
         Returns a list of all the stacks
         """
-        stacks = self._execute('list', expect_json=True)  # type: list
-        return stacks
+        return self._execute('list', expect_json=True)  # type: list
 
     def remove(self, stack_name: str, stack_version: str) -> bool:
         """
@@ -88,10 +89,38 @@ class Senza(Application):
         except ExecutionError as e:
             raise SenzaTrafficError(e.error, e.output)
 
+    def respawn_instances(self, stack_name: str, stack_version: str):
+        """Replace all EC2 instances in Auto Scaling Group(s).
 
-class SenzaDomainsError(ExecutionError):
-    pass
+        :param stack_name: Name of the application stack
+        :param stack_version: Name of the application version that will
+                              be changed
+        :raises SenzaRespawnInstancesError: when a ExecutionError is thrown
+                                            to allow more specific error handing.
+        """
+        try:
 
+            self._execute('respawn_instances', stack_name, stack_version,
+                          expect_json=True)
 
-class SenzaTrafficError(ExecutionError):
-    pass
+        except ExecutionError as e:
+            raise SenzaRespawnInstancesError(e.error, e.output)
+
+    def patch(self, stack_name: str, stack_version: str, aim_image: str):
+        """Patch specific properties of existing stack.
+
+        :param stack_name: Name of the application stack
+        :param stack_version: Name of the application version that will
+                              be changed
+        :param aim_image: Specified image (AMI ID or "latest")
+        :raises SenzaPatchError: when a ExecutionError is thrown to allow more
+                                 specific error handing.
+        """
+        try:
+
+            image_argument = '--image={}'.format(aim_image)
+            self._execute('patch', stack_name, stack_version, image_argument,
+                          expect_json=True)
+
+        except ExecutionError as e:
+            raise SenzaPatchError(e.error, e.output)

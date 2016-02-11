@@ -151,6 +151,17 @@ def test_traffic(monkeypatch, popen):
     assert traffic == {'stream': 'stdout'}
 
 
+def test_patch(monkeypatch, popen):
+    senza = Senza('region')
+    senza.logger = MagicMock()
+    senza.patch('lizzy', 'version42', 'latest')
+
+    cmd = 'senza patch --region region -o json lizzy version42 --image=latest'
+    senza.logger.debug.assert_called_with('Executing %s.', 'senza', extra={'command': cmd})
+    assert not senza.logger.error.called
+    assert not senza.logger.exception.called
+
+
 def test_exception():
     try:
         raise ExecutionError(20, '  Output         ')

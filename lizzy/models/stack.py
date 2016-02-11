@@ -1,9 +1,8 @@
 from typing import Optional  # NOQA
-from enum import Enum
 from datetime import datetime
 import pytz
 import rod.model
-from .exceptions import ObjectNotFoundException
+from lizzy.exceptions import ObjectNotFound
 
 from .senza_definition import SenzaDefinition
 
@@ -87,4 +86,4 @@ class Stack(rod.model.Model):
         try:
             rod.model.Model.get(self, *args, **kwargs)
         except KeyError:
-            raise ObjectNotFoundException(args[0])
+            raise ObjectNotFound(args[0])

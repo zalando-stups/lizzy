@@ -131,24 +131,29 @@ class Deployer:
 
     def change(self) -> str:
         """
-        Update stack. Currently this only changes the traffic and Toupage instance.
+        Update stack. Currently this only changes the traffic and
+        Toupage instance.
 
         Returns the cloud formation status
         """
-
         try:
             domains = self.senza.domains(self.stack.stack_name)
             if domains:
-                self.logger.info("Switching app traffic to stack.", extra=self.log_info)
+                self.logger.info("Switching app traffic to stack.",
+                                 extra=self.log_info)
+
                 self.senza.traffic(stack_name=self.stack.stack_name,
-                                stack_version=self.stack.stack_version,
-                                percentage=self.stack.traffic)
+                                   stack_version=self.stack.stack_version,
+                                   percentage=self.stack.traffic)
             else:
-                self.logger.info("App does not have a domain so traffic will not be switched.", extra=self.log_info)
+                self.logger.info("App does not have a domain so traffic will"
+                                 " not be switched.", extra=self.log_info)
         except SenzaDomainsError:
-            self.logger.exception("Failed to get domains. Traffic will not be switched.", extra=self.log_info)
+            self.logger.exception("Failed to get domains. Traffic will"
+                                  "not be switched.", extra=self.log_info)
         except SenzaTrafficError:
-            self.logger.exception("Failed to switch app traffic.", extra=self.log_info)
+            self.logger.exception("Failed to switch app traffic.",
+                                  extra=self.log_info)
 
         return self.default()
 
@@ -156,8 +161,8 @@ class Deployer:
         """
         Delete the stack.
         """
-
         self.logger.info("Removing stack...", extra=self.log_info)
+
         try:
             self.senza.remove(self.stack.stack_name, self.stack.stack_version)
             self.logger.info("Stack removed.", extra=self.log_info)
@@ -167,8 +172,7 @@ class Deployer:
         return self.default()
 
     def handle(self) -> str:
-        """
-        Does the right step for deployment status
+        """Does the right step for deployment status.
         """
         action_by_status = {
             'LIZZY:DEPLOYING': self.deploying,
