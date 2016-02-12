@@ -5,7 +5,7 @@ import requests
 
 import lizzy.api
 from lizzy.models.stack import Stack
-from lizzy.exceptions import ObjectNotFound
+from lizzy.exceptions import ObjectNotFound, AIMImageNotUpdated
 from lizzy.service import setup_webapp
 
 CURRENT_VERSION = '2016-02-09'
@@ -344,6 +344,11 @@ def test_patch(monkeypatch, app, oauth_requests):
     assert FakeStack.last_save['status'] == 'LIZZY:CHANGE'
     assert FakeStack.last_save['aim_image'] == 'aim-2323'
     mock_deployer.update_aim_image.assert_called_once_with('aim-2323')
+
+    # Should return 400 when not possible to change the AIM image
+    mock_deployer.update_aim_image.side_effect = AIMImageNotUpdated('fake error')
+    request = app.patch('/api/stacks/stack1', headers=GOOD_HEADERS, data=json.dumps(update_image))
+    assert request.status_code == 400
 
 
 def test_patch404(app, oauth_requests):

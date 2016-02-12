@@ -100,7 +100,7 @@ class Senza(Application):
         """
         try:
 
-            self._execute('respawn_instances', stack_name, stack_version,
+            self._execute('respawn-instances', stack_name, stack_version,
                           expect_json=True)
 
         except ExecutionError as e:
