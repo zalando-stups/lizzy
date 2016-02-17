@@ -1,11 +1,11 @@
 from unittest.mock import MagicMock, ANY
-import flask
 import json
 import pytest
 import requests
 
 import lizzy.api
 from lizzy.models.stack import Stack
+from lizzy.exceptions import ObjectNotFound, AIMImageNotUpdated
 from lizzy.service import setup_webapp
 
 CURRENT_VERSION = '2016-02-09'
@@ -17,6 +17,7 @@ STACKS = {'stack1': {'stack_id': None,
                      'keep_stacks': 1,
                      'traffic': 100,
                      'image_version': 'version',
+                     'aim_image': 'latest',
                      'senza_yaml': 'yaml',
                      'stack_name': 'stackno1',
                      'stack_version': 'v1',
@@ -65,6 +66,9 @@ class FakeStack(Stack):
 
     @classmethod
     def get(cls, uid):
+        if uid not in STACKS:
+            raise ObjectNotFound(uid)
+
         stack = STACKS[uid]
         return cls(**stack)
 
@@ -301,28 +305,50 @@ def test_get_stack_404(app, oauth_requests):
 def test_delete(app, oauth_requests):
     request = app.delete('/api/stacks/stack1', headers=GOOD_HEADERS)
     assert request.status_code == 204
-    # assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
     # delete is idempotent
     request = app.delete('/api/stacks/stack1', headers=GOOD_HEADERS)
     assert request.status_code == 204
-    # assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
     request = app.delete('/api/stacks/stack404', headers=GOOD_HEADERS)
     assert request.status_code == 204
-    # assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
 
-def test_patch(app, oauth_requests):
+def test_patch(monkeypatch, app, oauth_requests):
+    mock_deployer = MagicMock()
+    mock_deployer.return_value = mock_deployer
+    monkeypatch.setattr('lizzy.api.InstantDeployer', mock_deployer)
+
     data = {'new_traffic': 50}
 
+    # Only changes the traffic
     request = app.patch('/api/stacks/stack1', headers=GOOD_HEADERS, data=json.dumps(data))
     assert request.status_code == 202
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
+    # Does not change anything
     request = app.patch('/api/stacks/stack1', headers=GOOD_HEADERS, data=json.dumps({}))
     assert request.status_code == 202
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+
+    update_image = {'new_aim_image': 'aim-2323'}
+
+    # Should change the AIM image used by the stack and respwan the instances
+    # using the new AIM image.
+    request = app.patch('/api/stacks/stack1', headers=GOOD_HEADERS, data=json.dumps(update_image))
+    assert request.status_code == 202
+    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    assert FakeStack.last_save['status'] == 'LIZZY:CHANGE'
+    assert FakeStack.last_save['aim_image'] == 'aim-2323'
+    mock_deployer.update_aim_image.assert_called_once_with('aim-2323')
+
+    # Should return 400 when not possible to change the AIM image
+    mock_deployer.update_aim_image.side_effect = AIMImageNotUpdated('fake error')
+    request = app.patch('/api/stacks/stack1', headers=GOOD_HEADERS, data=json.dumps(update_image))
+    assert request.status_code == 400
 
 
 def test_patch404(app, oauth_requests):

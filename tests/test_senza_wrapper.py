@@ -3,7 +3,8 @@ from unittest.mock import MagicMock
 import pytest
 
 from lizzy.apps.senza import Senza
-from lizzy.apps.common import ExecutionError
+from lizzy.exceptions import (ExecutionError, SenzaPatchError,
+        SenzaRespawnInstancesError, SenzaTrafficError, SenzaDomainsError)
 
 
 @pytest.fixture
@@ -93,6 +94,12 @@ def test_domain(monkeypatch, popen):
 
     assert domains == {'test': 'domain2'}
 
+    # test error case
+    popen.side_effect = ExecutionError('', '')
+
+    with pytest.raises(SenzaDomainsError):
+        senza.domains()
+
 
 def test_list(monkeypatch, popen):
     popen.communicate.return_value = b'["item1", "item2"]', b'stderr'
@@ -149,6 +156,56 @@ def test_traffic(monkeypatch, popen):
                              stderr=-1)
 
     assert traffic == {'stream': 'stdout'}
+
+    # test error case
+    popen.side_effect = ExecutionError('', '')
+
+    with pytest.raises(SenzaTrafficError):
+        senza.traffic('lizzy', 'version42', 25)
+
+
+def test_respawn_instances(monkeypatch, popen):
+    senza = Senza('region')
+    senza.logger = MagicMock()
+    senza.respawn_instances('lizzy', 'version42')
+
+    cmd = 'senza respawn-instances --region region -o json lizzy version42'
+    senza.logger.debug.assert_called_with('Executing %s.', 'senza',
+                                          extra={'command': cmd})
+    assert not senza.logger.error.called
+    assert not senza.logger.exception.called
+
+    popen.assert_called_with(['senza', 'respawn-instances', '--region',
+                             'region', '-o', 'json', 'lizzy', 'version42'],
+                             stdout=-1, stderr=-1)
+
+    # test error case
+    popen.side_effect = ExecutionError('', '')
+
+    with pytest.raises(SenzaRespawnInstancesError):
+        senza.respawn_instances('lizzy', 'version42')
+
+
+def test_patch(monkeypatch, popen):
+    senza = Senza('region')
+    senza.logger = MagicMock()
+    senza.patch('lizzy', 'version42', 'latest')
+
+    cmd = 'senza patch --region region -o json lizzy version42 --image=latest'
+    senza.logger.debug.assert_called_with('Executing %s.', 'senza',
+                                          extra={'command': cmd})
+    assert not senza.logger.error.called
+    assert not senza.logger.exception.called
+
+    popen.assert_called_with(['senza', 'patch', '--region', 'region', '-o',
+                             'json', 'lizzy', 'version42', '--image=latest'],
+                             stdout=-1, stderr=-1)
+
+    # test error case
+    popen.side_effect = ExecutionError('', '')
+
+    with pytest.raises(SenzaPatchError):
+        senza.patch('lizzy', 'version42', 'latest')
 
 
 def test_exception():
