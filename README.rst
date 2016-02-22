@@ -41,6 +41,14 @@ Lizzy uses the following environment variables for configuration:
 | TOKEN_INFO_URL | URL to validate the token              |           |
 +----------------+----------------------------------------+-----------+
 
+Stack Version Naming
+--------------------
+The order of precedence to set the stack version is as follows:
+
+1. `stack_version` argument, if present;
+2. `application_version` argument, if present;
+3. Automatically generated version name based on the stack's creation time.
+
 Limitations
 -----------
 Currently Lizzy doesn't support:
