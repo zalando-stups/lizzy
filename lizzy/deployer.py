@@ -33,8 +33,8 @@ class InstantDeployer:
 
             self.senza.patch(self.stack.stack_name, self.stack.stack_version,
                              new_aim_image)
-            self.senza.respawn_instances(
-                       self.stack.stack_name, self.stack.stack_version)
+            self.senza.respawn_instances(self.stack.stack_name,
+                                         self.stack.stack_version)
 
         except ExecutionError as e:
             self.logger.info(e.message, extra=self.log_info)
