@@ -220,6 +220,11 @@ definitions:
       application_version:
         type: string
         description: Version of the application to use for stack name and kio
+      stack_version:
+        type: string
+        description: |
+            Version of the application to use for stack name, this will
+            override the version provided in the application_version
       keep_stacks:
         type: integer
         format: int32

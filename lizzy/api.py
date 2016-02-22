@@ -1,7 +1,9 @@
+from typing import Optional
+from decorator import decorator
 import logging
 import connexion
 import yaml
-from decorator import decorator
+
 from lizzy import config
 from lizzy.apps.kio import Kio
 from lizzy.apps.senza import Senza
@@ -68,7 +70,8 @@ def create_stack(new_stack: dict) -> dict:
     keep_stacks = new_stack['keep_stacks']  # type: int
     new_traffic = new_stack['new_traffic']  # type: int
     image_version = new_stack['image_version']  # type: str
-    application_version = new_stack.get('application_version')  # type Optional[str]
+    application_version = new_stack.get('application_version')  # type: Optional[str]
+    stack_version = new_stack.get('stack_version')  # type: Optional[str]
     senza_yaml = new_stack['senza_yaml']  # type: str
     parameters = new_stack.get('parameters', [])
     disable_rollback = new_stack.get('disable_rollback', False)
@@ -78,19 +81,29 @@ def create_stack(new_stack: dict) -> dict:
         if not isinstance(senza_definition, dict):
             raise TypeError
     except yaml.YAMLError:
-        logger.exception("Couldn't parse senza yaml.", extra={'senza_yaml': repr(senza_yaml)})
-        return connexion.problem(400, 'Invalid senza yaml', "Failed to parse senza yaml.", headers=_make_headers())
+        logger.exception("Couldn't parse senza yaml.",
+                         extra={'senza_yaml': repr(senza_yaml)})
+        return connexion.problem(400,
+                                 'Invalid senza yaml',
+                                 "Failed to parse senza yaml.",
+                                 headers=_make_headers())
     except TypeError:
-        logger.exception("Senza yaml is not a dict.", extra={'senza_yaml': repr(senza_yaml)})
-        return connexion.problem(400, 'Invalid senza yaml', "Senza yaml is not a dict.", headers=_make_headers())
+        logger.exception("Senza yaml is not a dict.",
+                         extra={'senza_yaml': repr(senza_yaml)})
+        return connexion.problem(400,
+                                 'Invalid senza yaml',
+                                 "Senza yaml is not a dict.",
+                                 headers=_make_headers())
 
     try:
         stack_name = senza_definition['SenzaInfo']['StackName']  # type: str
         # TODO validate stack name
     except KeyError as exception:
-        logger.error("Couldn't get stack name from definition.", extra={'senza_yaml': repr(senza_definition)})
+        logger.error("Couldn't get stack name from definition.",
+                     extra={'senza_yaml': repr(senza_definition)})
         missing_property = str(exception)
-        problem = connexion.problem(400, 'Invalid senza yaml',
+        problem = connexion.problem(400,
+                                    'Invalid senza yaml',
                                     "Missing property in senza yaml: {}".format(missing_property),
                                     headers=_make_headers())
         return problem
@@ -102,6 +115,7 @@ def create_stack(new_stack: dict) -> dict:
                   image_version=image_version,
                   senza_yaml=senza_yaml,
                   stack_name=stack_name,
+                  stack_version=stack_version,
                   application_version=application_version,
                   parameters=parameters)
     definition = stack.generate_definition()
@@ -117,8 +131,10 @@ def create_stack(new_stack: dict) -> dict:
             logger.error("Error registering version in Kio.", extra=kio_extra)
 
     senza = Senza(config.region)
-    stack_extra = {'stack_name': stack_name, 'stack_version': stack.stack_version,
-                   'image_version': stack.image_version, 'parameters': stack.parameters}
+    stack_extra = {'stack_name': stack_name,
+                   'stack_version': stack.stack_version,
+                   'image_version': stack.image_version,
+                   'parameters': stack.parameters}
     if senza.create(stack.senza_yaml, stack.stack_version, stack.image_version,
                     stack.parameters, disable_rollback):
         logger.info("Stack created.", extra=stack_extra)
@@ -127,7 +143,9 @@ def create_stack(new_stack: dict) -> dict:
         return _get_stack_dict(stack), 201, _make_headers()
     else:
         logger.error("Error creating stack.", extra=stack_extra)
-        return connexion.problem(400, 'Deployment Failed', "Senza create command failed.", headers=_make_headers())
+        return connexion.problem(400, 'Deployment Failed',
+                                 "Senza create command failed.",
+                                 headers=_make_headers())
 
 
 @bouncer
