@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional  # noqa
 from decorator import decorator
 import logging
 import connexion
