@@ -1,10 +1,10 @@
 from typing import Optional  # NOQA
 from datetime import datetime
-import pytz
 import rod.model
 from lizzy.exceptions import ObjectNotFound
 
 from .senza_definition import SenzaDefinition
+from ..util import now
 
 
 class Stack(rod.model.Model):
@@ -44,11 +44,12 @@ class Stack(rod.model.Model):
         :param kwargs: Other parameters that are not recognized
         """
         self.stack_name = stack_name
-        self.creation_time = creation_time or datetime.utcnow().replace(tzinfo=pytz.utc)  # type: datetime
+        self.creation_time = creation_time or now()  # type: datetime
         self.image_version = image_version
         self.stack_version = (stack_version or
                               application_version or
-                              self.generate_version(self.creation_time, image_version))
+                              self.generate_version(self.creation_time,
+                                                    image_version))
         self.stack_id = stack_id if stack_id is not None else self.generate_id()  # type str
         self.aim_image = aim_image
         self.keep_stacks = keep_stacks
@@ -69,7 +70,8 @@ class Stack(rod.model.Model):
         :return: CF stack version
         """
         version = version.lower().replace('-snapshot', 's').replace('.', 'o').replace('_', '')
-        return '{version}T{time:%Y%m%d%H%M%S}'.format(version=version, time=creation_time)
+        return '{version}T{time:%Y%m%d%H%M%S}'.format(version=version,
+                                                      time=creation_time)
 
     def generate_id(self) -> str:
         """

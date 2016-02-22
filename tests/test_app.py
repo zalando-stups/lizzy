@@ -8,7 +8,7 @@ from lizzy.models.stack import Stack
 from lizzy.exceptions import ObjectNotFound, AIMImageNotUpdated
 from lizzy.service import setup_webapp
 
-CURRENT_VERSION = '2016-02-09'
+CURRENT_VERSION = '2016-02-22'
 
 GOOD_HEADERS = {'Authorization': 'Bearer 100', 'Content-type': 'application/json'}
 
