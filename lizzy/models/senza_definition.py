@@ -20,9 +20,9 @@ class SenzaDefinition:
         for parameter in senza_paramaters:
             name = list(parameter.keys()).pop()
             keys.append(name)
-            if 'Default' in parameter:
+            if 'Default' in parameter[name]:
                 # Add the defaults to the parameter map
-                arguments_map[name] = parameter['Default']
+                arguments_map[name] = parameter[name]['Default']
 
         arguments_map.update(dict(zip(keys, arguments)))  # add provided values
 

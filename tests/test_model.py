@@ -5,9 +5,11 @@ SenzaInfo:
   Parameters:
   - ImageVersion: {Description: Docker image version of lizzy.}
   - Test: {Description: Docker image version of lizzy.}
+  - DefaultTest: {Description: Docker image version of lizzy., Default: defaultTestValue}
   StackName: lizzy
 Test: lizzy:{{Arguments.ImageVersion}}
 Test2: lizzy:{{Arguments.Test}}
+Test3: lizzy:{{Arguments.DefaultTest}}
 """
 
 
@@ -20,3 +22,4 @@ def test_definition_generator():
 
     assert definition1.definition['Test'] == 'lizzy:1.0'
     assert definition1.definition['Test2'] == 'lizzy:testValue'
+    assert definition1.definition['Test3'] == 'lizzy:defaultTestValue'
