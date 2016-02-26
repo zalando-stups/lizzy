@@ -9,7 +9,7 @@ from setuptools.command.test import test as TestCommand
 # The minor and major versions should match lizzy's version
 VERSION_MAJOR = 1
 VERSION_MINOR = 3
-REVISION = 1
+REVISION = 2
 VERSION = '{VERSION_MAJOR}.{VERSION_MINOR}.{REVISION}'.format_map(locals())
 
 
