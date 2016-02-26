@@ -84,8 +84,9 @@ class Stack(rod.model.Model):
         parameters.extend(self.parameters)
         return SenzaDefinition(self.senza_yaml, parameters)
 
-    def get(self, *args, **kwargs):
+    @classmethod
+    def get(cls, *args, **kwargs):
         try:
-            rod.model.Model.get(self, *args, **kwargs)
+            rod.model.Model.get(cls, *args, **kwargs)
         except KeyError:
             raise ObjectNotFound(args[0])
