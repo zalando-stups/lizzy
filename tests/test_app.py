@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, ANY
 import json
+import os
 import pytest
 import requests
 
@@ -28,8 +29,7 @@ class FakeConfig:
     def __init__(self):
         self.deployer_scope = 'myscope'
         self.token_url = 'https://ouath.example/access_token'
-        self.token_info_url = 'https://ouath.example/token_info'
-        self.port = 8080
+gtic        self.port = 8080
 
 
 class FakeResponse:
@@ -78,6 +78,7 @@ class FakeStack(Stack):
 
 @pytest.fixture
 def app(monkeypatch):
+    os.environ['TOKENINFO_URL'] = 'https://ouath.example/token_info'
     app = setup_webapp(FakeConfig())
     app_client = app.app.test_client()
 
