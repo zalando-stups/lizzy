@@ -14,10 +14,12 @@ logger = logging.getLogger('lizzy')
 def setup_webapp(config: configuration.Configuration):  # pragma: no cover
 
     arguments = {'deployer_scope': config.deployer_scope,
-                 'token_url': config.token_url,
-                 'token_info_url': config.token_info_url}
+                 'token_url': config.token_url}
     logger.debug('Webapp Parameters', extra=arguments)
-    app = connexion.App(__name__, specification_dir='swagger/', arguments=arguments)
+    app = connexion.App(__name__,
+                        specification_dir='swagger/',
+                        arguments=arguments,
+                        auth_all_paths=True)
     app.add_api('lizzy.yaml')
     return app
 

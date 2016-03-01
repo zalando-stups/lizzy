@@ -21,7 +21,6 @@ securityDefinitions:
     type: oauth2
     flow: password
     tokenUrl: "{{token_url}}"
-    x-tokenInfoUrl: "{{token_info_url}}"
     scopes:
         "{{deployer_scope}}": Can deploy and change stacks
 

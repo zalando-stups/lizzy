@@ -14,7 +14,7 @@ class Configuration:
     redis_port = environmental.Int('REDIS_PORT', 6379)
     region = environmental.Str('REGION', 'eu-west-1')  # AWS Region
     token_url = environmental.Str('TOKEN_URL')
-    token_info_url = environmental.Str('TOKEN_INFO_URL')
+    token_info_url = environmental.Str('TOKENINFO_URL')
 
 
 config = Configuration()
