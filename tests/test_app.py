@@ -29,7 +29,7 @@ class FakeConfig:
     def __init__(self):
         self.deployer_scope = 'myscope'
         self.token_url = 'https://ouath.example/access_token'
-gtic        self.port = 8080
+        self.port = 8080
 
 
 class FakeResponse:
