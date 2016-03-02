@@ -2,6 +2,7 @@ from unittest.mock import MagicMock, call, ANY
 
 from lizzy.apps.common import ExecutionError
 from lizzy.job import check_status
+from lizzy.exceptions import ObjectNotFound
 
 SENZA_STACKS = [{'stack_name': 'stack', 'version': 1},
                 {'stack_name': 'stacknotinlizzy', 'version': 1},
@@ -41,7 +42,10 @@ class FakeStack:
 
     @classmethod
     def get(cls, item):
-        return cls(**LIZZY_STACKS[item])
+        try:
+            return cls(**LIZZY_STACKS[item])
+        except KeyError:
+            raise ObjectNotFound(item)
 
     def lock(self, n):
         return True

@@ -9,3 +9,5 @@ build.py
 .cache
 .venv
 run.sh
+__pycache__
+.tox/

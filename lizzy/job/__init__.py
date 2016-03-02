@@ -23,6 +23,7 @@ from lizzy.apps.senza import Senza
 from lizzy.apps.common import ExecutionError
 from lizzy.job.deployer import Deployer
 from lizzy.models.stack import Stack
+from lizzy.exceptions import ObjectNotFound
 
 try:
     # From http://uwsgi-docs.readthedocs.org/en/latest/PythonModule.html
@@ -55,7 +56,7 @@ def check_status(region: str):
             logger.debug("Stack found.", extra={'lizzy.stack.id': stack_name})
             lizzy_stacks[lizzy_stack.stack_name][lizzy_stack.stack_version] = lizzy_stack
             cf_stacks[lizzy_stack.stack_name][lizzy_stack.stack_version] = cf_stack
-        except KeyError:
+        except ObjectNotFound:
             # Stack no handled by lizzy
             pass
 
