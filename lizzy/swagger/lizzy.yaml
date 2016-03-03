@@ -264,7 +264,7 @@ definitions:
         description: Docker image version of the stack
       parameters:
         type: array
-        description: List of parameters to passed to senza
+        description: List of parameters to be passed to senza
         items:
           type: string
       senza_yaml:

@@ -1,17 +1,20 @@
 from typing import Optional, List, Dict
 import tempfile
 
+from ..version import VERSION
 from .common import Application
 from ..exceptions import (ExecutionError, SenzaDomainsError, SenzaTrafficError,
                           SenzaRespawnInstancesError, SenzaPatchError)
+
+TAG_CLI_FLAG = '-t'
 
 
 class Senza(Application):
     def __init__(self, region: str):
         super().__init__('senza', extra_parameters=['--region', region])
 
-    def create(self, senza_yaml: str, stack_version: str, image_version: str, parameters: List[str],
-               disable_rollback: bool) -> bool:
+    def create(self, senza_yaml: str, stack_version: str, image_version: str,
+               parameters: List[str], disable_rollback: bool) -> bool:
         """
         Create a new stack
 
@@ -28,10 +31,17 @@ class Senza(Application):
                 args = ['--force']
                 if disable_rollback:
                     args.append('--disable-rollback')
-                self._execute('create', *args, temp_yaml.name, stack_version, image_version, *parameters)
+
+                parameters.append(TAG_CLI_FLAG)
+                parameters.append('LizzyVersion={}'.format(VERSION))
+
+                self._execute('create', *args, temp_yaml.name, stack_version,
+                              image_version, *parameters)
+
                 return True
             except ExecutionError as exception:
-                self.logger.error('Failed to create stack.', extra={'command.output': exception.output})
+                self.logger.error('Failed to create stack.',
+                                  extra={'command.output': exception.output})
                 return False
 
     def domains(self, stack_name: Optional[str]=None) -> List[Dict[str, str]]:

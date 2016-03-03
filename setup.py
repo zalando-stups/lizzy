@@ -58,7 +58,7 @@ setup(
                       'pyyaml',
                       'rod',
                       'stups-kio',
-                      'stups-senza',
+                      'stups-senza>=1.0.40',
                       'uwsgi',
                       'uwsgi_metrics3'],
     tests_require=['pytest-cov', 'pytest'],
