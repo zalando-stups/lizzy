@@ -6,8 +6,6 @@ from .common import Application
 from ..exceptions import (ExecutionError, SenzaDomainsError, SenzaTrafficError,
                           SenzaRespawnInstancesError, SenzaPatchError)
 
-TAG_CLI_FLAG = '-t'
-
 
 class Senza(Application):
     def __init__(self, region: str):
@@ -32,8 +30,7 @@ class Senza(Application):
                 if disable_rollback:
                     args.append('--disable-rollback')
 
-                parameters.append(TAG_CLI_FLAG)
-                parameters.append('LizzyVersion={}'.format(VERSION))
+                parameters.extend(['-t', 'LizzyVersion={}'.format(VERSION)])
 
                 self._execute('create', *args, temp_yaml.name, stack_version,
                               image_version, *parameters)
@@ -46,16 +43,18 @@ class Senza(Application):
 
     def domains(self, stack_name: Optional[str]=None) -> List[Dict[str, str]]:
         """
-        Get domain names for applications. If stack name is provided then it will show the domain names just for that
-        application
+        Get domain names for applications. If stack name is provided then it
+        will show the domain names just for that application
 
         :param stack_name: Name of the application stack
         :return: Route53 Domains
-        :raises SenzaDomainError: when a ExecutionError is thrown to allow more specific error handing.
+        :raises SenzaDomainError: when a ExecutionError is thrown to allow more
+                                  specific error handing.
         """
         try:
             if stack_name:
-                stack_domains = self._execute('domains', stack_name, expect_json=True)
+                stack_domains = self._execute('domains', stack_name,
+                                              expect_json=True)
             else:
                 stack_domains = self._execute('domains', expect_json=True)
             return stack_domains
