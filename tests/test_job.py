@@ -84,8 +84,10 @@ def test_check_status(monkeypatch):
     assert mock_deployer.handle.call_count == 1
 
     mock_log.debug.assert_any_call("In Job")
-    mock_log.debug.assert_any_call('Stack found.', extra={'lizzy.stack.id': 'stack-1'})
-    mock_log.debug.assert_any_call('Stack found.', extra={'lizzy.stack.id': 'lizzyremoved-1'})
+    mock_log.debug.assert_any_call('Stack found in Redis.',
+                                   extra={'lizzy.stack.id': 'stack-1'})
+    mock_log.debug.assert_any_call('Stack found in Redis.',
+                                   extra={'lizzy.stack.id': 'lizzyremoved-1'})
 
 
 def test_fail_get_list(monkeypatch):
