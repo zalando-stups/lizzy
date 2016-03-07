@@ -47,14 +47,16 @@ class Deployer:
         longer exists.
         """
 
-        self.logger.debug("Updating stack status based on AWS CF.", extra=self.log_info)
+        self.logger.debug("Updating stack status based on AWS CF.",
+                          extra=self.log_info)
         cloud_formation_status = self._get_stack_status()
         if cloud_formation_status is not None:
             self.logger.debug("Stack status updated", extra=self.log_info)
             new_status = 'CF:{}'.format(cloud_formation_status)
         else:
             # If this happens is because the stack was removed from aws
-            self.logger.info("Stack no longer exists, marking as removed", extra=self.log_info)
+            self.logger.info("Stack no longer exists, marking as removed",
+                             extra=self.log_info)
             new_status = 'LIZZY:REMOVED'
         return new_status
 
