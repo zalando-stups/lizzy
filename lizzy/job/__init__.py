@@ -32,7 +32,7 @@ def check_status(region: str):
         senza_list = senza.list()  # All stacks in senza
     except ExecutionError:
         logger.exception("Couldn't get CF stacks. Exiting Job.")
-        return
+        return False
 
     logger.debug('Got %d senza stacks.', len(senza_list),
                  extra={'senza_stacks': senza_list})
