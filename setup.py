@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-
+import re
+import ast
 import sys
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 
-# The minor and major versions should match lizzy's version
-VERSION_MAJOR = 1
-VERSION_MINOR = 4
-REVISION = 2
-VERSION = '{VERSION_MAJOR}.{VERSION_MINOR}.{REVISION}'.format_map(locals())
+_version_re = re.compile(r'VERSION\s+=\s+(.*)')
+
+with open('lizzy/version.py', 'rb') as f:
+    version_content = f.read().decode('utf-8')
+    VERSION = ast.literal_eval(_version_re.search(version_content).group(1))
 
 
 def get_long_description():

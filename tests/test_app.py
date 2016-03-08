@@ -9,8 +9,9 @@ from lizzy.models.stack import Stack
 from lizzy.exceptions import (ObjectNotFound, AMIImageNotUpdated,
                               TrafficNotUpdated)
 from lizzy.service import setup_webapp
+from lizzy.version import VERSION
 
-CURRENT_VERSION = '2016-02-22'
+CURRENT_VERSION = VERSION
 
 GOOD_HEADERS = {'Authorization': 'Bearer 100', 'Content-type': 'application/json'}
 
