@@ -87,6 +87,6 @@ class Stack(rod.model.Model):
     @classmethod
     def get(cls, *args, **kwargs):
         try:
-            super().get(*args, **kwargs)
+            return super().get(*args, **kwargs)
         except KeyError:
             raise ObjectNotFound(args[0])
