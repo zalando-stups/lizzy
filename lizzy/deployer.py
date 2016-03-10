@@ -36,6 +36,7 @@ class InstantDeployer:
             else:
                 self.logger.info("App does not have a domain so traffic will"
                                  " not be switched.", extra=self.log_info)
+                raise TrafficNotUpdated("App does not have a domain.")
         except SenzaDomainsError as e:
             self.logger.exception("Failed to get domains. Traffic will"
                                   "not be switched.", extra=self.log_info)

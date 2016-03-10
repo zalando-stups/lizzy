@@ -4,7 +4,9 @@ import pytest
 from lizzy.job.deployer import Deployer
 from lizzy.models.stack import Stack
 from lizzy.deployer import InstantDeployer
-from lizzy.exceptions import SenzaPatchError, AIMImageNotUpdated
+from lizzy.exceptions import (SenzaPatchError, AIMImageNotUpdated,
+                              SenzaDomainsError, SenzaTrafficError,
+                              TrafficNotUpdated)
 
 LIZZY_STACKS = {'lizzy': {'1': {},
                           '2': {},
@@ -200,3 +202,39 @@ def test_update_aim_image(monkeypatch):
 
     with pytest.raises(AIMImageNotUpdated):
         instant_deployer.update_aim_image('latest')
+
+
+def test_change_traffic(monkeypatch, logger):
+    mock_senza = MagicMock()
+    mock_senza.traffic.return_value = ['test.example']
+    mock_senza.return_value = mock_senza
+    monkeypatch.setattr('lizzy.deployer.Senza', mock_senza)
+
+    stack = Stack(stack_id='lizzy-42', creation_time='2015-09-16T09:48',
+                  keep_stacks=2, traffic=47,
+                  image_version='1.0', senza_yaml=YAML1, stack_name='lizzy',
+                  stack_version='42',
+                  status='LIZZY:CHANGE')
+
+    instant_deployer = InstantDeployer(stack)
+    instant_deployer.change_traffic(100)
+
+    mock_senza.traffic.assert_called_once_with(percentage=100,
+                                               stack_name='lizzy',
+                                               stack_version='42')
+
+    # while running the one of the senza commands an error occurs
+    mock_senza.traffic.side_effect = SenzaDomainsError('', '')
+
+    with pytest.raises(TrafficNotUpdated):
+        instant_deployer.change_traffic(100)
+
+    mock_senza.traffic.side_effect = SenzaTrafficError('', '')
+
+    with pytest.raises(TrafficNotUpdated):
+        instant_deployer.change_traffic(100)
+
+    mock_senza.traffic.side_effect = None
+    mock_senza.domains.return_value = []
+    with pytest.raises(TrafficNotUpdated):
+        instant_deployer.change_traffic(100)
