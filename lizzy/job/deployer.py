@@ -1,7 +1,7 @@
 import logging
 
 from lizzy.apps.common import ExecutionError
-from lizzy.apps.senza import Senza, SenzaDomainsError, SenzaTrafficError
+from lizzy.apps.senza import Senza
 from lizzy.models.stack import Stack
 
 _failed_to_get_domains = object()  # sentinel value for when we failed to get domains from senza
