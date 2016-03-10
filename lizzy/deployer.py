@@ -4,7 +4,8 @@ from lizzy.models.stack import Stack
 from lizzy.logging import logger
 from lizzy.configuration import config
 from lizzy.exceptions import (AIMImageNotUpdated, ExecutionError,
-                              SenzaDomainsError, SenzaTrafficError)
+                              SenzaDomainsError, SenzaTrafficError,
+                              TrafficNotUpdated)
 
 
 class InstantDeployer:
@@ -22,7 +23,7 @@ class InstantDeployer:
             'lizzy.stack.name': self.stack.stack_name
         }
 
-    def change_traffic(self):
+    def change_traffic(self, new_traffic: int):
         try:
             domains = self.senza.domains(self.stack.stack_name)
             if domains:
@@ -31,16 +32,18 @@ class InstantDeployer:
 
                 self.senza.traffic(stack_name=self.stack.stack_name,
                                    stack_version=self.stack.stack_version,
-                                   percentage=self.stack.traffic)
+                                   percentage=new_traffic)
             else:
                 self.logger.info("App does not have a domain so traffic will"
                                  " not be switched.", extra=self.log_info)
-        except SenzaDomainsError:
+        except SenzaDomainsError as e:
             self.logger.exception("Failed to get domains. Traffic will"
                                   "not be switched.", extra=self.log_info)
-        except SenzaTrafficError:
+            raise TrafficNotUpdated(e.message)
+        except SenzaTrafficError as e:
             self.logger.exception("Failed to switch app traffic.",
                                   extra=self.log_info)
+            raise TrafficNotUpdated(e.message)
 
     def update_aim_image(self, new_aim_image: str):
         """Change the AIM image of the Auto Scaling Group (ASG) and respawn the
