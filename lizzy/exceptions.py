@@ -53,3 +53,8 @@ class ObjectNotFound(LizzyError):
 class AIMImageNotUpdated(LizzyError):
     """Raised when 'senza patch' command to update Taupage image does
     not succeed."""
+
+
+class TrafficNotUpdated(LizzyError):
+    """Raised when 'senza traffic' command to update the stack traffic does
+    not succeed."""

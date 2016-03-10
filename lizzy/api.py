@@ -10,7 +10,8 @@ from lizzy.apps.senza import Senza
 from lizzy.models.stack import Stack
 from lizzy.security import bouncer
 from lizzy.version import VERSION
-from lizzy.exceptions import ObjectNotFound, AIMImageNotUpdated
+from lizzy.exceptions import (ObjectNotFound, AIMImageNotUpdated,
+                              TrafficNotUpdated)
 from lizzy.deployer import InstantDeployer
 from lizzy.util import filter_empty_values
 
@@ -180,8 +181,15 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
             return connexion.problem(400, 'Image update failed', e.message,
                                      headers=_make_headers())
 
-    stack.traffic = stack_patch.get('new_traffic', stack.traffic)  # type: int
-    stack.status = 'LIZZY:CHANGE'
+    if 'new_traffic' in stack_patch:
+        new_traffic = stack_patch['new_traffic']
+        try:
+            deployer.change_traffic(new_traffic)
+        except TrafficNotUpdated as e:
+            return connexion.problem(400, 'Traffic update failed', e.message,
+                                     headers=_make_headers())
+        stack.traffic = new_traffic
+
     stack.save()
 
     return _get_stack_dict(stack), 202, _make_headers()
