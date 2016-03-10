@@ -131,34 +131,6 @@ class Deployer:
 
         return 'CF:{}'.format(cloud_formation_status)
 
-    def change(self) -> str:
-        """
-        Update stack. Currently this only changes the traffic and
-        Toupage instance.
-
-        Returns the cloud formation status
-        """
-        try:
-            domains = self.senza.domains(self.stack.stack_name)
-            if domains:
-                self.logger.info("Switching app traffic to stack.",
-                                 extra=self.log_info)
-
-                self.senza.traffic(stack_name=self.stack.stack_name,
-                                   stack_version=self.stack.stack_version,
-                                   percentage=self.stack.traffic)
-            else:
-                self.logger.info("App does not have a domain so traffic will"
-                                 " not be switched.", extra=self.log_info)
-        except SenzaDomainsError:
-            self.logger.exception("Failed to get domains. Traffic will"
-                                  "not be switched.", extra=self.log_info)
-        except SenzaTrafficError:
-            self.logger.exception("Failed to switch app traffic.",
-                                  extra=self.log_info)
-
-        return self.default()
-
     def delete(self) -> str:
         """
         Delete the stack.
@@ -180,7 +152,6 @@ class Deployer:
             'LIZZY:DEPLOYING': self.deploying,
             'LIZZY:DEPLOYED': self.deployed,
             'LIZZY:ERROR': lambda: 'LIZZY:ERROR',
-            'LIZZY:CHANGE': self.change,
             'LIZZY:DELETE': self.delete
         }
         handler = action_by_status.get(self.stack.status, self.default)

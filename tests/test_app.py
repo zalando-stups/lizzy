@@ -6,7 +6,8 @@ import requests
 
 import lizzy.api
 from lizzy.models.stack import Stack
-from lizzy.exceptions import ObjectNotFound, AIMImageNotUpdated
+from lizzy.exceptions import (ObjectNotFound, AIMImageNotUpdated,
+                              TrafficNotUpdated)
 from lizzy.service import setup_webapp
 
 CURRENT_VERSION = '2016-02-22'
@@ -326,23 +327,33 @@ def test_patch(monkeypatch, app, oauth_requests):
     data = {'new_traffic': 50}
 
     # Only changes the traffic
-    request = app.patch('/api/stacks/stack1', headers=GOOD_HEADERS, data=json.dumps(data))
+    request = app.patch('/api/stacks/stack1', headers=GOOD_HEADERS,
+                        data=json.dumps(data))
     assert request.status_code == 202
+    assert FakeStack.last_save['traffic'] == 50
+    mock_deployer.change_traffic.assert_called_once_with(50)
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
+    # Should return 400 when not possible to change the traffic
+    mock_deployer.change_traffic.side_effect = TrafficNotUpdated(
+        'fake error')
+    request = app.patch('/api/stacks/stack1', headers=GOOD_HEADERS,
+                        data=json.dumps(data))
+    assert request.status_code == 400
+
     # Does not change anything
-    request = app.patch('/api/stacks/stack1', headers=GOOD_HEADERS, data=json.dumps({}))
+    request = app.patch('/api/stacks/stack1', headers=GOOD_HEADERS,
+                        data=json.dumps({}))
     assert request.status_code == 202
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
     update_image = {'new_aim_image': 'aim-2323'}
 
-    # Should change the AIM image used by the stack and respwan the instances
+    # Should change the AIM image used by the stack and respawnn the instances
     # using the new AIM image.
     request = app.patch('/api/stacks/stack1', headers=GOOD_HEADERS, data=json.dumps(update_image))
     assert request.status_code == 202
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
-    assert FakeStack.last_save['status'] == 'LIZZY:CHANGE'
     assert FakeStack.last_save['aim_image'] == 'aim-2323'
     mock_deployer.update_aim_image.assert_called_once_with('aim-2323')
 
