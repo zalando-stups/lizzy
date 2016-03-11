@@ -6,7 +6,7 @@ import requests
 
 import lizzy.api
 from lizzy.models.stack import Stack
-from lizzy.exceptions import (ObjectNotFound, AIMImageNotUpdated,
+from lizzy.exceptions import (ObjectNotFound, AMIImageNotUpdated,
                               TrafficNotUpdated)
 from lizzy.service import setup_webapp
 
@@ -19,7 +19,7 @@ STACKS = {'stack1': {'stack_id': None,
                      'keep_stacks': 1,
                      'traffic': 100,
                      'image_version': 'version',
-                     'aim_image': 'latest',
+                     'ami_image': 'latest',
                      'senza_yaml': 'yaml',
                      'stack_name': 'stackno1',
                      'stack_version': 'v1',
@@ -347,18 +347,18 @@ def test_patch(monkeypatch, app, oauth_requests):
     assert request.status_code == 202
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
-    update_image = {'new_aim_image': 'aim-2323'}
+    update_image = {'new_ami_image': 'ami-2323'}
 
-    # Should change the AIM image used by the stack and respawnn the instances
-    # using the new AIM image.
+    # Should change the AMI image used by the stack and respawnn the instances
+    # using the new AMI image.
     request = app.patch('/api/stacks/stack1', headers=GOOD_HEADERS, data=json.dumps(update_image))
     assert request.status_code == 202
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
-    assert FakeStack.last_save['aim_image'] == 'aim-2323'
-    mock_deployer.update_aim_image.assert_called_once_with('aim-2323')
+    assert FakeStack.last_save['ami_image'] == 'ami-2323'
+    mock_deployer.update_ami_image.assert_called_once_with('ami-2323')
 
-    # Should return 400 when not possible to change the AIM image
-    mock_deployer.update_aim_image.side_effect = AIMImageNotUpdated('fake error')
+    # Should return 400 when not possible to change the AMI image
+    mock_deployer.update_ami_image.side_effect = AMIImageNotUpdated('fake error')
     request = app.patch('/api/stacks/stack1', headers=GOOD_HEADERS, data=json.dumps(update_image))
     assert request.status_code == 400
 

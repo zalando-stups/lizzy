@@ -50,7 +50,7 @@ class ObjectNotFound(LizzyError):
         self.uid = uid
 
 
-class AIMImageNotUpdated(LizzyError):
+class AMIImageNotUpdated(LizzyError):
     """Raised when 'senza patch' command to update Taupage image does
     not succeed."""
 

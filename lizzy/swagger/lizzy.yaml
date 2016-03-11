@@ -291,7 +291,7 @@ definitions:
         description: Percentage of the traffic to be routed to stack
         minimum: 0
         maximum: 100
-      new_aim_image:
+      new_ami_image:
         type: string
         description: "Use specified image (AMI ID or \"latest\")"
         example: latest
