@@ -4,7 +4,7 @@ import pytest
 from lizzy.job.deployer import Deployer
 from lizzy.models.stack import Stack
 from lizzy.deployer import InstantDeployer
-from lizzy.exceptions import (SenzaPatchError, AIMImageNotUpdated,
+from lizzy.exceptions import (SenzaPatchError, AMIImageNotUpdated,
                               SenzaDomainsError, SenzaTrafficError,
                               TrafficNotUpdated)
 
@@ -180,7 +180,7 @@ def test_delete(monkeypatch, logger):
     mock_senza.remove.assert_called_once_with('lizzy', '42')
 
 
-def test_update_aim_image(monkeypatch):
+def test_update_ami_image(monkeypatch):
     mock_senza = MagicMock()
     mock_senza.domains.return_value = ['test.example']
     mock_senza.return_value = mock_senza
@@ -192,7 +192,7 @@ def test_update_aim_image(monkeypatch):
 
     # everything works as expected
     instant_deployer = InstantDeployer(stack)
-    instant_deployer.update_aim_image('latest')
+    instant_deployer.update_ami_image('latest')
 
     mock_senza.patch.assert_called_once_with('lizzy', '42', 'latest')
     mock_senza.respawn_instances.assert_called_once_with('lizzy', '42')
@@ -200,8 +200,8 @@ def test_update_aim_image(monkeypatch):
     # while running the one of the senza commands an error occour
     mock_senza.patch.side_effect = SenzaPatchError('', '')
 
-    with pytest.raises(AIMImageNotUpdated):
-        instant_deployer.update_aim_image('latest')
+    with pytest.raises(AMIImageNotUpdated):
+        instant_deployer.update_ami_image('latest')
 
 
 def test_change_traffic(monkeypatch, logger):

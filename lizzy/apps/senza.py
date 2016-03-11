@@ -106,19 +106,19 @@ class Senza(Application):
         except ExecutionError as e:
             raise SenzaRespawnInstancesError(e.error, e.output)
 
-    def patch(self, stack_name: str, stack_version: str, aim_image: str):
+    def patch(self, stack_name: str, stack_version: str, ami_image: str):
         """Patch specific properties of existing stack.
 
         :param stack_name: Name of the application stack
         :param stack_version: Name of the application version that will
                               be changed
-        :param aim_image: Specified image (AMI ID or "latest")
+        :param ami_image: Specified image (AMI ID or "latest")
         :raises SenzaPatchError: when a ExecutionError is thrown to allow more
                                  specific error handing.
         """
         try:
 
-            image_argument = '--image={}'.format(aim_image)
+            image_argument = '--image={}'.format(ami_image)
             self._execute('patch', stack_name, stack_version, image_argument,
                           expect_json=True)
 

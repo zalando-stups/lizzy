@@ -10,7 +10,7 @@ from lizzy.apps.senza import Senza
 from lizzy.models.stack import Stack
 from lizzy.security import bouncer
 from lizzy.version import VERSION
-from lizzy.exceptions import (ObjectNotFound, AIMImageNotUpdated,
+from lizzy.exceptions import (ObjectNotFound, AMIImageNotUpdated,
                               TrafficNotUpdated)
 from lizzy.deployer import InstantDeployer
 from lizzy.util import filter_empty_values
@@ -172,12 +172,12 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
     stack = Stack.get(stack_id)
     deployer = InstantDeployer(stack)
 
-    if 'new_aim_image' in stack_patch:
-        new_aim_image = stack_patch['new_aim_image']
+    if 'new_ami_image' in stack_patch:
+        new_ami_image = stack_patch['new_ami_image']
         try:
-            deployer.update_aim_image(new_aim_image)
-            stack.aim_image = new_aim_image
-        except AIMImageNotUpdated as e:
+            deployer.update_ami_image(new_ami_image)
+            stack.ami_image = new_ami_image
+        except AMIImageNotUpdated as e:
             return connexion.problem(400, 'Image update failed', e.message,
                                      headers=_make_headers())
 
