@@ -3,8 +3,10 @@ from unittest.mock import MagicMock
 import pytest
 
 from lizzy.apps.senza import Senza
+from lizzy.version import VERSION
 from lizzy.exceptions import (ExecutionError, SenzaPatchError,
-        SenzaRespawnInstancesError, SenzaTrafficError, SenzaDomainsError)
+                              SenzaRespawnInstancesError, SenzaTrafficError,
+                              SenzaDomainsError)
 
 
 @pytest.fixture
@@ -24,6 +26,7 @@ def test_create(monkeypatch, popen):
     mock_named_tempfile.__enter__.return_value = mock_tempfile
     mock_named_tempfile.return_value = mock_named_tempfile
     monkeypatch.setattr('tempfile.NamedTemporaryFile', mock_named_tempfile)
+    lizzy_version_tag = 'LizzyVersion={}'.format(VERSION)
 
     senza = Senza('region')
     senza.logger = MagicMock()
@@ -35,12 +38,15 @@ def test_create(monkeypatch, popen):
     popen.assert_called_with(['senza', 'create',
                               '--region', 'region',
                               '--force', 'filename',
-                              '10', '42', 'param1', 'param2'],
+                              '10', '42', 'param1', 'param2',
+                              '-t', lizzy_version_tag],
                              stdout=-1,
                              stderr=-2)
 
-    cmd = 'senza create --region region --force filename 10 42 param1 param2'
-    senza.logger.debug.assert_called_with('Executing %s.', 'senza', extra={'command': cmd})
+    cmd = 'senza create --region region --force filename 10 42 param1 param2 '\
+          '-t ' + lizzy_version_tag
+    senza.logger.debug.assert_called_with('Executing %s.', 'senza',
+                                          extra={'command': cmd})
     assert not senza.logger.error.called
 
     popen.reset_mock()
@@ -52,7 +58,8 @@ def test_create(monkeypatch, popen):
     popen.assert_called_with(['senza', 'create',
                               '--region', 'region',
                               '--force', '--disable-rollback', 'filename',
-                              '10', '42', 'param1', 'param2'],
+                              '10', '42', 'param1', 'param2', '-t',
+                              lizzy_version_tag],
                              stdout=-1,
                              stderr=-2)
 
@@ -60,7 +67,9 @@ def test_create(monkeypatch, popen):
     senza.logger.reset_mock()
 
     senza.create('yaml: yaml', '10', '42', ['param1', 'param2'], False)
-    senza.logger.error.assert_called_with('Failed to create stack.', extra={'command.output': '{"stream": "stdout"}'})
+    senza.logger.error.assert_called_with('Failed to create stack.', extra={
+        'command.output': '{"stream": "stdout"}'
+    })
 
 
 def test_domain(monkeypatch, popen):

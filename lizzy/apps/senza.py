@@ -1,6 +1,7 @@
 from typing import Optional, List, Dict
 import tempfile
 
+from ..version import VERSION
 from .common import Application
 from ..exceptions import (ExecutionError, SenzaDomainsError, SenzaTrafficError,
                           SenzaRespawnInstancesError, SenzaPatchError)
@@ -10,8 +11,8 @@ class Senza(Application):
     def __init__(self, region: str):
         super().__init__('senza', extra_parameters=['--region', region])
 
-    def create(self, senza_yaml: str, stack_version: str, image_version: str, parameters: List[str],
-               disable_rollback: bool) -> bool:
+    def create(self, senza_yaml: str, stack_version: str, image_version: str,
+               parameters: List[str], disable_rollback: bool) -> bool:
         """
         Create a new stack
 
@@ -28,24 +29,32 @@ class Senza(Application):
                 args = ['--force']
                 if disable_rollback:
                     args.append('--disable-rollback')
-                self._execute('create', *args, temp_yaml.name, stack_version, image_version, *parameters)
+
+                parameters.extend(['-t', 'LizzyVersion={}'.format(VERSION)])
+
+                self._execute('create', *args, temp_yaml.name, stack_version,
+                              image_version, *parameters)
+
                 return True
             except ExecutionError as exception:
-                self.logger.error('Failed to create stack.', extra={'command.output': exception.output})
+                self.logger.error('Failed to create stack.',
+                                  extra={'command.output': exception.output})
                 return False
 
     def domains(self, stack_name: Optional[str]=None) -> List[Dict[str, str]]:
         """
-        Get domain names for applications. If stack name is provided then it will show the domain names just for that
-        application
+        Get domain names for applications. If stack name is provided then it
+        will show the domain names just for that application
 
         :param stack_name: Name of the application stack
         :return: Route53 Domains
-        :raises SenzaDomainError: when a ExecutionError is thrown to allow more specific error handing.
+        :raises SenzaDomainError: when a ExecutionError is thrown to allow more
+                                  specific error handing.
         """
         try:
             if stack_name:
-                stack_domains = self._execute('domains', stack_name, expect_json=True)
+                stack_domains = self._execute('domains', stack_name,
+                                              expect_json=True)
             else:
                 stack_domains = self._execute('domains', expect_json=True)
             return stack_domains
