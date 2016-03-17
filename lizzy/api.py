@@ -98,7 +98,6 @@ def create_stack(new_stack: dict) -> dict:
 
     try:
         stack_name = senza_definition['SenzaInfo']['StackName']  # type: str
-        # TODO validate stack name
     except KeyError as exception:
         logger.error("Couldn't get stack name from definition.",
                      extra={'senza_yaml': repr(senza_definition)})
@@ -126,7 +125,9 @@ def create_stack(new_stack: dict) -> dict:
         taupage_config = definition.app_server.get('TaupageConfig', {})  # type: Dict[str, str]
         artifact_name = taupage_config.get('source', '')
         kio = Kio()
-        if kio.versions_create(stack.stack_name, stack.stack_version, artifact_name):
+        if kio.versions_create(application_id=stack.stack_name,
+                               version=stack.application_version,
+                               artifact=artifact_name):
             logger.info("Version registered in Kio.", extra=kio_extra)
         else:
             logger.error("Error registering version in Kio.", extra=kio_extra)
