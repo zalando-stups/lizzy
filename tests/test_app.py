@@ -213,7 +213,9 @@ def test_new_stack(monkeypatch, app, oauth_requests):
     mock_senza.assert_called_with('eu-west-1')
     mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc', ANY, '1.0', ['abc', 'def'], False)
     mock_kio.assert_called_with()
-    mock_kio.versions_create.assert_called_once_with('abc', '42', '')
+    mock_kio.versions_create.assert_called_once_with(application_id='abc',
+                                                     artifact='',
+                                                     version='42')
     assert request.status_code == 201
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
     assert FakeStack.last_save['application_version'] == '42'
@@ -236,11 +238,17 @@ def test_new_stack(monkeypatch, app, oauth_requests):
             'disable_rollback': True}
 
     mock_kio.versions_create.return_value = True
-    request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
+    request = app.post('/api/stacks', headers=GOOD_HEADERS,
+                       data=json.dumps(data))  # type: flask.Response
     mock_senza.assert_called_with('eu-west-1')
-    mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc', ANY, '1.0', ['abc', 'def'], True)
+    mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc',
+                                         ANY, '1.0',
+                                         ['abc', 'def'],
+                                         True)
     mock_kio.assert_called_with()
-    mock_kio.versions_create.assert_called_once_with('abc', '42', '')
+    mock_kio.versions_create.assert_called_once_with(application_id='abc',
+                                                     artifact='',
+                                                     version='42')
     assert request.status_code == 201
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
     assert FakeStack.last_save['application_version'] == '42'
@@ -255,9 +263,13 @@ def test_new_stack(monkeypatch, app, oauth_requests):
     # kio version creation doesn't affect the rest of the process
     mock_kio.versions_create.reset_mock()
     mock_kio.versions_create.return_value = False
-    request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
+    request = app.post('/api/stacks',
+                       headers=GOOD_HEADERS,
+                       data=json.dumps(data))  # type: flask.Response
     mock_kio.assert_called_with()
-    mock_kio.versions_create.assert_called_once_with('abc', '42', '')
+    mock_kio.versions_create.assert_called_once_with(application_id='abc',
+                                                     artifact='',
+                                                     version='42')
     assert request.status_code == 201
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
     assert FakeStack.last_save['application_version'] == '42'
@@ -270,7 +282,9 @@ def test_new_stack(monkeypatch, app, oauth_requests):
     assert FakeStack.last_save['traffic'] == 100
 
     mock_senza.create.return_value = False
-    request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
+    request = app.post('/api/stacks',
+                       headers=GOOD_HEADERS,
+                       data=json.dumps(data))  # type: flask.Response
     assert request.status_code == 400
 
 
