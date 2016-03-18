@@ -83,7 +83,7 @@ class Stack(rod.model.Model):
     def generate_definition(self) -> SenzaDefinition:
         parameters = [self.image_version]
         parameters.extend(self.parameters)
-        return SenzaDefinition(self.senza_yaml, parameters)
+        return SenzaDefinition(self.senza_yaml, self.stack_version, parameters)
 
     def _parse_date(self, date_time):
         if isinstance(date_time, datetime):

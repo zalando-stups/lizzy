@@ -1,5 +1,5 @@
-from typing import Optional, List  # NOQA
-import pystache
+from typing import List  # NOQA
+from senza.components import evaluate_template
 import yaml
 
 
@@ -9,7 +9,9 @@ class SenzaDefinition:
     See http://stups.readthedocs.org/en/latest/components/senza.html#senza-definition
     """
 
-    def __init__(self, definition_yaml: str, arguments: List[str]):
+    def __init__(self, definition_yaml: str,
+                 stack_version: str,
+                 arguments: List[str]):
         # TODO support named parameters
         # TODO: error handling
         self.definition = yaml.load(definition_yaml)
@@ -23,11 +25,15 @@ class SenzaDefinition:
             if 'Default' in parameter[name]:
                 # Add the defaults to the parameter map
                 arguments_map[name] = parameter[name]['Default']
-
         arguments_map.update(dict(zip(keys, arguments)))  # add provided values
 
-        render = pystache.Renderer(missing_tags='strict')
-        final_definition = render.render(definition_yaml, {'Arguments': arguments_map})
+        # Senza adds the StackVersion to the senza_info
+        senza_info["StackVersion"] = stack_version
+        final_definition = evaluate_template(definition_yaml,
+                                             info=senza_info,
+                                             components=self.senza_components,
+                                             args=arguments_map,
+                                             account_info={})
         self.definition = yaml.load(final_definition)
 
     @property
