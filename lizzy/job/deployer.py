@@ -113,7 +113,11 @@ class Deployer:
             except ExecutionError:
                 self.logger.exception("Failed to switch app traffic.", extra=self.log_info)
 
-        all_versions = sorted(self.lizzy_stacks[self.stack.stack_name].keys())
+        all_versions = sorted(
+            self.lizzy_stacks[self.stack.stack_name].values(),
+            key=lambda s: s.creation_time)
+        all_versions = [stack.stack_name for stack in all_versions]
+
         self.logger.debug("Existing versions: %s", all_versions, extra=self.log_info)
         # we want to keep only two versions
         number_of_versions_to_keep = self.stack.keep_stacks + 1  # keep provided old stacks + 1

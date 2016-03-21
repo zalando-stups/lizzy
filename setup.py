@@ -64,7 +64,7 @@ setup(
                       'stups-senza>=1.0.40',
                       'uwsgi',
                       'uwsgi_metrics3'],
-    tests_require=['pytest-cov', 'pytest'],
+    tests_require=['pytest-cov', 'pytest', 'factory_boy'],
     cmdclass={'test': PyTest},
     classifiers=[
         'Programming Language :: Python',
