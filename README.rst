@@ -6,7 +6,8 @@ Lizzy
 
 **DISCLAIMER: Lizzy is still in alpha state.**
 
-REST Service to deploy AWS CF templates using Senza.
+REST Service to deploy AWS Cloud Formation templates using `Senza`_
+CLI tool.
 
 
 Configuration
@@ -71,3 +72,5 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+.. _Senza: https://github.com/zalando-stups/senza
