@@ -11,7 +11,7 @@ from lizzy.models.stack import Stack
 from lizzy.security import bouncer
 from lizzy.version import VERSION
 from lizzy.exceptions import (ObjectNotFound, AMIImageNotUpdated,
-                              TrafficNotUpdated)
+                              TrafficNotUpdated, StackDeleteException)
 from lizzy.deployer import InstantDeployer
 from lizzy.util import filter_empty_values
 
@@ -210,6 +210,11 @@ def delete_stack(stack_id: str) -> dict:
         # doesn't do anything.
         pass
     else:
-        stack.status = 'LIZZY:DELETE'
-        stack.save()
+        deployer = InstantDeployer(stack)
+        try:
+            deployer.delete_stack()
+        except StackDeleteException as e:
+            return connexion.problem(500, 'Stack deletion failed', e.message,
+                                     headers=_make_headers())
+
     return '', 204, _make_headers()

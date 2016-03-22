@@ -146,8 +146,8 @@ def test_remove(monkeypatch, popen):
     popen.returncode = 1
     senza.logger.reset_mock()
 
-    senza.remove('lizzy', 'version')
-    senza.logger.error.assert_called_with('Failed to delete stack.', extra={'command.output': '{"stream": "stdout"}'})
+    with pytest.raises(ExecutionError):
+        senza.remove('lizzy', 'version')
 
 
 def test_traffic(monkeypatch, popen):

@@ -145,6 +145,15 @@ paths:
               type: string
           schema:
             $ref: '#/definitions/problem'
+        500:
+          description: |
+            Stack was not deleted because of a senza error
+          headers:
+            X-Lizzy-Version:
+              description: Lizzy Version
+              type: string
+          schema:
+            $ref: '#/definitions/problem'
       security:
         - oauth:
             - "{{deployer_scope}}"

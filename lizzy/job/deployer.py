@@ -135,20 +135,6 @@ class Deployer:
 
         return 'CF:{}'.format(cloud_formation_status)
 
-    def delete(self) -> str:
-        """
-        Delete the stack.
-        """
-        self.logger.info("Removing stack...", extra=self.log_info)
-
-        try:
-            self.senza.remove(self.stack.stack_name, self.stack.stack_version)
-            self.logger.info("Stack removed.", extra=self.log_info)
-        except Exception:
-            self.logger.exception("Failed to remove stack.", extra=self.log_info)
-
-        return self.default()
-
     def handle(self) -> str:
         """Does the right step for deployment status.
         """
@@ -156,7 +142,6 @@ class Deployer:
             'LIZZY:DEPLOYING': self.deploying,
             'LIZZY:DEPLOYED': self.deployed,
             'LIZZY:ERROR': lambda: 'LIZZY:ERROR',
-            'LIZZY:DELETE': self.delete
         }
         handler = action_by_status.get(self.stack.status, self.default)
         return handler()

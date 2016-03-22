@@ -5,7 +5,7 @@ from lizzy.logging import logger
 from lizzy.configuration import config
 from lizzy.exceptions import (AMIImageNotUpdated, ExecutionError,
                               SenzaDomainsError, SenzaTrafficError,
-                              TrafficNotUpdated)
+                              TrafficNotUpdated, StackDeleteException)
 
 
 class InstantDeployer:
@@ -64,3 +64,19 @@ class InstantDeployer:
         except ExecutionError as e:
             self.logger.info(e.message, extra=self.log_info)
             raise AMIImageNotUpdated(e.message)
+
+    def delete_stack(self) -> None:
+        """
+        Delete the stack.
+
+        :raises: StackDeleteException
+        """
+        self.logger.info("Removing stack...", extra=self.log_info)
+
+        try:
+            self.senza.remove(self.stack.stack_name, self.stack.stack_version)
+            self.logger.info("Stack removed.", extra=self.log_info)
+        except ExecutionError as e:
+            self.logger.exception("Failed to remove stack.",
+                                  extra=self.log_info)
+            raise StackDeleteException(e.output)
