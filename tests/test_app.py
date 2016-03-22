@@ -287,6 +287,27 @@ def test_new_stack(monkeypatch, app, oauth_requests):
                        data=json.dumps(data))  # type: flask.Response
     assert request.status_code == 400
 
+    # Test creating stack with parameters to senza
+    mock_senza.reset_mock()
+    mock_senza.create.return_value = True
+    mock_kio.versions_create.reset_mock()
+    mock_kio.versions_create.return_value = True
+    data = {'keep_stacks': 0,
+            'new_traffic': 100,
+            'image_version': '1.0',
+            'senza_yaml': 'SenzaInfo:\n  StackName: abc',
+            'parameters': ['MintBucket=bk-bucket', 'ImageVersion=28']}
+
+    request = app.post('/api/stacks',
+                       headers=GOOD_HEADERS,
+                       data=json.dumps(data))
+    mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc', ANY,
+                                         '1.0', ['MintBucket=bk-bucket',
+                                                 'ImageVersion=28'], False)
+    stack_version = FakeStack.last_save['stack_version']
+    assert FakeStack.last_save['parameters'] == ['MintBucket=bk-bucket',
+                                                 'ImageVersion=28']
+
 
 def test_invalid_yaml(app, oauth_requests):
     data = {'keep_stacks': 0,
