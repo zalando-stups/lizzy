@@ -73,14 +73,11 @@ class Senza(Application):
 
         :param stack_name: Name of the application stack
         :param stack_version: Name of the application version that will be removed
+        :raises: ExecutionError
         :return: Success of the operation
         """
-        try:
-            self._execute('delete', stack_name, stack_version)
-            return True
-        except ExecutionError as exception:
-            self.logger.error('Failed to delete stack.', extra={'command.output': exception.output})
-            return False
+        self._execute('delete', stack_name, stack_version)
+        return True
 
     def traffic(self, stack_name: str, stack_version: str, percentage: int) -> List[Dict]:
         """
