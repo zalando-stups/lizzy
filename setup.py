@@ -9,7 +9,7 @@ from setuptools.command.test import test as TestCommand
 
 _version_re = re.compile(r'VERSION\s+=\s+(.*)')
 
-MINOR_VERSION = 0
+MINOR_VERSION = 1
 
 with open('lizzy/version.py', 'rb') as f:
     version_content = f.read().decode('utf-8')
@@ -64,7 +64,7 @@ setup(
                       'stups-senza>=1.0.40',
                       'uwsgi',
                       'uwsgi_metrics3'],
-    tests_require=['pytest-cov', 'pytest'],
+    tests_require=['pytest-cov', 'pytest', 'factory_boy'],
     cmdclass={'test': PyTest},
     classifiers=[
         'Programming Language :: Python',

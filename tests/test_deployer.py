@@ -1,5 +1,7 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, call
 import pytest
+from datetime import datetime
+from factory import Factory, Sequence
 
 from lizzy.job.deployer import Deployer
 from lizzy.models.stack import Stack
@@ -8,12 +10,6 @@ from lizzy.exceptions import (SenzaPatchError, AMIImageNotUpdated,
                               SenzaDomainsError, SenzaTrafficError,
                               TrafficNotUpdated)
 
-LIZZY_STACKS = {'lizzy': {'1': {},
-                          '2': {},
-                          '3': {},
-                          '42': {},
-                          'inprog': {},
-                          'deployed': {}}}
 
 CF_STACKS = {'lizzy': {'42': {'status': 'TEST'},
                        'inprog': {'status': 'CREATE_IN_PROGRESS'},
@@ -52,6 +48,47 @@ SenzaInfo:
 Test: lizzy:{{Arguments.ImageVersion}}
 Test2: test-{{Arguments.Test1}}
 """
+
+
+class StackFactory(Factory):
+    class Meta:
+        model = Stack
+
+    stack_name = Sequence(lambda x: 'stack_{}'.format(x))
+    creation_time = '2015-09-16T09:48'
+    image_version = Sequence(lambda x: 'version_{}'.format(x))
+    stack_version = None
+    traffic = 100
+    keep_stacks = 2
+    senza_yaml = YAML1
+    status = 'LIZZY:TEST'
+    image_version = '1.0'
+
+
+LIZZY_STACKS = {
+    'lizzy': {
+        '1': StackFactory(stack_name='1',
+                          creation_time=datetime(2016, 3, 10, 12, 30)),
+
+        '2': StackFactory(stack_name='2',
+                          creation_time=datetime(2016, 3, 12, 12, 30)),
+
+        '3': StackFactory(stack_name='3',
+                          creation_time=datetime(2016, 3, 13, 12, 30)),
+
+        '9': StackFactory(stack_name='9',
+                          creation_time=datetime(2016, 3, 19, 12, 30)),
+
+        '42': StackFactory(stack_name='42',
+                           creation_time=datetime(2016, 3, 27, 12, 30)),
+
+        'inprog': StackFactory(stack_name='inprog',
+                               creation_time=datetime(2016, 3, 20, 12, 30)),
+
+        'deployed': StackFactory(stack_name='deployed',
+                                 creation_time=datetime(2016, 3, 21, 12, 30))
+    }
+}
 
 
 @pytest.fixture
@@ -117,21 +154,31 @@ def test_deployed(monkeypatch, logger):
     mock_senza.return_value = mock_senza
     monkeypatch.setattr('lizzy.job.deployer.Senza', mock_senza)
 
-    stack = Stack(stack_id='nonexisting-42', creation_time='2015-09-16T09:48', keep_stacks=2, traffic=7,
-                  image_version='1.0', senza_yaml=YAML1, stack_name='nonexisting', stack_version='42',
-                  status='LIZZY:DEPLOYED')
+    stack = StackFactory(stack_id='nonexisting-42',
+                         creation_time='2015-09-27T09:48', keep_stacks=2,
+                         stack_version='42', traffic=7,
+                         status='LIZZY:DEPLOYED')
 
     deployer = Deployer('region', LIZZY_STACKS, CF_STACKS, stack)
     assert deployer.handle() == 'LIZZY:REMOVED'
 
-    stack = Stack(stack_id='lizzy-42', creation_time='2015-09-16T09:48', keep_stacks=2, traffic=7,
-                  image_version='1.0', senza_yaml=YAML1, stack_name='lizzy', stack_version='42',
-                  status='LIZZY:DEPLOYED')
+    stack = StackFactory(stack_id='lizzy-42', creation_time='2015-09-27T09:48',
+                         keep_stacks=2, stack_name='lizzy', traffic=7,
+                         stack_version='42', status='LIZZY:DEPLOYED')
 
     deployer = Deployer('region', LIZZY_STACKS, CF_STACKS, stack)
     assert deployer.handle() == 'CF:TEST'
 
-    assert mock_senza.remove.call_count == 3
+    # remove old stacks
+    assert mock_senza.remove.call_count == 4
+    expected_calls_to_remove = [
+        call('lizzy', '1'),
+        call('lizzy', '2'),
+        call('lizzy', '3'),
+        call('lizzy', '9')
+    ]
+    mock_senza.remove.assert_has_calls(expected_calls_to_remove)
+
     mock_senza.traffic.assert_called_once_with(stack_name='lizzy', percentage=7, stack_version='42')
 
 

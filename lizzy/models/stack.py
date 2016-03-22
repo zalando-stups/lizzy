@@ -1,5 +1,6 @@
 from typing import Optional  # NOQA
 from datetime import datetime
+from dateutil import parser as date_parser
 import rod.model
 from lizzy.exceptions import ObjectNotFound
 
@@ -44,7 +45,7 @@ class Stack(rod.model.Model):
         :param kwargs: Other parameters that are not recognized
         """
         self.stack_name = stack_name
-        self.creation_time = creation_time or now()  # type: datetime
+        self.creation_time = self._parse_date(creation_time or now())  # type: datetime
         self.image_version = image_version
         self.stack_version = (stack_version or
                               application_version or
@@ -83,6 +84,11 @@ class Stack(rod.model.Model):
         parameters = [self.image_version]
         parameters.extend(self.parameters)
         return SenzaDefinition(self.senza_yaml, parameters)
+
+    def _parse_date(self, date_time):
+        if isinstance(date_time, datetime):
+            return date_time
+        return date_parser.parse(date_time)
 
     @classmethod
     def get(cls, *args, **kwargs) -> "Stack":
