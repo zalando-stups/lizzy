@@ -161,6 +161,7 @@ def test_new_stack(monkeypatch, app, oauth_requests):
     mock_kio = MagicMock()
     mock_kio.return_value = mock_kio
     monkeypatch.setattr('lizzy.api.Kio', mock_kio)
+    mock_senza.render_definition.return_value = {}
 
     mock_senza.create.return_value = True
     request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response

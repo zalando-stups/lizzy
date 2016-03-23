@@ -43,6 +43,10 @@ class SenzaPatchError(ExecutionError):
     """Raised when `senza patch` command returns an unexpected error."""
 
 
+class SenzaRenderError(Exception):
+    """Raised when not possible to render CloudFormation file."""
+
+
 class ObjectNotFound(LizzyError):
     """Raised when model instance is not found in storage."""
 

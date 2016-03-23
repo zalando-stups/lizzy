@@ -4,7 +4,8 @@ import tempfile
 from ..version import VERSION
 from .common import Application
 from ..exceptions import (ExecutionError, SenzaDomainsError, SenzaTrafficError,
-                          SenzaRespawnInstancesError, SenzaPatchError)
+                          SenzaRespawnInstancesError, SenzaPatchError,
+                          SenzaRenderError)
 
 
 class Senza(Application):
@@ -96,7 +97,8 @@ class Senza(Application):
             raise SenzaTrafficError(e.error, e.output)
 
     def respawn_instances(self, stack_name: str, stack_version: str):
-        """Replace all EC2 instances in Auto Scaling Group(s).
+        """
+        Replace all EC2 instances in Auto Scaling Group(s).
 
         :param stack_name: Name of the application stack
         :param stack_version: Name of the application version that will
@@ -113,7 +115,8 @@ class Senza(Application):
             raise SenzaRespawnInstancesError(e.error, e.output)
 
     def patch(self, stack_name: str, stack_version: str, ami_image: str):
-        """Patch specific properties of existing stack.
+        """
+        Patch specific properties of existing stack.
 
         :param stack_name: Name of the application stack
         :param stack_version: Name of the application version that will
@@ -130,3 +133,24 @@ class Senza(Application):
 
         except ExecutionError as e:
             raise SenzaPatchError(e.error, e.output)
+
+    def render_definition(self, senza_yaml: str, stack_version: str, image_version: str,
+                          parameters: List[str]):
+        """
+        Renders the cloud formation json used by senza.
+
+        :param senza_yaml: Senza Definition
+        :param stack_version: New stack's version
+        :param image_version: Docker image to deployed
+        :param parameters: Extra parameters for the deployment
+        """
+        with tempfile.NamedTemporaryFile() as temp_yaml:
+            temp_yaml.write(senza_yaml.encode())
+            temp_yaml.file.flush()
+            try:
+                return self._execute('print', temp_yaml.name, stack_version,
+                                     image_version, *parameters, expect_json=True)
+            except ExecutionError as e:
+                self.logger.error('Failed to render CloudFormation defition.',
+                                  extra={'command.output': e.output})
+                raise SenzaRenderError(e.error, e.output)
