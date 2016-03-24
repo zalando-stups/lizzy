@@ -56,7 +56,7 @@ def all_stacks() -> dict:
     """
     GET /stacks/
     """
-    stacks = [(_get_stack_dict(stack)) for stack in Stack.all()]
+    stacks = [_get_stack_dict(stack) for stack in Stack.all()]
     stacks.sort(key=lambda stack: stack['creation_time'])
     return stacks, 200, _make_headers()
 
@@ -93,7 +93,7 @@ def create_stack(new_stack: dict) -> dict:
 
     try:
         stack_name = cf_raw_definition['Mappings']['Senza']['Info']['StackName']
-        taupage_yaml = cf_raw_definition['Resources']['AppServerConfig']['Properties']['UserData']
+        taupage_yaml = cf_raw_definition['Resources']['AppServerConfig']['Properties']['UserData']['Fn::Base64']
         taupage_config = yaml.safe_load(taupage_yaml)
         artifact_name = taupage_config['source']
     except KeyError as exception:

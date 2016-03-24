@@ -10,7 +10,7 @@ from lizzy.exceptions import (SenzaPatchError, AMIImageNotUpdated,
                               SenzaDomainsError, SenzaTrafficError,
                               TrafficNotUpdated)
 
-from .fixtures.senza_definitions import YAML1
+from fixtures.senza_definitions import YAML1
 
 
 CF_STACKS = {'lizzy': {'42': {'status': 'TEST'},

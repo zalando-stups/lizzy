@@ -43,7 +43,7 @@ class SenzaPatchError(ExecutionError):
     """Raised when `senza patch` command returns an unexpected error."""
 
 
-class SenzaRenderError(Exception):
+class SenzaRenderError(ExecutionError):
     """Raised when not possible to render CloudFormation file."""
 
 
