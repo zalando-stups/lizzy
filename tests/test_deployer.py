@@ -99,7 +99,7 @@ def test_deploying(monkeypatch, logger):
                   status='LIZZY:DEPLOYING')
 
     deployer = Deployer('region', LIZZY_STACKS, CF_STACKS, stack)
-    assert deployer.handle() == 'LIZZY:DEPLOYING'
+    assert deployer.handle() == 'CF:CREATE_IN_PROGRESS'
 
     stack = Stack(stack_id='lizzy-deployed', creation_time='2015-09-16T09:48', keep_stacks=2, traffic=7,
                   image_version='1.0', senza_yaml=YAML1, stack_name='lizzy', stack_version='deployed',
@@ -111,6 +111,40 @@ def test_deploying(monkeypatch, logger):
     stack = Stack(stack_id='lizzy-42', creation_time='2015-09-16T09:48', keep_stacks=2, traffic=7,
                   image_version='1.0', senza_yaml=YAML1, stack_name='lizzy', stack_version='42',
                   status='LIZZY:DEPLOYING')
+
+    deployer = Deployer('region', LIZZY_STACKS, CF_STACKS, stack)
+    assert deployer.handle() == 'CF:TEST'
+
+
+def test_deploying_create_in_progress(monkeypatch, logger):
+    mock_senza = MagicMock()
+    mock_senza.return_value = mock_senza
+    monkeypatch.setattr('lizzy.job.deployer.Senza', mock_senza)
+
+    stack = Stack(stack_id='nonexisting-42', creation_time='2015-09-16T09:48', keep_stacks=2, traffic=7,
+                  image_version='1.0', senza_yaml=YAML1, stack_name='nonexisting', stack_version='42',
+                  status='CF:CREATE_IN_PROGRESS')
+
+    deployer = Deployer('region', LIZZY_STACKS, CF_STACKS, stack)
+    assert deployer.handle() == 'LIZZY:REMOVED'
+
+    stack = Stack(stack_id='lizzy-inprog', creation_time='2015-09-16T09:48', keep_stacks=2, traffic=7,
+                  image_version='1.0', senza_yaml=YAML1, stack_name='lizzy', stack_version='inprog',
+                  status='CF:CREATE_IN_PROGRESS')
+
+    deployer = Deployer('region', LIZZY_STACKS, CF_STACKS, stack)
+    assert deployer.handle() == 'CF:CREATE_IN_PROGRESS'
+
+    stack = Stack(stack_id='lizzy-deployed', creation_time='2015-09-16T09:48', keep_stacks=2, traffic=7,
+                  image_version='1.0', senza_yaml=YAML1, stack_name='lizzy', stack_version='deployed',
+                  status='CF:CREATE_IN_PROGRESS')
+
+    deployer = Deployer('region', LIZZY_STACKS, CF_STACKS, stack)
+    assert deployer.handle() == 'LIZZY:DEPLOYED'
+
+    stack = Stack(stack_id='lizzy-42', creation_time='2015-09-16T09:48', keep_stacks=2, traffic=7,
+                  image_version='1.0', senza_yaml=YAML1, stack_name='lizzy', stack_version='42',
+                  status='CF:CREATE_IN_PROGRESS')
 
     deployer = Deployer('region', LIZZY_STACKS, CF_STACKS, stack)
     assert deployer.handle() == 'CF:TEST'
