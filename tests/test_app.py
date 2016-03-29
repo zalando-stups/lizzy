@@ -7,9 +7,12 @@ import requests
 import lizzy.api
 from lizzy.models.stack import Stack
 from lizzy.exceptions import (ObjectNotFound, AMIImageNotUpdated,
-                              TrafficNotUpdated, StackDeleteException)
+                              TrafficNotUpdated, StackDeleteException,
+                              SenzaRenderError)
 from lizzy.service import setup_webapp
 from lizzy.version import VERSION
+
+from fixtures.cloud_formation import GOOD_CF_DEFINITION, BAD_CF_DEFINITION
 
 CURRENT_VERSION = VERSION
 
@@ -127,25 +130,34 @@ def test_empty_new_stack(monkeypatch, app, oauth_requests):
     assert response['title'] == 'Bad Request'
 
 
-def test_bad_senza_yaml(app, oauth_requests):
+def test_bad_senza_yaml(app, oauth_requests, monkeypatch):
     data = {'keep_stacks': 0,
             'new_traffic': 100,
             'image_version': '1.0',
             'senza_yaml': 'key: value'}
 
+    mock_senza = MagicMock()
+    mock_senza.return_value = mock_senza
+    monkeypatch.setattr('lizzy.api.Senza', mock_senza)
+    mock_senza.render_definition.side_effect = SenzaRenderError("Some error", "output error")
+
     request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
     assert request.status_code == 400
     response = json.loads(request.data.decode())
     assert response['title'] == 'Invalid senza yaml'
-    assert response['detail'] == "Missing property in senza yaml: 'SenzaInfo'"
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+
+    mock_senza = MagicMock()
+    mock_senza.return_value = mock_senza
+    monkeypatch.setattr('lizzy.api.Senza', mock_senza)
+    mock_senza.render_definition.return_value = BAD_CF_DEFINITION
 
     data['senza_yaml'] = '[]'
     request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
     assert request.status_code == 400
     response = json.loads(request.data.decode())
     assert response['title'] == 'Invalid senza yaml'
-    assert response['detail'] == "Senza yaml is not a dict."
+    assert response['detail'] == "Missing property in senza yaml: 'Fn::Base64'"
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
 
@@ -161,6 +173,7 @@ def test_new_stack(monkeypatch, app, oauth_requests):
     mock_kio = MagicMock()
     mock_kio.return_value = mock_kio
     monkeypatch.setattr('lizzy.api.Kio', mock_kio)
+    mock_senza.render_definition.return_value = GOOD_CF_DEFINITION
 
     mock_senza.create.return_value = True
     request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
@@ -208,13 +221,14 @@ def test_new_stack(monkeypatch, app, oauth_requests):
             'parameters': ['abc', 'def'],
             'application_version': '42'}
     mock_senza.reset_mock()
+    mock_senza.render_definition.return_value = GOOD_CF_DEFINITION
     mock_kio.versions_create.return_value = True
     request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
     mock_senza.assert_called_with('eu-west-1')
     mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc', ANY, '1.0', ['abc', 'def'], False)
     mock_kio.assert_called_with()
     mock_kio.versions_create.assert_called_once_with(application_id='abc',
-                                                     artifact='',
+                                                     artifact='pierone.example.com/lizzy/lizzy:12',
                                                      version='42')
     assert request.status_code == 201
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
@@ -229,6 +243,7 @@ def test_new_stack(monkeypatch, app, oauth_requests):
 
     mock_kio.reset_mock()
     mock_senza.reset_mock()
+    mock_senza.render_definition.return_value = GOOD_CF_DEFINITION
     data = {'keep_stacks': 0,
             'new_traffic': 100,
             'image_version': '1.0',
@@ -247,7 +262,7 @@ def test_new_stack(monkeypatch, app, oauth_requests):
                                          True)
     mock_kio.assert_called_with()
     mock_kio.versions_create.assert_called_once_with(application_id='abc',
-                                                     artifact='',
+                                                     artifact='pierone.example.com/lizzy/lizzy:12',
                                                      version='42')
     assert request.status_code == 201
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
@@ -268,7 +283,7 @@ def test_new_stack(monkeypatch, app, oauth_requests):
                        data=json.dumps(data))  # type: flask.Response
     mock_kio.assert_called_with()
     mock_kio.versions_create.assert_called_once_with(application_id='abc',
-                                                     artifact='',
+                                                     artifact='pierone.example.com/lizzy/lizzy:12',
                                                      version='42')
     assert request.status_code == 201
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
@@ -287,19 +302,27 @@ def test_new_stack(monkeypatch, app, oauth_requests):
                        data=json.dumps(data))  # type: flask.Response
     assert request.status_code == 400
 
-
-def test_invalid_yaml(app, oauth_requests):
+    # Test creating stack with parameters to senza
+    mock_senza.reset_mock()
+    mock_senza.create.return_value = True
+    mock_senza.render_definition.return_value = GOOD_CF_DEFINITION
+    mock_kio.versions_create.reset_mock()
+    mock_kio.versions_create.return_value = True
     data = {'keep_stacks': 0,
             'new_traffic': 100,
             'image_version': '1.0',
-            'senza_yaml': '*invalid*yaml*file'}
+            'senza_yaml': 'SenzaInfo:\n  StackName: abc',
+            'parameters': ['MintBucket=bk-bucket', 'ImageVersion=28']}
 
-    request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
-    assert request.status_code == 400
-    response = json.loads(request.data.decode())  # type: dict
-    assert response['title'] == 'Invalid senza yaml'
-    assert response['detail'] == "Failed to parse senza yaml."
-    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    request = app.post('/api/stacks',
+                       headers=GOOD_HEADERS,
+                       data=json.dumps(data))
+    mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc', ANY,
+                                         '1.0', ['MintBucket=bk-bucket',
+                                                 'ImageVersion=28'], False)
+    stack_version = FakeStack.last_save['stack_version']
+    assert FakeStack.last_save['parameters'] == ['MintBucket=bk-bucket',
+                                                 'ImageVersion=28']
 
 
 def test_get_stack(app, oauth_requests):

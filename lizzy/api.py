@@ -11,7 +11,8 @@ from lizzy.models.stack import Stack
 from lizzy.security import bouncer
 from lizzy.version import VERSION
 from lizzy.exceptions import (ObjectNotFound, AMIImageNotUpdated,
-                              TrafficNotUpdated, StackDeleteException)
+                              TrafficNotUpdated, StackDeleteException,
+                              SenzaRenderError)
 from lizzy.deployer import InstantDeployer
 from lizzy.util import filter_empty_values
 
@@ -55,7 +56,7 @@ def all_stacks() -> dict:
     """
     GET /stacks/
     """
-    stacks = [(_get_stack_dict(stack)) for stack in Stack.all()]
+    stacks = [_get_stack_dict(stack) for stack in Stack.all()]
     stacks.sort(key=lambda stack: stack['creation_time'])
     return stacks, 200, _make_headers()
 
@@ -76,31 +77,28 @@ def create_stack(new_stack: dict) -> dict:
     senza_yaml = new_stack['senza_yaml']  # type: str
     parameters = new_stack.get('parameters', [])
     disable_rollback = new_stack.get('disable_rollback', False)
+    stack_name = None
+    artifact_name = None
+    cf_raw_definition = None
+    senza = Senza(config.region)
 
     try:
-        senza_definition = yaml.safe_load(senza_yaml)
-        if not isinstance(senza_definition, dict):
-            raise TypeError
-    except yaml.YAMLError:
-        logger.exception("Couldn't parse senza yaml.",
-                         extra={'senza_yaml': repr(senza_yaml)})
+        cf_raw_definition = senza.render_definition(senza_yaml, stack_version,
+                                                    image_version, parameters)
+    except SenzaRenderError as exception:
         return connexion.problem(400,
                                  'Invalid senza yaml',
-                                 "Failed to parse senza yaml.",
-                                 headers=_make_headers())
-    except TypeError:
-        logger.exception("Senza yaml is not a dict.",
-                         extra={'senza_yaml': repr(senza_yaml)})
-        return connexion.problem(400,
-                                 'Invalid senza yaml',
-                                 "Senza yaml is not a dict.",
+                                 exception.message,
                                  headers=_make_headers())
 
     try:
-        stack_name = senza_definition['SenzaInfo']['StackName']  # type: str
+        stack_name = cf_raw_definition['Mappings']['Senza']['Info']['StackName']
+        taupage_yaml = cf_raw_definition['Resources']['AppServerConfig']['Properties']['UserData']['Fn::Base64']
+        taupage_config = yaml.safe_load(taupage_yaml)
+        artifact_name = taupage_config['source']
     except KeyError as exception:
         logger.error("Couldn't get stack name from definition.",
-                     extra={'senza_yaml': repr(senza_definition)})
+                     extra={'cf_definition': repr(cf_raw_definition)})
         missing_property = str(exception)
         problem = connexion.problem(400,
                                     'Invalid senza yaml',
@@ -118,12 +116,10 @@ def create_stack(new_stack: dict) -> dict:
                   stack_version=stack_version,
                   application_version=application_version,
                   parameters=parameters)
-    definition = stack.generate_definition()
+
     if stack.application_version:
         kio_extra = {'stack_name': stack_name, 'version': application_version}
         logger.info("Registering version on kio...", extra=kio_extra)
-        taupage_config = definition.app_server.get('TaupageConfig', {})  # type: Dict[str, str]
-        artifact_name = taupage_config.get('source', '')
         kio = Kio()
         if kio.versions_create(application_id=stack.stack_name,
                                version=stack.application_version,
