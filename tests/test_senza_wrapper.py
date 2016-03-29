@@ -71,6 +71,19 @@ def test_create(monkeypatch, popen):
         'command.output': '{"stream": "stdout"}'
     })
 
+    popen.returncode = 0
+    senza.logger.reset_mock()
+    senza.create('yaml: yaml', '10', '42',
+                 ['Param1Here=Simple', 'ParamTwo=100'], False)
+
+    popen.assert_called_with(['senza', 'create',
+                              '--region', 'region',
+                              '--force', mock_tempfile.name,
+                              '10', '42', 'Param1Here=Simple', 'ParamTwo=100',
+                              '-t', lizzy_version_tag],
+                             stdout=-1,
+                             stderr=-2)
+
 
 def test_domain(monkeypatch, popen):
     senza = Senza('region')
