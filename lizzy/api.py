@@ -98,7 +98,7 @@ def create_stack(new_stack: dict) -> dict:
         artifact_name = taupage_config['source']
     except KeyError as exception:
         logger.error("Couldn't get stack name from definition.",
-                     extra={'senza_yaml': repr(cf_raw_definition)})
+                     extra={'cf_definition': repr(cf_raw_definition)})
         missing_property = str(exception)
         problem = connexion.problem(400,
                                     'Invalid senza yaml',
