@@ -6,7 +6,7 @@ from lizzy.apps.senza import Senza
 from lizzy.version import VERSION
 from lizzy.exceptions import (ExecutionError, SenzaPatchError,
                               SenzaRespawnInstancesError, SenzaTrafficError,
-                              SenzaDomainsError)
+                              SenzaDomainsError, SenzaRenderError)
 
 
 @pytest.fixture
@@ -228,6 +228,34 @@ def test_patch(monkeypatch, popen):
 
     with pytest.raises(SenzaPatchError):
         senza.patch('lizzy', 'version42', 'latest')
+
+
+def test_render_definition(monkeypatch, popen):
+    senza = Senza('region')
+    senza.logger = MagicMock()
+
+    mock_named_tempfile = MagicMock()
+    mock_tempfile = MagicMock()
+    mock_tempfile.name = 'lizzy.yaml'
+    mock_named_tempfile.__enter__.return_value = mock_tempfile
+    mock_named_tempfile.return_value = mock_named_tempfile
+    monkeypatch.setattr('tempfile.NamedTemporaryFile', mock_named_tempfile)
+
+    senza.render_definition('yaml content', 'version42', 'imgversion22',
+                            ['Param1=app', 'SecondParam=3'])
+
+    cmd = 'senza print --region region -o json lizzy.yaml version42 ' \
+          'imgversion22 Param1=app SecondParam=3'
+
+    popen.assert_called_with(cmd.split(" "), stdout=-1, stderr=-1)
+    assert not senza.logger.error.called
+
+    # test error case
+    popen.side_effect = ExecutionError('', '')
+
+    with pytest.raises(SenzaRenderError):
+        senza.render_definition('yaml content', 'version42', 'imgversion22',
+                                ['Param1=app', 'SecondParam=3'])
 
 
 def test_exception():
