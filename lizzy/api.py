@@ -136,7 +136,9 @@ def create_stack(new_stack: dict) -> dict:
     if senza.create(stack.senza_yaml, stack.stack_version, stack.image_version,
                     stack.parameters, disable_rollback):
         logger.info("Stack created.", extra=stack_extra)
-        stack.status = 'LIZZY:DEPLOYING'
+        # Mark the stack as CREATE_IN_PROGRESS. Even if this isn't true anymore
+        # this will be handled in the job anyway
+        stack.status = 'CF:CREATE_IN_PROGRESS'
         stack.save()
         return _get_stack_dict(stack), 201, _make_headers()
     else:

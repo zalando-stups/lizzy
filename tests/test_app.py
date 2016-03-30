@@ -189,7 +189,7 @@ def test_new_stack(monkeypatch, app, oauth_requests):
     assert FakeStack.last_save['parameters'] == []
     assert FakeStack.last_save['stack_id'] == 'abc-' + stack_version
     assert FakeStack.last_save['stack_name'] == 'abc'
-    assert FakeStack.last_save['status'] == 'LIZZY:DEPLOYING'
+    assert FakeStack.last_save['status'] == 'CF:CREATE_IN_PROGRESS'
     assert FakeStack.last_save['traffic'] == 100
 
     data = {'keep_stacks': 0,
@@ -211,7 +211,7 @@ def test_new_stack(monkeypatch, app, oauth_requests):
     assert FakeStack.last_save['parameters'] == ['abc', 'def']
     assert FakeStack.last_save['stack_id'] == 'abc-' + stack_version
     assert FakeStack.last_save['stack_name'] == 'abc'
-    assert FakeStack.last_save['status'] == 'LIZZY:DEPLOYING'
+    assert FakeStack.last_save['status'] == 'CF:CREATE_IN_PROGRESS'
     assert FakeStack.last_save['traffic'] == 100
 
     data = {'keep_stacks': 0,
@@ -238,7 +238,7 @@ def test_new_stack(monkeypatch, app, oauth_requests):
     assert FakeStack.last_save['parameters'] == ['abc', 'def']
     assert FakeStack.last_save['stack_id'] == 'abc-42'
     assert FakeStack.last_save['stack_name'] == 'abc'
-    assert FakeStack.last_save['status'] == 'LIZZY:DEPLOYING'
+    assert FakeStack.last_save['status'] == 'CF:CREATE_IN_PROGRESS'
     assert FakeStack.last_save['traffic'] == 100
 
     mock_kio.reset_mock()
@@ -272,7 +272,7 @@ def test_new_stack(monkeypatch, app, oauth_requests):
     assert FakeStack.last_save['parameters'] == ['abc', 'def']
     assert FakeStack.last_save['stack_id'] == 'abc-42'
     assert FakeStack.last_save['stack_name'] == 'abc'
-    assert FakeStack.last_save['status'] == 'LIZZY:DEPLOYING'
+    assert FakeStack.last_save['status'] == 'CF:CREATE_IN_PROGRESS'
     assert FakeStack.last_save['traffic'] == 100
 
     # kio version creation doesn't affect the rest of the process
@@ -293,7 +293,7 @@ def test_new_stack(monkeypatch, app, oauth_requests):
     assert FakeStack.last_save['parameters'] == ['abc', 'def']
     assert FakeStack.last_save['stack_id'] == 'abc-42'
     assert FakeStack.last_save['stack_name'] == 'abc'
-    assert FakeStack.last_save['status'] == 'LIZZY:DEPLOYING'
+    assert FakeStack.last_save['status'] == 'CF:CREATE_IN_PROGRESS'
     assert FakeStack.last_save['traffic'] == 100
 
     mock_senza.create.return_value = False
