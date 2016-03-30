@@ -4,7 +4,6 @@ from dateutil import parser as date_parser
 import rod.model
 from lizzy.exceptions import ObjectNotFound
 
-from .senza_definition import SenzaDefinition
 from ..util import now
 
 REMOVED_STACK = object
@@ -81,11 +80,6 @@ class Stack(rod.model.Model):
         The id will be the same as the stack name on aws
         """
         return '{name}-{version}'.format(name=self.stack_name, version=self.stack_version)
-
-    def generate_definition(self) -> SenzaDefinition:
-        parameters = [self.image_version]
-        parameters.extend(self.parameters)
-        return SenzaDefinition(self.senza_yaml, parameters)
 
     def _parse_date(self, date_time):
         if isinstance(date_time, datetime):
