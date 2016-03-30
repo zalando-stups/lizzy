@@ -27,11 +27,23 @@ LIZZY_STACKS = {'stack-1': {'stack_id': 'stack-1',
                                    'stack_name': 'stackno1',
                                    'stack_version': 'v1',
                                    'status': 'LIZZY:REMOVED',
-                                   'parameters': ['parameter1', 'parameter2']}}
+                                   'parameters': ['parameter1', 'parameter2']},
+                'lizzyerror-1': {'stack_id': 'lizzyremoved-1',
+                                 'creation_time': '2015-09-15',
+                                 'keep_stacks': 1,
+                                 'traffic': 100,
+                                 'image_version': 'version',
+                                 'senza_yaml': 'yaml',
+                                 'stack_name': 'stackno1',
+                                 'stack_version': 'v1',
+                                 'status': 'LIZZY:ERROR',
+                                 'parameters': ['parameter1', 'parameter2']}
+                }
 
 
 class FakeStack:
-    # TODO Implement some stacks
+
+    delete = MagicMock()
 
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
@@ -88,6 +100,9 @@ def test_check_status(monkeypatch):
                                    extra={'lizzy.stack.id': 'stack-1'})
     mock_log.debug.assert_any_call('Stack found in Redis.',
                                    extra={'lizzy.stack.id': 'lizzyremoved-1'})
+
+    # Delete should be called twice (lizzyremoved and lizzyerror)
+    assert FakeStack.delete.call_count == 2
 
 
 def test_fail_get_list(monkeypatch):

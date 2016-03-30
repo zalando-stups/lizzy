@@ -56,6 +56,10 @@ def check_status(region: str):
         if lizzy_stack.status in ['LIZZY:REMOVED', 'LIZZY:ERROR']:
             # There is nothing to do this, the stack is no more, it has
             # expired, it's an ex-stack
+
+            # Delete broken and removed stacks as it makes no sense to keep
+            # them around
+            lizzy_stack.delete()
             continue
 
         if lizzy_stack.lock(3600000):
