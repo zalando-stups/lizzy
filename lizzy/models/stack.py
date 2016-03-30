@@ -7,6 +7,8 @@ from lizzy.exceptions import ObjectNotFound
 from .senza_definition import SenzaDefinition
 from ..util import now
 
+REMOVED_STACK = object
+
 
 class Stack(rod.model.Model):
     prefix = 'lizzy_stack'
