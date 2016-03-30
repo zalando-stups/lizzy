@@ -2,6 +2,7 @@ from unittest.mock import MagicMock, call, ANY
 
 from lizzy.apps.common import ExecutionError
 from lizzy.job import check_status
+from lizzy.models.stack import REMOVED_STACK
 from lizzy.exceptions import ObjectNotFound
 
 SENZA_STACKS = [{'stack_name': 'stack', 'version': 1},
@@ -70,8 +71,10 @@ class FakeStack:
 
 
 def test_check_status(monkeypatch):
+    FakeStack.delete.reset_mock()
     mock_stack = MagicMock()
-    mock_stack.all.return_value = [FakeStack(**stack) for stack in LIZZY_STACKS.values()]
+    mock_stack.all.return_value = [FakeStack(**stack)
+                                   for stack in LIZZY_STACKS.values()]
     monkeypatch.setattr('lizzy.job.Stack', FakeStack)
 
     mock_senza = MagicMock()
@@ -103,6 +106,40 @@ def test_check_status(monkeypatch):
 
     # Delete should be called twice (lizzyremoved and lizzyerror)
     assert FakeStack.delete.call_count == 2
+
+
+def test_check_status_remove(monkeypatch):
+    FakeStack.delete.reset_mock()
+    mock_stack = MagicMock()
+    mock_stack.all.return_value = [FakeStack(**stack)
+                                   for stack in LIZZY_STACKS.values()]
+    monkeypatch.setattr('lizzy.job.Stack', FakeStack)
+
+    mock_senza = MagicMock()
+    mock_senza.return_value = mock_senza
+    mock_senza.list.return_value = SENZA_STACKS
+    monkeypatch.setattr('lizzy.job.Senza', mock_senza)
+
+    mock_deployer = MagicMock()
+    mock_deployer.return_value = mock_deployer
+    mock_deployer.handle.return_value = REMOVED_STACK
+    monkeypatch.setattr('lizzy.job.Deployer', mock_deployer)
+
+    mock_log = MagicMock()
+    monkeypatch.setattr('lizzy.job.logger', mock_log)
+
+    check_status('abc')
+
+    assert mock_deployer.call_count == 1
+    assert mock_deployer.handle.call_count == 1
+    assert FakeStack.delete.call_count == 3
+    mock_deployer.assert_any_call('abc', ANY, ANY, ANY)
+
+    mock_log.debug.assert_any_call("In Job")
+    mock_log.info.assert_any_call('Deleting stack from Redis.',
+                                  extra={'lizzy.stack.id': 'stack-1'})
+    mock_log.info.assert_any_call('Deleting stack from Redis.',
+                                  extra={'lizzy.stack.id': 'lizzyremoved-1'})
 
 
 def test_fail_get_list(monkeypatch):

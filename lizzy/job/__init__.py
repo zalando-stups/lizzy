@@ -1,3 +1,4 @@
+from typing import List  # NOQA
 import collections
 import logging
 import time
@@ -9,7 +10,7 @@ import lizzy.configuration as configuration
 from lizzy.apps.senza import Senza
 from lizzy.apps.common import ExecutionError
 from lizzy.job.deployer import Deployer
-from lizzy.models.stack import Stack
+from lizzy.models.stack import Stack, REMOVED_STACK
 from lizzy.exceptions import ObjectNotFound
 
 try:
@@ -25,7 +26,7 @@ logger = logging.getLogger('lizzy.job')
 
 def check_status(region: str):
     logger.debug('In Job')
-    all_stacks = Stack.all()  # Lizzy Stacks
+    all_stacks = Stack.all()  # type: List[Stack]
 
     senza = Senza(region)
     try:
@@ -54,11 +55,11 @@ def check_status(region: str):
 
     for lizzy_stack in all_stacks:
         if lizzy_stack.status in ['LIZZY:REMOVED', 'LIZZY:ERROR']:
-            # There is nothing to do this, the stack is no more, it has
-            # expired, it's an ex-stack
-
             # Delete broken and removed stacks as it makes no sense to keep
             # them around
+            # TODO remove this in a later version (2.0???)
+            logger.info('Deleting stack from Redis.',
+                        extra={'lizzy.stack.id': lizzy_stack.stack_id})
             lizzy_stack.delete()
             continue
 
@@ -66,8 +67,14 @@ def check_status(region: str):
             controller = Deployer(region, lizzy_stacks, cf_stacks, lizzy_stack)
             try:
                 new_status = controller.handle()
-                lizzy_stack.status = new_status
-                lizzy_stack.save()
+                if new_status is not REMOVED_STACK:
+                    lizzy_stack.status = new_status
+                    lizzy_stack.save()
+                else:
+                    # stack no longer exists
+                    logger.info('Deleting stack from Redis.',
+                                extra={'lizzy.stack.id': lizzy_stack.stack_id})
+                    lizzy_stack.delete()
             finally:
                 lizzy_stack.unlock()
 

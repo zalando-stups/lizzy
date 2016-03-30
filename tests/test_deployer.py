@@ -4,7 +4,7 @@ from datetime import datetime
 from factory import Factory, Sequence
 
 from lizzy.job.deployer import Deployer
-from lizzy.models.stack import Stack
+from lizzy.models.stack import Stack, REMOVED_STACK
 from lizzy.deployer import InstantDeployer
 from lizzy.exceptions import (SenzaPatchError, AMIImageNotUpdated,
                               SenzaDomainsError, SenzaTrafficError,
@@ -92,7 +92,7 @@ def test_deploying(monkeypatch, logger):
                   status='LIZZY:DEPLOYING')
 
     deployer = Deployer('region', LIZZY_STACKS, CF_STACKS, stack)
-    assert deployer.handle() == 'LIZZY:REMOVED'
+    assert deployer.handle() is REMOVED_STACK
 
     stack = Stack(stack_id='lizzy-inprog', creation_time='2015-09-16T09:48', keep_stacks=2, traffic=7,
                   image_version='1.0', senza_yaml=YAML1, stack_name='lizzy', stack_version='inprog',
@@ -162,7 +162,7 @@ def test_deployed(monkeypatch, logger):
                          status='LIZZY:DEPLOYED')
 
     deployer = Deployer('region', LIZZY_STACKS, CF_STACKS, stack)
-    assert deployer.handle() == 'LIZZY:REMOVED'
+    assert deployer.handle() is REMOVED_STACK
 
     stack = StackFactory(stack_id='lizzy-42', creation_time='2015-09-27T09:48',
                          keep_stacks=2, stack_name='lizzy', traffic=7,
@@ -184,15 +184,6 @@ def test_deployed(monkeypatch, logger):
     mock_senza.traffic.assert_called_once_with(stack_name='lizzy', percentage=7, stack_version='42')
 
 
-def test_lizzy_error(monkeypatch, logger):
-    stack = Stack(stack_id='nonexisting-42', creation_time='2015-09-16T09:48', keep_stacks=2, traffic=7,
-                  image_version='1.0', senza_yaml=YAML1, stack_name='nonexisting', stack_version='42',
-                  status='LIZZY:ERROR')
-
-    deployer = Deployer('region', LIZZY_STACKS, CF_STACKS, stack)
-    assert deployer.handle() == 'LIZZY:ERROR'
-
-
 def test_default(monkeypatch, logger):
     mock_senza = MagicMock()
     mock_senza.domains.return_value = ['test.example']
@@ -204,7 +195,7 @@ def test_default(monkeypatch, logger):
                   status='CF:TESTING')
 
     deployer = Deployer('region', LIZZY_STACKS, CF_STACKS, stack)
-    assert deployer.handle() == 'LIZZY:REMOVED'
+    assert deployer.handle() is REMOVED_STACK
 
     stack = Stack(stack_id='lizzy-42', creation_time='2015-09-16T09:48', keep_stacks=2, traffic=7,
                   image_version='1.0', senza_yaml=YAML1, stack_name='lizzy', stack_version='42',

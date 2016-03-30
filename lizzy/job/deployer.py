@@ -2,7 +2,7 @@ import logging
 
 from lizzy.apps.common import ExecutionError
 from lizzy.apps.senza import Senza
-from lizzy.models.stack import Stack
+from lizzy.models.stack import Stack, REMOVED_STACK
 
 _failed_to_get_domains = object()  # sentinel value for when we failed to get domains from senza
 
@@ -58,12 +58,12 @@ class Deployer:
         if cloud_formation_status is not None:
             self.logger.debug("Stack status updated", extra=self.log_info)
             new_status = 'CF:{}'.format(cloud_formation_status)
+            return new_status
         else:
             # If this happens is because the stack was removed from aws
             self.logger.info("Stack no longer exists, marking as removed",
                              extra=self.log_info)
-            new_status = 'LIZZY:REMOVED'
-        return new_status
+            return REMOVED_STACK
 
     def deploying(self) -> str:
         """
@@ -76,8 +76,9 @@ class Deployer:
         if cloud_formation_status is None:  # Stack no longer exist.
             self.logger.info("Stack no longer exists, marking as removed.",
                              extra=self.log_info)
-            new_status = 'LIZZY:REMOVED'
-        elif cloud_formation_status == 'CREATE_COMPLETE':
+            return REMOVED_STACK
+
+        if cloud_formation_status == 'CREATE_COMPLETE':
             self.logger.info("Stack created.", extra=self.log_info)
             new_status = 'LIZZY:DEPLOYED'
         elif cloud_formation_status == 'CREATE_IN_PROGRESS':
@@ -104,7 +105,7 @@ class Deployer:
         if cloud_formation_status is None:  # Stack no longer exist.
             self.logger.info("Stack no longer exists, marking as removed",
                              extra=self.log_info)
-            return 'LIZZY:REMOVED'
+            return REMOVED_STACK
 
         # Switch all traffic to new version
         try:
@@ -162,7 +163,6 @@ class Deployer:
             'LIZZY:DEPLOYING': self.deploying,
             'CF:CREATE_IN_PROGRESS': self.deploying,
             'LIZZY:DEPLOYED': self.deployed,
-            'LIZZY:ERROR': lambda: 'LIZZY:ERROR',
         }
         handler = action_by_status.get(self.stack.status, self.default)
         return handler()
