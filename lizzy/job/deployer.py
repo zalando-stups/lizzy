@@ -119,6 +119,8 @@ class Deployer:
             self.logger.info("App doesn't have a domain so traffic will not be switched.",
                              extra=self.log_info)
         elif domains is not _failed_to_get_domains and self.stack.traffic > 0:
+            # if new stack's traffic is zero the traffic does not need to be
+            # switched. More details at: https://github.com/zalando/lizzy/issues/83
             self.logger.info("Switching app traffic.", extra=self.log_info)
             try:
                 self.senza.traffic(stack_name=self.stack.stack_name,
