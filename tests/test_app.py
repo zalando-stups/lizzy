@@ -190,7 +190,10 @@ def test_new_stack(monkeypatch, app, oauth_requests):
     request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
     mock_kio.assert_not_called()
     mock_senza.assert_called_with('eu-west-1')
-    mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc', ANY, '1.0', [], False)
+    mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc',
+                                         ANY, '1.0', [], False,
+                                         {'TargetTraffic': 100,
+                                          'KeepStacks': 0})
     assert request.status_code == 201
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
     stack_version = FakeStack.last_save['stack_version']
@@ -212,7 +215,10 @@ def test_new_stack(monkeypatch, app, oauth_requests):
     request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
     mock_kio.assert_not_called()
     mock_senza.assert_called_with('eu-west-1')
-    mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc', ANY, '1.0', ['abc', 'def'], False)
+    mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc',
+                                         ANY, '1.0', ['abc', 'def'], False,
+                                         {'TargetTraffic': 100,
+                                          'KeepStacks': 0})
     assert request.status_code == 201
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
     stack_version = FakeStack.last_save['stack_version']
@@ -236,7 +242,10 @@ def test_new_stack(monkeypatch, app, oauth_requests):
     mock_kio.versions_create.return_value = True
     request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
     mock_senza.assert_called_with('eu-west-1')
-    mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc', ANY, '1.0', ['abc', 'def'], False)
+    mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc',
+                                         ANY, '1.0', ['abc', 'def'], False,
+                                         {'KeepStacks': 0,
+                                          'TargetTraffic': 100})
     mock_kio.assert_called_with()
     mock_kio.versions_create.assert_called_once_with(application_id='abc',
                                                      artifact='pierone.example.com/lizzy/lizzy:12',
@@ -270,7 +279,9 @@ def test_new_stack(monkeypatch, app, oauth_requests):
     mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc',
                                          ANY, '1.0',
                                          ['abc', 'def'],
-                                         True)
+                                         True,
+                                         {'KeepStacks': 0,
+                                          'TargetTraffic': 100})
     mock_kio.assert_called_with()
     mock_kio.versions_create.assert_called_once_with(application_id='abc',
                                                      artifact='pierone.example.com/lizzy/lizzy:12',
@@ -330,7 +341,9 @@ def test_new_stack(monkeypatch, app, oauth_requests):
                        data=json.dumps(data))
     mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc', ANY,
                                          '1.0', ['MintBucket=bk-bucket',
-                                                 'ImageVersion=28'], False)
+                                                 'ImageVersion=28'], False,
+                                         {'KeepStacks': 0,
+                                          'TargetTraffic': 100})
     stack_version = FakeStack.last_save['stack_version']
     assert FakeStack.last_save['parameters'] == ['MintBucket=bk-bucket',
                                                  'ImageVersion=28']
