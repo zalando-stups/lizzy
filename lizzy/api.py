@@ -77,9 +77,6 @@ def create_stack(new_stack: dict) -> dict:
     senza_yaml = new_stack['senza_yaml']  # type: str
     parameters = new_stack.get('parameters', [])
     disable_rollback = new_stack.get('disable_rollback', False)
-    stack_name = None
-    artifact_name = None
-    cf_raw_definition = None
     senza = Senza(config.region)
 
     stack = Stack(keep_stacks=keep_stacks,
@@ -138,8 +135,10 @@ def create_stack(new_stack: dict) -> dict:
                    'stack_version': stack.stack_version,
                    'image_version': stack.image_version,
                    'parameters': stack.parameters}
+    tags = {'KeepStacks': keep_stacks,
+            'TargetTraffic': new_traffic}
     if senza.create(stack.senza_yaml, stack.stack_version, stack.image_version,
-                    stack.parameters, disable_rollback):
+                    stack.parameters, disable_rollback, tags):
         logger.info("Stack created.", extra=stack_extra)
         # Mark the stack as CREATE_IN_PROGRESS. Even if this isn't true anymore
         # this will be handled in the job anyway

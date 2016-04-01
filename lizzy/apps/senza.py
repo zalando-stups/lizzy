@@ -1,4 +1,4 @@
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Any
 import tempfile
 
 from ..version import VERSION
@@ -13,7 +13,8 @@ class Senza(Application):
         super().__init__('senza', extra_parameters=['--region', region])
 
     def create(self, senza_yaml: str, stack_version: str, image_version: str,
-               parameters: List[str], disable_rollback: bool) -> bool:
+               parameters: List[str], disable_rollback: bool,
+               tags: Dict[str, Any]) -> bool:
         """
         Create a new stack
 
@@ -21,6 +22,8 @@ class Senza(Application):
         :param stack_version: New stack's version
         :param image_version: Docker image to deployed
         :param parameters: Extra parameters for the deployment
+        :param disable_rollback: Disables stack rollback on creation failure
+        :param tags: Extra tags to add to the stack
         :return: Success of the operation
         """
         with tempfile.NamedTemporaryFile() as temp_yaml:
@@ -32,6 +35,11 @@ class Senza(Application):
                     args.append('--disable-rollback')
 
                 parameters.extend(['-t', 'LizzyVersion={}'.format(VERSION)])
+
+                for key, value in tags.items():
+                    # Adds the tags prepended with Lizzy
+                    tag = 'Lizzy{0}={1}'.format(key, value)
+                    parameters.extend(['-t', tag])
 
                 self._execute('create', *args, temp_yaml.name, stack_version,
                               image_version, *parameters)
