@@ -170,6 +170,9 @@ def test_deployed(monkeypatch, logger):
 
     deployer = Deployer('region', LIZZY_STACKS, CF_STACKS, stack)
     assert deployer.handle() == 'CF:TEST'
+    mock_senza.traffic.assert_called_with(stack_name=stack.stack_name,
+                                          stack_version=stack.stack_version,
+                                          percentage=stack.traffic)
 
     # remove old stacks
     assert mock_senza.remove.call_count == 4
@@ -181,7 +184,22 @@ def test_deployed(monkeypatch, logger):
     ]
     mock_senza.remove.assert_has_calls(expected_calls_to_remove)
 
-    mock_senza.traffic.assert_called_once_with(stack_name='lizzy', percentage=7, stack_version='42')
+    mock_senza.traffic.assert_called_once_with(stack_name='lizzy',
+                                               percentage=7, stack_version='42')
+
+    # If stack has traffic of 0, do not call senza.traffic command
+    mock_senza.reset_mock()
+    mock_senza.domains.return_value = ['test.example']
+    mock_senza.return_value = mock_senza
+
+    stack = StackFactory.create(stack_name='lizzy',
+                                stack_version='42',
+                                traffic=0,
+                                status='LIZZY:DEPLOYED')
+
+    deployer = Deployer('region', LIZZY_STACKS, CF_STACKS, stack)
+    assert deployer.handle() == 'CF:TEST'
+    mock_senza.traffic.assert_not_called()
 
 
 def test_default(monkeypatch, logger):
