@@ -116,7 +116,7 @@ class Deployer:
             domains = _failed_to_get_domains
 
         # TODO Remove the traffic percentage from Redis in a future version
-        traffic_percentage = int(self.stack.cf_tags.get('LizzyTraffic',
+        traffic_percentage = int(self.stack.cf_tags.get('LizzyTargetTraffic',
                                                         self.stack.traffic))
 
         if not domains:

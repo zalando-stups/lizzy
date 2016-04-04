@@ -149,8 +149,8 @@ def create_stack(new_stack: dict) -> dict:
                    'stack_version': stack.stack_version,
                    'image_version': stack.image_version,
                    'parameters': stack.parameters}
-    tags = {'KeepStacks': keep_stacks,
-            'TargetTraffic': new_traffic}
+    tags = {'LizzyKeepStacks': keep_stacks,
+            'LizzyTargetTraffic': new_traffic}
     if senza.create(stack.senza_yaml, stack.stack_version, stack.image_version,
                     stack.parameters, disable_rollback, tags):
         logger.info("Stack created.", extra=stack_extra)
