@@ -142,8 +142,10 @@ class Deployer:
 
         self.logger.debug("Existing versions: %s", all_versions_names,
                           extra=self.log_info)
-        # we want to keep only two versions
-        number_of_versions_to_keep = self.stack.keep_stacks + 1  # keep provided old stacks + 1
+        # TODO Remove the keep_stacks from Redis in a future version
+        # keep provided old stacks + 1
+        number_of_versions_to_keep = int(self.stack.cf_tags.get('LizzyKeepStacks',
+                                                                self.stack.keep_stacks)) + 1
         versions_to_remove = all_versions_names[:-number_of_versions_to_keep]
         self.logger.debug("Versions to be removed: %s", versions_to_remove,
                           extra=self.log_info)
