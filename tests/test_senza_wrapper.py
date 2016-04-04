@@ -250,6 +250,10 @@ def test_render_definition(monkeypatch, popen):
     popen.assert_called_with(cmd.split(" "), stdout=-1, stderr=-1)
     assert not senza.logger.error.called
 
+    senza.render_definition('yaml content', None, 'imgversion22',
+                            ['Param1=app', 'SecondParam=3'])
+    assert not senza.logger.error.called
+
     # test error case
     popen.side_effect = ExecutionError('', '')
 

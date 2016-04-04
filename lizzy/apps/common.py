@@ -21,6 +21,7 @@ class Application:
         else:
             stderr_to = STDOUT
         command += args
+        command = [arg for arg in command if arg is not None]
         self.logger.debug('Executing %s.', self.application, extra={'command': ' '.join(command)})
         process = Popen(command, stdout=PIPE, stderr=stderr_to)
         stdout, _ = process.communicate()
