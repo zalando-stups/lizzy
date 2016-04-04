@@ -38,7 +38,7 @@ class Senza(Application):
 
                 for key, value in tags.items():
                     # Adds the tags prepended with Lizzy
-                    tag = 'Lizzy{0}={1}'.format(key, value)
+                    tag = '{0}={1}'.format(key, value)
                     parameters.extend(['-t', tag])
 
                 self._execute('create', *args, temp_yaml.name, stack_version,

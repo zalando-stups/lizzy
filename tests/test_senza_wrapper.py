@@ -41,7 +41,7 @@ def test_create(monkeypatch, popen):
                               '--force', 'filename',
                               '10', '42', 'param1', 'param2',
                               '-t', lizzy_version_tag,
-                              '-t', 'LizzyRandomTag=tag_value'],
+                              '-t', 'RandomTag=tag_value'],
                              stdout=-1,
                              stderr=-2)
 
