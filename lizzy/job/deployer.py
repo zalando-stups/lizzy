@@ -115,17 +115,22 @@ class Deployer:
                                   extra=self.log_info)
             domains = _failed_to_get_domains
 
+        # TODO Remove the traffic percentage from Redis in a future version
+        traffic_percentage = int(self.stack.cf_tags.get('LizzyTraffic',
+                                                        self.stack.traffic))
+
         if not domains:
             self.logger.info("App doesn't have a domain so traffic will not be switched.",
                              extra=self.log_info)
-        elif domains is not _failed_to_get_domains and self.stack.traffic > 0:
+        elif domains is not _failed_to_get_domains and traffic_percentage:
             # if new stack's traffic is zero the traffic does not need to be
             # switched. More details at: https://github.com/zalando/lizzy/issues/83
             self.logger.info("Switching app traffic.", extra=self.log_info)
             try:
+
                 self.senza.traffic(stack_name=self.stack.stack_name,
                                    stack_version=self.stack.stack_version,
-                                   percentage=self.stack.traffic)
+                                   percentage=traffic_percentage)
             except ExecutionError:
                 self.logger.exception("Failed to switch app traffic.",
                                       extra=self.log_info)
