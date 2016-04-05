@@ -46,7 +46,7 @@ def test_create(monkeypatch, popen):
                              stderr=-2)
 
     cmd = 'senza create --region region --force filename 10 42 param1 param2 '\
-          '-t ' + lizzy_version_tag + ' -t LizzyRandomTag=tag_value'
+          '-t ' + lizzy_version_tag + ' -t RandomTag=tag_value'
     senza.logger.debug.assert_called_with('Executing %s.', 'senza',
                                           extra={'command': cmd})
 

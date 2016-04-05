@@ -10,6 +10,7 @@ from lizzy.exceptions import (SenzaPatchError, AMIImageNotUpdated,
                               SenzaDomainsError, SenzaTrafficError,
                               TrafficNotUpdated)
 
+from fixtures.boto import cf
 from fixtures.senza_definitions import YAML1
 
 
@@ -150,7 +151,7 @@ def test_deploying_create_in_progress(monkeypatch, logger):
     assert deployer.handle() == 'CF:TEST'
 
 
-def test_deployed(monkeypatch, logger):
+def test_deployed(monkeypatch, logger, cf):
     mock_senza = MagicMock()
     mock_senza.domains.return_value = ['test.example']
     mock_senza.return_value = mock_senza
