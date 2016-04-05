@@ -82,9 +82,20 @@ def create_stack(new_stack: dict) -> dict:
     cf_raw_definition = None
     senza = Senza(config.region)
 
+    stack = Stack(keep_stacks=keep_stacks,
+                  traffic=new_traffic,
+                  image_version=image_version,
+                  senza_yaml=senza_yaml,
+                  stack_name=stack_name,
+                  stack_version=stack_version,
+                  application_version=application_version,
+                  parameters=parameters)
+
     try:
-        cf_raw_definition = senza.render_definition(senza_yaml, stack_version,
-                                                    image_version, parameters)
+        cf_raw_definition = senza.render_definition(senza_yaml,
+                                                    stack.stack_version,
+                                                    stack.image_version,
+                                                    parameters)
     except SenzaRenderError as exception:
         return connexion.problem(400,
                                  'Invalid senza yaml',
@@ -108,14 +119,8 @@ def create_stack(new_stack: dict) -> dict:
 
     # Create the Stack
     logger.info("Creating stack %s...", stack_name)
-    stack = Stack(keep_stacks=keep_stacks,
-                  traffic=new_traffic,
-                  image_version=image_version,
-                  senza_yaml=senza_yaml,
-                  stack_name=stack_name,
-                  stack_version=stack_version,
-                  application_version=application_version,
-                  parameters=parameters)
+    stack.stack_name = stack_name
+    stack.stack_id = stack.generate_id()
 
     if stack.application_version:
         kio_extra = {'stack_name': stack_name, 'version': application_version}
