@@ -148,8 +148,10 @@ class Senza(Application):
             temp_yaml.write(senza_yaml.encode())
             temp_yaml.file.flush()
             try:
-                return self._execute('print', temp_yaml.name, stack_version,
-                                     image_version, *parameters, expect_json=True)
+                return self._execute('print', '--force',
+                                     temp_yaml.name, stack_version,
+                                     image_version, *parameters,
+                                     expect_json=True)
             except ExecutionError as e:
                 self.logger.error('Failed to render CloudFormation defition.',
                                   extra={'command.output': e.output})
