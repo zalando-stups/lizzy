@@ -76,6 +76,10 @@ def create_stack(new_stack: dict) -> dict:
     senza_yaml = new_stack['senza_yaml']  # type: str
     parameters = new_stack.get('parameters', [])
     disable_rollback = new_stack.get('disable_rollback', False)
+    stack_name = None
+    artifact_name = None
+    cf_raw_definition = None
+
     senza = Senza(config.region)
 
     stack = Stack(keep_stacks=keep_stacks,
