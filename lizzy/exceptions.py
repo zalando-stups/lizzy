@@ -51,6 +51,7 @@ class ObjectNotFound(LizzyError):
     """Raised when model instance is not found in storage."""
 
     def __init__(self, uid: str):
+        super().__init__("Object not found '{0}'".format(uid))
         self.uid = uid
 
 

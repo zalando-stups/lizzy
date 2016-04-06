@@ -21,7 +21,7 @@ try:
 except ImportError:
     uwsgi = None
 
-logger = logging.getLogger('lizzy.job')
+logger = logging.getLogger('lizzy.job')  # pylint: disable=invalid-name
 
 
 def check_status(region: str):
@@ -43,7 +43,7 @@ def check_status(region: str):
     for cf_stack in senza_list:
         stack_name = '{stack_name}-{version}'.format_map(cf_stack)
         try:
-            lizzy_stack = Stack.get(stack_name)
+            lizzy_stack = Stack.get(stack_name)  # type: Stack
             logger.debug("Stack found in Redis.",
                          extra={'lizzy.stack.id': stack_name})
             lizzy_stacks[lizzy_stack.stack_name][lizzy_stack.stack_version] = lizzy_stack
@@ -89,9 +89,9 @@ def main_loop():  # pragma: no cover
                        'redis_port': config.redis_port})
     rod.connection.setup(redis_host=config.redis_host, port=config.redis_port)
     while True:
-        t = Thread(target=check_status, args=(config.region,))
-        t.daemon = True
-        t.start()
+        job_thread = Thread(target=check_status, args=(config.region,))
+        job_thread.daemon = True
+        job_thread.start()
         logger.debug('Waiting %d seconds to run the job again.',
                      config.job_interval)
         time.sleep(config.job_interval)

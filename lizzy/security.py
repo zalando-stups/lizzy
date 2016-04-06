@@ -1,10 +1,11 @@
+import logging
+
 import connexion
 import decorator
-import logging
 
 from lizzy import Configuration
 
-logger = logging.getLogger('lizzy.security')
+logger = logging.getLogger('lizzy.security')  # pylint: disable=invalid-name
 
 
 @decorator.decorator

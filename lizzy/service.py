@@ -5,12 +5,13 @@
 import logging
 
 import connexion
-import lizzy.configuration as configuration
 import rod.connection
 import uwsgi_metrics
-from lizzy.api import not_found_path_handler
 
-logger = logging.getLogger('lizzy')
+from lizzy.api import not_found_path_handler
+import lizzy.configuration as configuration
+
+logger = logging.getLogger('lizzy')  # pylint: disable=invalid-name
 
 
 def setup_webapp(config: configuration.Configuration):  # pragma: no cover

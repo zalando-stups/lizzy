@@ -37,14 +37,14 @@ class InstantDeployer:
                 self.logger.info("App does not have a domain so traffic will"
                                  " not be switched.", extra=self.log_info)
                 raise TrafficNotUpdated("App does not have a domain.")
-        except SenzaDomainsError as e:
+        except SenzaDomainsError as exception:
             self.logger.exception("Failed to get domains. Traffic will"
                                   "not be switched.", extra=self.log_info)
-            raise TrafficNotUpdated(e.message)
-        except SenzaTrafficError as e:
+            raise TrafficNotUpdated(exception.message)
+        except SenzaTrafficError as exception:
             self.logger.exception("Failed to switch app traffic.",
                                   extra=self.log_info)
-            raise TrafficNotUpdated(e.message)
+            raise TrafficNotUpdated(exception.message)
 
     def update_ami_image(self, new_ami_image: str):
         """Change the AMI image of the Auto Scaling Group (ASG) and respawn the
@@ -61,9 +61,9 @@ class InstantDeployer:
             self.senza.respawn_instances(self.stack.stack_name,
                                          self.stack.stack_version)
 
-        except ExecutionError as e:
-            self.logger.info(e.message, extra=self.log_info)
-            raise AMIImageNotUpdated(e.message)
+        except ExecutionError as exception:
+            self.logger.info(exception.message, extra=self.log_info)
+            raise AMIImageNotUpdated(exception.message)
 
     def delete_stack(self) -> None:
         """
@@ -76,7 +76,7 @@ class InstantDeployer:
         try:
             self.senza.remove(self.stack.stack_name, self.stack.stack_version)
             self.logger.info("Stack removed.", extra=self.log_info)
-        except ExecutionError as e:
+        except ExecutionError as exception:
             self.logger.exception("Failed to remove stack.",
                                   extra=self.log_info)
-            raise StackDeleteException(e.output)
+            raise StackDeleteException(exception.output)

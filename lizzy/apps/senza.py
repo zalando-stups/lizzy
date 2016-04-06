@@ -67,8 +67,8 @@ class Senza(Application):
             else:
                 stack_domains = self._execute('domains', expect_json=True)
             return stack_domains
-        except ExecutionError as e:
-            raise SenzaDomainsError(e.error, e.output)
+        except ExecutionError as exception:
+            raise SenzaDomainsError(exception.error, exception.output)
 
     def list(self) -> List[Dict]:
         """
@@ -101,8 +101,8 @@ class Senza(Application):
         try:
             traffic_weights = self._execute('traffic', stack_name, stack_version, str(percentage), expect_json=True)
             return traffic_weights
-        except ExecutionError as e:
-            raise SenzaTrafficError(e.error, e.output)
+        except ExecutionError as exception:
+            raise SenzaTrafficError(exception.error, exception.output)
 
     def respawn_instances(self, stack_name: str, stack_version: str):
         """
@@ -119,8 +119,8 @@ class Senza(Application):
             self._execute('respawn-instances', stack_name, stack_version,
                           expect_json=True)
 
-        except ExecutionError as e:
-            raise SenzaRespawnInstancesError(e.error, e.output)
+        except ExecutionError as exception:
+            raise SenzaRespawnInstancesError(exception.error, exception.output)
 
     def patch(self, stack_name: str, stack_version: str, ami_image: str):
         """
@@ -139,11 +139,11 @@ class Senza(Application):
             self._execute('patch', stack_name, stack_version, image_argument,
                           expect_json=True)
 
-        except ExecutionError as e:
-            raise SenzaPatchError(e.error, e.output)
+        except ExecutionError as exception:
+            raise SenzaPatchError(exception.error, exception.output)
 
-    def render_definition(self, senza_yaml: str, stack_version: str, image_version: str,
-                          parameters: List[str]):
+    def render_definition(self, senza_yaml: str, stack_version: str,
+                          image_version: str, parameters: List[str]):
         """
         Renders the cloud formation json used by senza.
 
@@ -160,7 +160,7 @@ class Senza(Application):
                                      temp_yaml.name, stack_version,
                                      image_version, *parameters,
                                      expect_json=True)
-            except ExecutionError as e:
+            except ExecutionError as exception:
                 self.logger.error('Failed to render CloudFormation defition.',
-                                  extra={'command.output': e.output})
-                raise SenzaRenderError(e.error, e.output)
+                                  extra={'command.output': exception.output})
+                raise SenzaRenderError(exception.error, exception.output)
