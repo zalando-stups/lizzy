@@ -102,7 +102,6 @@ class Stack(rod.model.Model):
             try:
                 stacks = cloud_formation.describe_stacks(StackName=self.stack_id)  # type: Dict[str, Any]
             except botocore.exceptions.ClientError:
-                # don't save the {} because it can work later
                 return {}
             self.__cf_stack = stacks['Stacks'][0]  # type: Dict[str, Any]
 
