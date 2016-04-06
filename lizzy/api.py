@@ -1,4 +1,4 @@
-from typing import Optional  # noqa  # pylint: disable=unused-import
+from typing import Optional  # noqa pylint: disable=unused-import
 
 import logging
 import connexion

@@ -1,4 +1,4 @@
-from typing import Dict, Any, List, Optional  # NOQA  # pylint: disable=unused-import
+from typing import Dict, Any, List, Optional  # NOQA  pylint: disable=unused-import
 
 from datetime import datetime
 import rod.model
