@@ -244,7 +244,7 @@ def test_render_definition(monkeypatch, popen):
     senza.render_definition('yaml content', 'version42', 'imgversion22',
                             ['Param1=app', 'SecondParam=3'])
 
-    cmd = 'senza print --region region -o json lizzy.yaml version42 ' \
+    cmd = 'senza print --region region -o json --force lizzy.yaml version42 ' \
           'imgversion22 Param1=app SecondParam=3'
 
     popen.assert_called_with(cmd.split(" "), stdout=-1, stderr=-1)
