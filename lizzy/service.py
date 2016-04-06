@@ -2,13 +2,15 @@
 
 # The functions in this module all have `pragma: no cover` because they only setup stuff and don't do "real" work
 
-import connexion
 import logging
+
+import connexion
 import rod.connection
 import uwsgi_metrics
+
 import lizzy.configuration as configuration
 
-logger = logging.getLogger('lizzy')
+logger = logging.getLogger('lizzy')  # pylint: disable=invalid-name
 
 
 def setup_webapp(config: configuration.Configuration):  # pragma: no cover

@@ -1,4 +1,6 @@
 from datetime import datetime
+
+from dateutil import parser as date_parser
 import pytz
 
 
@@ -22,3 +24,9 @@ def now() -> datetime:
     True
     """
     return datetime.utcnow().replace(tzinfo=pytz.utc)
+
+
+def parse_date(date_time) -> datetime:
+    if isinstance(date_time, datetime):
+        return date_time
+    return date_parser.parse(date_time)

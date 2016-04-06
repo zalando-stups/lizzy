@@ -1,7 +1,7 @@
 import environmental
 
 
-class Configuration:
+class Configuration:  # pylint: disable=too-few-public-methods
     """
     Configuration parameters to be fetched from the environment
     """
@@ -17,4 +17,4 @@ class Configuration:
     token_info_url = environmental.Str('TOKENINFO_URL')
 
 
-config = Configuration()
+config = Configuration()  # pylint: disable=invalid-name
