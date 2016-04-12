@@ -1,21 +1,20 @@
-from typing import Optional  # noqa
-from decorator import decorator
 import logging
+
 import connexion
 import yaml
-
+from decorator import decorator
 from lizzy import config
 from lizzy.apps.kio import Kio
 from lizzy.apps.senza import Senza
+from lizzy.deployer import InstantDeployer
+from lizzy.exceptions import (AMIImageNotUpdated, ObjectNotFound,
+                              SenzaRenderError, StackDeleteException,
+                              TrafficNotUpdated)
 from lizzy.models.stack import Stack
 from lizzy.security import bouncer
-from lizzy.version import VERSION
-from lizzy.exceptions import (ObjectNotFound, AMIImageNotUpdated,
-                              TrafficNotUpdated, StackDeleteException,
-                              SenzaRenderError)
-from lizzy.deployer import InstantDeployer
 from lizzy.util import filter_empty_values
-
+from lizzy.version import VERSION
+from typing import Optional  # noqa
 
 logger = logging.getLogger('lizzy.api')
 
@@ -104,9 +103,24 @@ def create_stack(new_stack: dict) -> dict:
 
     try:
         stack_name = cf_raw_definition['Mappings']['Senza']['Info']['StackName']
-        taupage_yaml = cf_raw_definition['Resources']['AppServerConfig']['Properties']['UserData']['Fn::Base64']
-        taupage_config = yaml.safe_load(taupage_yaml)
-        artifact_name = taupage_config['source']
+
+        for resource, definition in cf_raw_definition['Resources'].items():
+            if definition['Type'] == 'AWS::AutoScaling::LaunchConfiguration':
+                taupage_yaml = definition['Properties']['UserData']['Fn::Base64']
+                taupage_config = yaml.safe_load(taupage_yaml)
+                artifact_name = taupage_config['source']
+
+        if artifact_name is None:
+            missing_component_error = "Missing component type Senza::TaupageAutoScalingGroup"
+            problem = connexion.problem(400,
+                                        'Invalid senza yaml',
+                                        missing_component_error,
+                                        headers=_make_headers())
+
+            logger.error(missing_component_error, extra={
+                'cf_definition': repr(cf_raw_definition)})
+            return problem
+
     except KeyError as exception:
         logger.error("Couldn't get stack name from definition.",
                      extra={'cf_definition': repr(cf_raw_definition)})
