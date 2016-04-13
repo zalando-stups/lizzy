@@ -123,6 +123,15 @@ def test_security(app, oauth_requests):
     assert get_stacks.status_code == 200
     assert get_stacks.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
+    inexistent_url = app.get('/api/does-not-exist', headers=GOOD_HEADERS)
+    assert inexistent_url.status_code == 403
+
+    invalid_access = app.get('/api/does-not-exist')
+    assert invalid_access.status_code == 401
+
+    invalid_access = app.get('/random-access-that-does-not-exist-outside-of-api')
+    assert invalid_access.status_code == 401
+
 
 def test_empty_new_stack(monkeypatch, app, oauth_requests):
     data = {}

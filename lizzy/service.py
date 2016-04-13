@@ -2,11 +2,13 @@
 
 # The functions in this module all have `pragma: no cover` because they only setup stuff and don't do "real" work
 
-import connexion
 import logging
+
+import connexion
+import lizzy.configuration as configuration
 import rod.connection
 import uwsgi_metrics
-import lizzy.configuration as configuration
+from lizzy.api import not_found_path_handler
 
 logger = logging.getLogger('lizzy')
 
@@ -21,6 +23,10 @@ def setup_webapp(config: configuration.Configuration):  # pragma: no cover
                         arguments=arguments,
                         auth_all_paths=True)
     app.add_api('lizzy.yaml')
+
+    flask_app = app.app
+    flask_app.errorhandler(404)(not_found_path_handler)
+
     return app
 
 
