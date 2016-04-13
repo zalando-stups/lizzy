@@ -238,5 +238,4 @@ def delete_stack(stack_id: str) -> dict:
 
 
 def not_found_path_handler(error):
-    return connexion.problem(401, 'Unauthorized',
-                             "No authorization token provided")
+    return connexion.problem(401, 'Unauthorized', '')
