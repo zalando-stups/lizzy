@@ -24,6 +24,9 @@ securityDefinitions:
     scopes:
         "{{deployer_scope}}": Can deploy and change stacks
 
+security:
+  - oauth: []
+
 paths:
   /stacks:
     get:
