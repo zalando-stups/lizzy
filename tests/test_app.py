@@ -1,18 +1,20 @@
-from unittest.mock import MagicMock, ANY
 import json
 import os
-import pytest
-import requests
+from unittest.mock import ANY, MagicMock
 
 import lizzy.api
+import pytest
+import requests
+from fixtures.cloud_formation import (BAD_CF_DEFINITION,
+                                      BAD_CF_MISSING_TAUPAGE_AUTOSCALING_GROUP,
+                                      GOOD_CF_DEFINITION,
+                                      GOOD_CF_DEFINITION_WITH_UNUSUAL_AUTOSCALING_RESOURCE)
+from lizzy.exceptions import (AMIImageNotUpdated, ObjectNotFound,
+                              SenzaRenderError, StackDeleteException,
+                              TrafficNotUpdated)
 from lizzy.models.stack import Stack
-from lizzy.exceptions import (ObjectNotFound, AMIImageNotUpdated,
-                              TrafficNotUpdated, StackDeleteException,
-                              SenzaRenderError)
 from lizzy.service import setup_webapp
 from lizzy.version import VERSION
-
-from fixtures.cloud_formation import GOOD_CF_DEFINITION, BAD_CF_DEFINITION
 
 CURRENT_VERSION = VERSION
 
@@ -323,6 +325,42 @@ def test_new_stack(monkeypatch, app, oauth_requests):
     stack_version = FakeStack.last_save['stack_version']
     assert FakeStack.last_save['parameters'] == ['MintBucket=bk-bucket',
                                                  'ImageVersion=28']
+
+    # unusual launch configuration name (usually is AppServer)
+    mock_kio.reset_mock()
+    mock_senza.reset_mock()
+    mock_senza.render_definition.return_value = GOOD_CF_DEFINITION_WITH_UNUSUAL_AUTOSCALING_RESOURCE
+    data = {'keep_stacks': 0,
+            'new_traffic': 100,
+            'image_version': '1.0',
+            'senza_yaml': 'SenzaInfo:\n  StackName: abc',
+            'parameters': ['abc', 'def'],
+            'application_version': '42',
+            'disable_rollback': True}
+
+    mock_kio.versions_create.return_value = True
+    response = app.post('/api/stacks', headers=GOOD_HEADERS,
+                        data=json.dumps(data))  # type: flask.Response
+
+    assert response.status_code == 201
+
+    # unusual launch missing TaupageAutoScalingGroup
+    mock_kio.reset_mock()
+    mock_senza.reset_mock()
+    mock_senza.render_definition.return_value = BAD_CF_MISSING_TAUPAGE_AUTOSCALING_GROUP
+    data = {'keep_stacks': 0,
+            'new_traffic': 100,
+            'image_version': '1.0',
+            'senza_yaml': 'SenzaInfo:\n  StackName: abc',
+            'parameters': ['abc', 'def'],
+            'application_version': '42',
+            'disable_rollback': True}
+
+    mock_kio.versions_create.return_value = True
+    response = app.post('/api/stacks', headers=GOOD_HEADERS,
+                        data=json.dumps(data))  # type: flask.Response
+
+    assert response.status_code == 400
 
 
 def test_get_stack(app, oauth_requests):
