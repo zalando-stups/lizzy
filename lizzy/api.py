@@ -235,3 +235,8 @@ def delete_stack(stack_id: str) -> dict:
                                      headers=_make_headers())
 
     return '', 204, _make_headers()
+
+
+def not_found_path_handler(error):
+    return connexion.problem(401, 'Unauthorized',
+                             "No authorization token provided")

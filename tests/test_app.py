@@ -129,6 +129,9 @@ def test_security(app, oauth_requests):
     invalid_access = app.get('/api/does-not-exist')
     assert invalid_access.status_code == 401
 
+    invalid_access = app.get('/random-access-that-does-not-exist-outside-of-api')
+    assert invalid_access.status_code == 401
+
 
 def test_empty_new_stack(monkeypatch, app, oauth_requests):
     data = {}
