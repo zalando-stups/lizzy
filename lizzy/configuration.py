@@ -6,6 +6,7 @@ class Configuration:  # pylint: disable=too-few-public-methods
     Configuration parameters to be fetched from the environment
     """
     allowed_users = environmental.List('ALLOWED_USERS', None)
+    allowed_user_pattern = environmental.Str('ALLOWED_USER_PATTERN', None)  # Username pattern
     deployer_scope = environmental.Str('DEPLOYER_SCOPE')  # OAUTH scope needed to deploy
     job_interval = environmental.Int('JOB_INTERVAL', 15)  # how many seconds to wait between job runs
     log_level = environmental.Str('LOG_LEVEL', 'INFO')

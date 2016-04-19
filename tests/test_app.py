@@ -102,9 +102,9 @@ def oauth_requests(monkeypatch: '_pytest.monkeypatch.monkeypatch'):
             if url == "https://ouath.example/token_info":
                 token = params['access_token']
                 if token == "100":
-                    return FakeResponse(200, '{"scope": ["myscope"], "uid": ["test_user"]}')
+                    return FakeResponse(200, '{"scope": ["myscope"], "uid": "test_user"}')
                 if token == "200":
-                    return FakeResponse(200, '{"scope": ["wrongscope"], , "uid": ["test_user"]}')
+                    return FakeResponse(200, '{"scope": ["wrongscope"], , "uid": "test_user"}')
                 if token == "300":
                     return FakeResponse(404, '')
             return url
@@ -131,6 +131,44 @@ def test_security(app, oauth_requests):
 
     invalid_access = app.get('/random-access-that-does-not-exist-outside-of-api')
     assert invalid_access.status_code == 401
+
+
+def test_security_allowed_user_pattern(monkeypatch):
+    os.environ['TOKENINFO_URL'] = 'https://ouath.example/token_info'
+
+    class AllowedOtherUsersConfig(FakeConfig):
+        def __init__(self):
+            super().__init__()
+            self.allowed_users = None
+            self.allowed_user_pattern = '^test_.*'
+
+    app = setup_webapp(AllowedOtherUsersConfig())
+    app_client = app.app.test_client()
+
+    monkeypatch.setattr(lizzy.security, 'Configuration', AllowedOtherUsersConfig)
+    monkeypatch.setattr(lizzy.api, 'Stack', FakeStack)
+
+    stacks_response = app_client.get('/api/stacks', headers=GOOD_HEADERS)
+    assert stacks_response.status_code == 200
+
+
+def test_security_now_allowed_user_pattern(monkeypatch):
+    os.environ['TOKENINFO_URL'] = 'https://ouath.example/token_info'
+
+    class AllowedOtherUsersConfig(FakeConfig):
+        def __init__(self):
+            super().__init__()
+            self.allowed_users = None
+            self.allowed_user_pattern = '^somethingelse_.*'
+
+    app = setup_webapp(AllowedOtherUsersConfig())
+    app_client = app.app.test_client()
+
+    monkeypatch.setattr(lizzy.security, 'Configuration', AllowedOtherUsersConfig)
+    monkeypatch.setattr(lizzy.api, 'Stack', FakeStack)
+
+    stacks_response = app_client.get('/api/stacks', headers=GOOD_HEADERS)
+    assert stacks_response.status_code == 403
 
 
 def test_empty_new_stack(monkeypatch, app, oauth_requests):
