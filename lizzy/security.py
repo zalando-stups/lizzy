@@ -1,8 +1,8 @@
 import logging
+import re
 
 import connexion
 import decorator
-
 from lizzy import Configuration
 
 logger = logging.getLogger('lizzy.security')  # pylint: disable=invalid-name
@@ -24,6 +24,13 @@ def bouncer(endpoint, *args, **kwargs):
         logger.debug('Checking if user is allowed',
                      extra={'user': connexion.request.user, 'allowed_users': config.allowed_users})
         if connexion.request.user not in config.allowed_users:
+            return connexion.problem(403, 'Forbidden', "User is not allowed to access this endpoint")
+
+    if config.allowed_user_pattern is not None:
+        logger.debug('Checking if user pattern is allowed',
+                     extra={'user': connexion.request.user,
+                            'allowed_user_pattern': config.allowed_user_pattern})
+        if re.match(config.allowed_user_pattern, connexion.request.user) is None:
             return connexion.problem(403, 'Forbidden', "User is not allowed to access this endpoint")
 
     return endpoint(*args, **kwargs)
