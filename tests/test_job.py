@@ -5,6 +5,9 @@ from lizzy.job import check_status
 from lizzy.models.stack import REMOVED_STACK
 from lizzy.exceptions import ObjectNotFound
 
+from fixtures.boto import cf
+
+
 SENZA_STACKS = [{'stack_name': 'stack', 'version': 1},
                 {'stack_name': 'stacknotinlizzy', 'version': 1},
                 {'stack_name': 'lizzyremoved', 'version': 1}]
@@ -70,7 +73,7 @@ class FakeStack:
         return True
 
 
-def test_check_status(monkeypatch):
+def test_check_status(monkeypatch, cf):
     FakeStack.delete.reset_mock()
     mock_stack = MagicMock()
     mock_stack.all.return_value = [FakeStack(**stack)

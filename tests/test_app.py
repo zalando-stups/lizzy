@@ -102,9 +102,9 @@ def oauth_requests(monkeypatch: '_pytest.monkeypatch.monkeypatch'):
             if url == "https://ouath.example/token_info":
                 token = params['access_token']
                 if token == "100":
-                    return FakeResponse(200, '{"scope": ["myscope"], "uid": ["test_user"]}')
+                    return FakeResponse(200, '{"scope": ["myscope"], "uid": "test_user"}')
                 if token == "200":
-                    return FakeResponse(200, '{"scope": ["wrongscope"], , "uid": ["test_user"]}')
+                    return FakeResponse(200, '{"scope": ["wrongscope"], , "uid": "test_user"}')
                 if token == "300":
                     return FakeResponse(404, '')
             return url
@@ -131,6 +131,44 @@ def test_security(app, oauth_requests):
 
     invalid_access = app.get('/random-access-that-does-not-exist-outside-of-api')
     assert invalid_access.status_code == 401
+
+
+def test_security_allowed_user_pattern(monkeypatch):
+    os.environ['TOKENINFO_URL'] = 'https://ouath.example/token_info'
+
+    class AllowedOtherUsersConfig(FakeConfig):
+        def __init__(self):
+            super().__init__()
+            self.allowed_users = None
+            self.allowed_user_pattern = '^test_.*'
+
+    app = setup_webapp(AllowedOtherUsersConfig())
+    app_client = app.app.test_client()
+
+    monkeypatch.setattr(lizzy.security, 'Configuration', AllowedOtherUsersConfig)
+    monkeypatch.setattr(lizzy.api, 'Stack', FakeStack)
+
+    stacks_response = app_client.get('/api/stacks', headers=GOOD_HEADERS)
+    assert stacks_response.status_code == 200
+
+
+def test_security_now_allowed_user_pattern(monkeypatch):
+    os.environ['TOKENINFO_URL'] = 'https://ouath.example/token_info'
+
+    class AllowedOtherUsersConfig(FakeConfig):
+        def __init__(self):
+            super().__init__()
+            self.allowed_users = None
+            self.allowed_user_pattern = '^somethingelse_.*'
+
+    app = setup_webapp(AllowedOtherUsersConfig())
+    app_client = app.app.test_client()
+
+    monkeypatch.setattr(lizzy.security, 'Configuration', AllowedOtherUsersConfig)
+    monkeypatch.setattr(lizzy.api, 'Stack', FakeStack)
+
+    stacks_response = app_client.get('/api/stacks', headers=GOOD_HEADERS)
+    assert stacks_response.status_code == 403
 
 
 def test_empty_new_stack(monkeypatch, app, oauth_requests):
@@ -190,7 +228,10 @@ def test_new_stack(monkeypatch, app, oauth_requests):
     request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
     mock_kio.assert_not_called()
     mock_senza.assert_called_with('eu-west-1')
-    mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc', ANY, '1.0', [], False)
+    mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc',
+                                         ANY, '1.0', [], False,
+                                         {'LizzyTargetTraffic': 100,
+                                          'LizzyKeepStacks': 0})
     assert request.status_code == 201
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
     stack_version = FakeStack.last_save['stack_version']
@@ -212,7 +253,10 @@ def test_new_stack(monkeypatch, app, oauth_requests):
     request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
     mock_kio.assert_not_called()
     mock_senza.assert_called_with('eu-west-1')
-    mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc', ANY, '1.0', ['abc', 'def'], False)
+    mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc',
+                                         ANY, '1.0', ['abc', 'def'], False,
+                                         {'LizzyTargetTraffic': 100,
+                                          'LizzyKeepStacks': 0})
     assert request.status_code == 201
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
     stack_version = FakeStack.last_save['stack_version']
@@ -236,7 +280,10 @@ def test_new_stack(monkeypatch, app, oauth_requests):
     mock_kio.versions_create.return_value = True
     request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
     mock_senza.assert_called_with('eu-west-1')
-    mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc', ANY, '1.0', ['abc', 'def'], False)
+    mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc',
+                                         ANY, '1.0', ['abc', 'def'], False,
+                                         {'LizzyKeepStacks': 0,
+                                          'LizzyTargetTraffic': 100})
     mock_kio.assert_called_with()
     mock_kio.versions_create.assert_called_once_with(application_id='abc',
                                                      artifact='pierone.example.com/lizzy/lizzy:12',
@@ -270,7 +317,9 @@ def test_new_stack(monkeypatch, app, oauth_requests):
     mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc',
                                          ANY, '1.0',
                                          ['abc', 'def'],
-                                         True)
+                                         True,
+                                         {'LizzyKeepStacks': 0,
+                                          'LizzyTargetTraffic': 100})
     mock_kio.assert_called_with()
     mock_kio.versions_create.assert_called_once_with(application_id='abc',
                                                      artifact='pierone.example.com/lizzy/lizzy:12',
@@ -330,7 +379,9 @@ def test_new_stack(monkeypatch, app, oauth_requests):
                        data=json.dumps(data))
     mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc', ANY,
                                          '1.0', ['MintBucket=bk-bucket',
-                                                 'ImageVersion=28'], False)
+                                                 'ImageVersion=28'], False,
+                                         {'LizzyKeepStacks': 0,
+                                          'LizzyTargetTraffic': 100})
     stack_version = FakeStack.last_save['stack_version']
     assert FakeStack.last_save['parameters'] == ['MintBucket=bk-bucket',
                                                  'ImageVersion=28']

@@ -1,7 +1,7 @@
 from .common import ExecutionError, Application
 
 
-class Kio(Application):
+class Kio(Application):  # pylint: disable=too-few-public-methods
     def __init__(self):
         super().__init__('kio')
 

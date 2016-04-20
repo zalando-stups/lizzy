@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import ast
+import os
 import re
 import sys
 
@@ -26,6 +27,13 @@ def get_long_description():
     except FileNotFoundError:
         description = ''
     return description
+
+
+def get_install_requirements(path):
+    location = os.path.dirname(os.path.realpath(__file__))
+    content = open(os.path.join(location, path)).read()
+    requires = [req for req in content.split('\\n') if req != '']
+    return requires
 
 
 class PyTest(TestCommand):
@@ -54,17 +62,7 @@ setup(
     author='Zalando SE',
     url='https://github.com/zalando/lizzy',
     license='Apache License Version 2.0',
-    install_requires=['connexion>=0.13',
-                      'environmental>=1.1',
-                      'decorator',
-                      'pystache',
-                      'pytz',
-                      'pyyaml',
-                      'rod',
-                      'stups-kio',
-                      'stups-senza>=1.0.40',
-                      'uwsgi',
-                      'uwsgi_metrics3'],
+    install_requires=get_install_requirements('requirements.txt'),
     tests_require=['pytest-cov', 'pytest', 'factory_boy'],
     cmdclass={'test': PyTest},
     classifiers=[
