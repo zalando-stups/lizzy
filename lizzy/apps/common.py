@@ -14,7 +14,8 @@ class Application:  # pylint: disable=too-few-public-methods
         self.extra_parameters = extra_parameters or []  # type: Iterable[str]
 
     def _execute(self, subcommand: str, *args: Iterable[str],
-                 expect_json: bool=False):
+                 expect_json: bool=False,
+                 accept_empty: bool=True):
         command = [self.application, subcommand]
         command.extend(self.extra_parameters)
         if expect_json:
@@ -30,11 +31,13 @@ class Application:  # pylint: disable=too-few-public-methods
         stdout, _ = process.communicate()
         output = stdout.decode()
         if process.returncode == 0:
-            if expect_json:
+            if expect_json and (output or not accept_empty):
                 try:
                     return json.loads(output)
                 except ValueError:
                     raise ExecutionError('JSON ERROR', output)
+            elif not output and not accept_empty:
+                raise ExecutionError('EMPTY OUTPUT', output)
             else:
                 return output
         else:
