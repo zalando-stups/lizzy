@@ -6,13 +6,15 @@ from typing import Iterable, Optional
 from ..exceptions import ExecutionError
 
 
-class Application:
-    def __init__(self, application: str, extra_parameters: Optional[Iterable[str]]=None):
+class Application:  # pylint: disable=too-few-public-methods
+    def __init__(self, application: str,
+                 extra_parameters: Optional[Iterable[str]]=None):
         self.logger = getLogger('lizzy.app.{}'.format(application))
         self.application = application
         self.extra_parameters = extra_parameters or []  # type: Iterable[str]
 
-    def _execute(self, subcommand: str, *args: Iterable[str], expect_json: bool=False):
+    def _execute(self, subcommand: str, *args: Iterable[str],
+                 expect_json: bool=False):
         command = [self.application, subcommand]
         command.extend(self.extra_parameters)
         if expect_json:
@@ -22,7 +24,8 @@ class Application:
             stderr_to = STDOUT
         command += args
         command = [arg for arg in command if arg is not None]
-        self.logger.debug('Executing %s.', self.application, extra={'command': ' '.join(command)})
+        self.logger.debug('Executing %s.', self.application,
+                          extra={'command': ' '.join(command)})
         process = Popen(command, stdout=PIPE, stderr=stderr_to)
         stdout, _ = process.communicate()
         output = stdout.decode()

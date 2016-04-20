@@ -1,12 +1,14 @@
-from typing import Optional  # NOQA
+from typing import Dict, Any, List, Optional  # NOQA  pylint: disable=unused-import
+
 from datetime import datetime
-from dateutil import parser as date_parser
 import rod.model
+import boto3
+import botocore.exceptions
+
 from lizzy.exceptions import ObjectNotFound
+from ..util import now, parse_date
 
-from ..util import now
-
-REMOVED_STACK = object
+REMOVED_STACK = object()
 
 
 class Stack(rod.model.Model):
@@ -27,7 +29,7 @@ class Stack(rod.model.Model):
                  parameters: Optional[list]=None,
                  status: Optional[str]='LIZZY:NEW',
                  application_version: Optional[str]=None,
-                 **kwargs):
+                 **kwargs):  # pylint: disable=unused-argument
         """
         Stack Model stored in Redis
 
@@ -46,7 +48,7 @@ class Stack(rod.model.Model):
         :param kwargs: Other parameters that are not recognized
         """
         self.stack_name = stack_name
-        self.creation_time = self._parse_date(creation_time or now())  # type: datetime
+        self.creation_time = parse_date(creation_time or now())
         self.image_version = image_version
         self.stack_version = (stack_version or
                               application_version or
@@ -60,6 +62,7 @@ class Stack(rod.model.Model):
         self.parameters = parameters or []  # type: list
         self.status = status  # status is cloud formation status or LIZZY_NEW
         self.application_version = application_version
+        self.__cf_stack = None
 
     @staticmethod
     def generate_version(creation_time: datetime, version: str) -> str:
@@ -81,14 +84,35 @@ class Stack(rod.model.Model):
         """
         return '{name}-{version}'.format(name=self.stack_name, version=self.stack_version)
 
-    def _parse_date(self, date_time):
-        if isinstance(date_time, datetime):
-            return date_time
-        return date_parser.parse(date_time)
-
     @classmethod
     def get(cls, *args, **kwargs) -> "Stack":
         try:
             return super().get(*args, **kwargs)
         except KeyError:
             raise ObjectNotFound(args[0])
+
+    @property
+    def cf_stack(self) -> Dict[str, Any]:
+        """
+        Gets the Cloud Formation Stack
+        """
+
+        if self.__cf_stack is None:
+            cloud_formation = boto3.client('cloudformation')
+            try:
+                stacks = cloud_formation.describe_stacks(StackName=self.stack_id)  # type: Dict[str, Any]
+            except botocore.exceptions.ClientError:
+                return {}
+            self.__cf_stack = stacks['Stacks'][0]  # type: Dict[str, Any]
+
+        return self.__cf_stack
+
+    @property
+    def cf_tags(self) -> Dict[str, str]:
+        """
+        Return a dict with cloud formation stacks
+        """
+        kv_tags = self.cf_stack.get('Tags', {})  # type: List[Dict[str, str]]
+        # AWS returns tags in the form of [{'Key': 'KeyName', 'Value': 'KeyValue'}]
+        tags = {tag['Key']: tag['Value'] for tag in kv_tags}
+        return tags

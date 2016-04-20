@@ -1,5 +1,6 @@
-import logging
+from typing import Optional  # noqa pylint: disable=unused-import
 
+import logging
 import connexion
 import yaml
 from decorator import decorator
@@ -14,9 +15,8 @@ from lizzy.models.stack import Stack
 from lizzy.security import bouncer
 from lizzy.util import filter_empty_values
 from lizzy.version import VERSION
-from typing import Optional  # noqa
 
-logger = logging.getLogger('lizzy.api')
+logger = logging.getLogger('lizzy.api')  # pylint: disable=invalid-name
 
 
 def _make_headers() -> dict:
@@ -43,9 +43,9 @@ def _get_stack_dict(stack: Stack) -> dict:
 def exception_to_connexion_problem(func, *args, **kwargs):
     try:
         return func(*args, **kwargs)
-    except ObjectNotFound as e:
+    except ObjectNotFound as exception:
         problem = connexion.problem(404, 'Not Found',
-                                    "Stack not found: {}".format(e.uid),
+                                    "Stack not found: {}".format(exception.uid),
                                     headers=_make_headers())
         return problem
 
@@ -79,6 +79,7 @@ def create_stack(new_stack: dict) -> dict:
     stack_name = None
     artifact_name = None
     cf_raw_definition = None
+
     senza = Senza(config.region)
 
     stack = Stack(keep_stacks=keep_stacks,
@@ -152,8 +153,10 @@ def create_stack(new_stack: dict) -> dict:
                    'stack_version': stack.stack_version,
                    'image_version': stack.image_version,
                    'parameters': stack.parameters}
+    tags = {'LizzyKeepStacks': keep_stacks,
+            'LizzyTargetTraffic': new_traffic}
     if senza.create(stack.senza_yaml, stack.stack_version, stack.image_version,
-                    stack.parameters, disable_rollback):
+                    stack.parameters, disable_rollback, tags):
         logger.info("Stack created.", extra=stack_extra)
         # Mark the stack as CREATE_IN_PROGRESS. Even if this isn't true anymore
         # this will be handled in the job anyway
@@ -195,16 +198,16 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
         try:
             deployer.update_ami_image(new_ami_image)
             stack.ami_image = new_ami_image
-        except AMIImageNotUpdated as e:
-            return connexion.problem(400, 'Image update failed', e.message,
+        except AMIImageNotUpdated as exception:
+            return connexion.problem(400, 'Image update failed', exception.message,
                                      headers=_make_headers())
 
     if 'new_traffic' in stack_patch:
         new_traffic = stack_patch['new_traffic']
         try:
             deployer.change_traffic(new_traffic)
-        except TrafficNotUpdated as e:
-            return connexion.problem(400, 'Traffic update failed', e.message,
+        except TrafficNotUpdated as exception:
+            return connexion.problem(400, 'Traffic update failed', exception.message,
                                      headers=_make_headers())
         stack.traffic = new_traffic
 
@@ -230,8 +233,8 @@ def delete_stack(stack_id: str) -> dict:
         deployer = InstantDeployer(stack)
         try:
             deployer.delete_stack()
-        except StackDeleteException as e:
-            return connexion.problem(500, 'Stack deletion failed', e.message,
+        except StackDeleteException as exception:
+            return connexion.problem(500, 'Stack deletion failed', exception.message,
                                      headers=_make_headers())
 
     return '', 204, _make_headers()

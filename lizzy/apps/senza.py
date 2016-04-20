@@ -1,4 +1,4 @@
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Any
 import tempfile
 
 from ..version import VERSION
@@ -13,7 +13,8 @@ class Senza(Application):
         super().__init__('senza', extra_parameters=['--region', region])
 
     def create(self, senza_yaml: str, stack_version: str, image_version: str,
-               parameters: List[str], disable_rollback: bool) -> bool:
+               parameters: List[str], disable_rollback: bool,
+               tags: Dict[str, Any]) -> bool:
         """
         Create a new stack
 
@@ -21,6 +22,8 @@ class Senza(Application):
         :param stack_version: New stack's version
         :param image_version: Docker image to deployed
         :param parameters: Extra parameters for the deployment
+        :param disable_rollback: Disables stack rollback on creation failure
+        :param tags: Extra tags to add to the stack
         :return: Success of the operation
         """
         with tempfile.NamedTemporaryFile() as temp_yaml:
@@ -32,6 +35,11 @@ class Senza(Application):
                     args.append('--disable-rollback')
 
                 parameters.extend(['-t', 'LizzyVersion={}'.format(VERSION)])
+
+                for key, value in tags.items():
+                    # Adds the tags prepended with Lizzy
+                    tag = '{0}={1}'.format(key, value)
+                    parameters.extend(['-t', tag])
 
                 self._execute('create', *args, temp_yaml.name, stack_version,
                               image_version, *parameters)
@@ -59,8 +67,8 @@ class Senza(Application):
             else:
                 stack_domains = self._execute('domains', expect_json=True)
             return stack_domains
-        except ExecutionError as e:
-            raise SenzaDomainsError(e.error, e.output)
+        except ExecutionError as exception:
+            raise SenzaDomainsError(exception.error, exception.output)
 
     def list(self) -> List[Dict]:
         """
@@ -93,8 +101,8 @@ class Senza(Application):
         try:
             traffic_weights = self._execute('traffic', stack_name, stack_version, str(percentage), expect_json=True)
             return traffic_weights
-        except ExecutionError as e:
-            raise SenzaTrafficError(e.error, e.output)
+        except ExecutionError as exception:
+            raise SenzaTrafficError(exception.error, exception.output)
 
     def respawn_instances(self, stack_name: str, stack_version: str):
         """
@@ -111,8 +119,8 @@ class Senza(Application):
             self._execute('respawn-instances', stack_name, stack_version,
                           expect_json=True)
 
-        except ExecutionError as e:
-            raise SenzaRespawnInstancesError(e.error, e.output)
+        except ExecutionError as exception:
+            raise SenzaRespawnInstancesError(exception.error, exception.output)
 
     def patch(self, stack_name: str, stack_version: str, ami_image: str):
         """
@@ -131,11 +139,11 @@ class Senza(Application):
             self._execute('patch', stack_name, stack_version, image_argument,
                           expect_json=True)
 
-        except ExecutionError as e:
-            raise SenzaPatchError(e.error, e.output)
+        except ExecutionError as exception:
+            raise SenzaPatchError(exception.error, exception.output)
 
-    def render_definition(self, senza_yaml: str, stack_version: str, image_version: str,
-                          parameters: List[str]):
+    def render_definition(self, senza_yaml: str, stack_version: str,
+                          image_version: str, parameters: List[str]):
         """
         Renders the cloud formation json used by senza.
 
@@ -152,7 +160,7 @@ class Senza(Application):
                                      temp_yaml.name, stack_version,
                                      image_version, *parameters,
                                      expect_json=True)
-            except ExecutionError as e:
+            except ExecutionError as exception:
                 self.logger.error('Failed to render CloudFormation defition.',
-                                  extra={'command.output': e.output})
-                raise SenzaRenderError(e.error, e.output)
+                                  extra={'command.output': exception.output})
+                raise SenzaRenderError(exception.error, exception.output)

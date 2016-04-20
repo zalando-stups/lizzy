@@ -4,7 +4,8 @@ from lizzy.apps.common import ExecutionError
 from lizzy.apps.senza import Senza
 from lizzy.models.stack import Stack, REMOVED_STACK
 
-_failed_to_get_domains = object()  # sentinel value for when we failed to get domains from senza
+# sentinel value for when we failed to get domains from senza
+FAILED_TO_GET_DOMAINS = object()
 
 
 class Deployer:
@@ -113,19 +114,24 @@ class Deployer:
         except ExecutionError:
             self.logger.exception("Failed to get domains. Traffic will no be switched.",
                                   extra=self.log_info)
-            domains = _failed_to_get_domains
+            domains = FAILED_TO_GET_DOMAINS
+
+        # TODO Remove the traffic percentage from Redis in a future version
+        traffic_percentage = int(self.stack.cf_tags.get('LizzyTargetTraffic',
+                                                        self.stack.traffic))
 
         if not domains:
             self.logger.info("App doesn't have a domain so traffic will not be switched.",
                              extra=self.log_info)
-        elif domains is not _failed_to_get_domains and self.stack.traffic > 0:
+        elif domains is not FAILED_TO_GET_DOMAINS and traffic_percentage:
             # if new stack's traffic is zero the traffic does not need to be
             # switched. More details at: https://github.com/zalando/lizzy/issues/83
             self.logger.info("Switching app traffic.", extra=self.log_info)
             try:
+
                 self.senza.traffic(stack_name=self.stack.stack_name,
                                    stack_version=self.stack.stack_version,
-                                   percentage=self.stack.traffic)
+                                   percentage=traffic_percentage)
             except ExecutionError:
                 self.logger.exception("Failed to switch app traffic.",
                                       extra=self.log_info)
@@ -137,8 +143,10 @@ class Deployer:
 
         self.logger.debug("Existing versions: %s", all_versions_names,
                           extra=self.log_info)
-        # we want to keep only two versions
-        number_of_versions_to_keep = self.stack.keep_stacks + 1  # keep provided old stacks + 1
+        # TODO Remove the keep_stacks from Redis in a future version
+        # keep provided old stacks + 1
+        number_of_versions_to_keep = int(self.stack.cf_tags.get('LizzyKeepStacks',
+                                                                self.stack.keep_stacks)) + 1
         versions_to_remove = all_versions_names[:-number_of_versions_to_keep]
         self.logger.debug("Versions to be removed: %s", versions_to_remove,
                           extra=self.log_info)
@@ -150,7 +158,8 @@ class Deployer:
             try:
                 self.senza.remove(self.stack.stack_name, version)
                 self.logger.info("Stack removed.", extra=log_info)
-            except Exception:
+            except ExecutionError as execution_error:
+                log_info['output'] = execution_error.output
                 self.logger.exception("Failed to remove stack.",
                                       extra=log_info)
 
