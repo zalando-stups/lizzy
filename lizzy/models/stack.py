@@ -7,6 +7,7 @@ import botocore.exceptions
 
 from lizzy.exceptions import ObjectNotFound
 from ..util import now, parse_date
+from ..configuration import config
 
 REMOVED_STACK = object()
 
@@ -98,7 +99,8 @@ class Stack(rod.model.Model):
         """
 
         if self.__cf_stack is None:
-            cloud_formation = boto3.client('cloudformation')
+            cloud_formation = boto3.client('cloudformation',
+                                           region_name=config.region)
             try:
                 stacks = cloud_formation.describe_stacks(StackName=self.stack_id)  # type: Dict[str, Any]
             except botocore.exceptions.ClientError:
