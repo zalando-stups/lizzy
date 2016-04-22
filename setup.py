@@ -11,7 +11,7 @@ from setuptools.command.test import test as TestCommand
 
 _version_re = re.compile(r'VERSION\s+=\s+(.*)')
 
-MINOR_VERSION = 2
+MINOR_VERSION = 1
 
 with open('lizzy/version.py', 'rb') as f:
     version_content = f.read().decode('utf-8')

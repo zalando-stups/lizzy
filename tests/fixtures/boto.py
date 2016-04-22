@@ -10,5 +10,5 @@ def cf(monkeypatch):
                        'Value': '42'}]}
     stacks = {'Stacks': [stack]}
     cf.describe_stacks.return_value = stacks
-    monkeypatch.setattr('boto3.client', lambda *args: cf)
+    monkeypatch.setattr('boto3.client', lambda *args, **kwargs: cf)
     return cf
