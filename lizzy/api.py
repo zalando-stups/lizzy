@@ -4,6 +4,8 @@ import logging
 import connexion
 import yaml
 from decorator import decorator
+from datetime import datetime
+
 from lizzy import config
 from lizzy.apps.kio import Kio
 from lizzy.apps.senza import Senza
@@ -27,16 +29,17 @@ def _get_stack_dict(stack: Stack) -> dict:
     """
     .. seealso:: lizzy/swagger/lizzy.yaml#/definitions/stack
     """
-    stack_dict = {'stack_id': stack.stack_id,
-                  'creation_time': '{:%FT%T%z}'.format(stack.creation_time),
-                  'image_version': stack.image_version,
-                  'parameters': stack.parameters,
-                  'application_version': stack.application_version,
-                  'senza_yaml': stack.senza_yaml,
-                  'stack_name': stack.stack_name,
-                  'stack_version': stack.stack_version,
-                  'status': stack.status}
-    return stack_dict
+
+    senza = Senza(config.region)
+    list_stack = senza.list(stack.stack_name, stack.stack_version)
+    dict_stack = list_stack[0]
+
+    # Return time according to
+    # http://zalando.github.io/restful-api-guidelines/data-formats/DataFormats.html#must-use-standard-date-and-time-formats
+    creation_date = datetime.fromtimestamp(dict_stack['creation_time'])
+
+    dict_stack['creation_time'] = '{:%FT%T%z}'.format(creation_date)
+    return dict_stack
 
 
 @decorator
