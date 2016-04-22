@@ -1,18 +1,16 @@
-from unittest.mock import MagicMock, call
-import pytest
 from datetime import datetime
+from unittest.mock import MagicMock, call
+
+import pytest
 from factory import Factory, Sequence
-
-from lizzy.job.deployer import Deployer
-from lizzy.models.stack import Stack, REMOVED_STACK
-from lizzy.deployer import InstantDeployer
-from lizzy.exceptions import (SenzaPatchError, AMIImageNotUpdated,
-                              SenzaDomainsError, SenzaTrafficError,
-                              TrafficNotUpdated)
-
 from fixtures.boto import cf
 from fixtures.senza_definitions import YAML1
-
+from lizzy.deployer import InstantDeployer
+from lizzy.exceptions import (AMIImageNotUpdated, SenzaDomainsError,
+                              SenzaPatchError, SenzaTrafficError,
+                              TrafficNotUpdated)
+from lizzy.job.deployer import Deployer
+from lizzy.models.stack import REMOVED_STACK, Stack
 
 CF_STACKS = {'lizzy': {'42': {'status': 'TEST'},
                        'inprog': {'status': 'CREATE_IN_PROGRESS'},
@@ -36,25 +34,32 @@ class StackFactory(Factory):
 
 LIZZY_STACKS = {
     'lizzy': {
-        '1': StackFactory(stack_name='1',
+        '1': StackFactory(stack_name='lizzy-1',
+                          stack_version='1',
                           creation_time=datetime(2016, 3, 10, 12, 30)),
 
-        '2': StackFactory(stack_name='2',
+        '2': StackFactory(stack_name='lizzy-2',
+                          stack_version='2',
                           creation_time=datetime(2016, 3, 12, 12, 30)),
 
-        '3': StackFactory(stack_name='3',
+        '3': StackFactory(stack_name='lizzy-3',
+                          stack_version='3',
                           creation_time=datetime(2016, 3, 13, 12, 30)),
 
-        '9': StackFactory(stack_name='9',
+        '9': StackFactory(stack_name='lizzy-9',
+                          stack_version='9',
                           creation_time=datetime(2016, 3, 19, 12, 30)),
 
-        '42': StackFactory(stack_name='42',
+        '42': StackFactory(stack_name='lizzy-42',
+                           stack_version='42',
                            creation_time=datetime(2016, 3, 27, 12, 30)),
 
-        'inprog': StackFactory(stack_name='inprog',
+        'inprog': StackFactory(stack_name='lizzy-inprog',
+                               stack_version='inprog',
                                creation_time=datetime(2016, 3, 20, 12, 30)),
 
-        'deployed': StackFactory(stack_name='deployed',
+        'deployed': StackFactory(stack_name='lizzy-deployed',
+                                 stack_version='deployed',
                                  creation_time=datetime(2016, 3, 21, 12, 30))
     }
 }
@@ -151,7 +156,7 @@ def test_deploying_create_in_progress(monkeypatch, logger):
     assert deployer.handle() == 'CF:TEST'
 
 
-def test_deployed(monkeypatch, logger, cf):
+def test_deployed(monkeypatch, logger, cf):  # NOQA
     mock_senza = MagicMock()
     mock_senza.domains.return_value = ['test.example']
     mock_senza.return_value = mock_senza
