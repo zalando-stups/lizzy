@@ -2,7 +2,7 @@ import logging
 
 from lizzy.apps.common import ExecutionError
 from lizzy.apps.senza import Senza
-from lizzy.models.stack import Stack, REMOVED_STACK
+from lizzy.models.stack import REMOVED_STACK, Stack
 
 # sentinel value for when we failed to get domains from senza
 FAILED_TO_GET_DOMAINS = object()
@@ -139,7 +139,7 @@ class Deployer:
         all_versions = sorted(
             self.lizzy_stacks[self.stack.stack_name].values(),
             key=lambda s: s.creation_time)
-        all_versions_names = [stack.stack_name for stack in all_versions]
+        all_versions_names = [stack.stack_version for stack in all_versions]
 
         self.logger.debug("Existing versions: %s", all_versions_names,
                           extra=self.log_info)
