@@ -108,34 +108,6 @@ class Deployer:
                              extra=self.log_info)
             return REMOVED_STACK
 
-        # Switch all traffic to new version
-        try:
-            domains = self.senza.domains(self.stack.stack_name)
-        except ExecutionError:
-            self.logger.exception("Failed to get domains. Traffic will no be switched.",
-                                  extra=self.log_info)
-            domains = FAILED_TO_GET_DOMAINS
-
-        # TODO Remove the traffic percentage from Redis in a future version
-        traffic_percentage = int(self.stack.cf_tags.get('LizzyTargetTraffic',
-                                                        self.stack.traffic))
-
-        if not domains:
-            self.logger.info("App doesn't have a domain so traffic will not be switched.",
-                             extra=self.log_info)
-        elif domains is not FAILED_TO_GET_DOMAINS and traffic_percentage:
-            # if new stack's traffic is zero the traffic does not need to be
-            # switched. More details at: https://github.com/zalando/lizzy/issues/83
-            self.logger.info("Switching app traffic.", extra=self.log_info)
-            try:
-
-                self.senza.traffic(stack_name=self.stack.stack_name,
-                                   stack_version=self.stack.stack_version,
-                                   percentage=traffic_percentage)
-            except ExecutionError:
-                self.logger.exception("Failed to switch app traffic.",
-                                      extra=self.log_info)
-
         all_versions = sorted(
             self.lizzy_stacks[self.stack.stack_name].values(),
             key=lambda s: s.creation_time)
