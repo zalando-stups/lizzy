@@ -4,7 +4,6 @@ import logging
 import connexion
 import yaml
 from decorator import decorator
-from datetime import datetime
 
 from lizzy import config
 from lizzy.apps.kio import Kio
