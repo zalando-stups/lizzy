@@ -15,7 +15,7 @@ from lizzy.exceptions import (AMIImageNotUpdated, ObjectNotFound,
                               TrafficNotUpdated)
 from lizzy.models.stack import Stack
 from lizzy.security import bouncer
-from lizzy.util import filter_empty_values
+from lizzy.util import filter_empty_values, timestamp_to_uct
 from lizzy.version import VERSION
 
 logger = logging.getLogger('lizzy.api')  # pylint: disable=invalid-name
@@ -36,9 +36,9 @@ def _get_stack_dict(stack: Stack) -> dict:
 
     # Return time according to
     # http://zalando.github.io/restful-api-guidelines/data-formats/DataFormats.html#must-use-standard-date-and-time-formats
-    creation_date = datetime.fromtimestamp(dict_stack['creation_time'])
-
+    creation_date = timestamp_to_uct(dict_stack['creation_time'])
     dict_stack['creation_time'] = '{:%FT%T%z}'.format(creation_date)
+
     return dict_stack
 
 

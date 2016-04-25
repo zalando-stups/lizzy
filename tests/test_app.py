@@ -223,7 +223,9 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
     mock_senza.render_definition.return_value = GOOD_CF_DEFINITION
 
     mock_senza.create.return_value = True
-    request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
+    request = app.post('/api/stacks',
+                       headers=GOOD_HEADERS,
+                       data=json.dumps(data))  # type: flask.Response
     mock_kio.assert_not_called()
     mock_senza.assert_called_with('eu-west-1')
     mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc',
@@ -234,7 +236,7 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
     response = json.loads(request.get_data().decode())
     assert len(response) == 5
-    assert response['creation_time'] == '2016-04-14T13:59:27'
+    assert response['creation_time'] == '2016-04-14T11:59:27+0000'
     stack_version = FakeStack.last_save['stack_version']
     assert FakeStack.last_save['application_version'] is None
     assert FakeStack.last_save['image_version'] == '1.0'
