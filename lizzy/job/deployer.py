@@ -108,33 +108,6 @@ class Deployer:
                              extra=self.log_info)
             return REMOVED_STACK
 
-        all_versions = sorted(
-            self.lizzy_stacks[self.stack.stack_name].values(),
-            key=lambda s: s.creation_time)
-        all_versions_names = [stack.stack_version for stack in all_versions]
-
-        self.logger.debug("Existing versions: %s", all_versions_names,
-                          extra=self.log_info)
-        # TODO Remove the keep_stacks from Redis in a future version
-        # keep provided old stacks + 1
-        number_of_versions_to_keep = int(self.stack.cf_tags.get('LizzyKeepStacks',
-                                                                self.stack.keep_stacks)) + 1
-        versions_to_remove = all_versions_names[:-number_of_versions_to_keep]
-        self.logger.debug("Versions to be removed: %s", versions_to_remove,
-                          extra=self.log_info)
-        for version in versions_to_remove:
-            stack_id = '{}-{}'.format(self.stack.stack_name, version)
-            log_info = {'lizzy.stack.id': stack_id, 'lizzy.new_stack.id':
-                        self.stack.stack_id}
-            self.logger.info("Removing stack...", extra=log_info)
-            try:
-                self.senza.remove(self.stack.stack_name, version)
-                self.logger.info("Stack removed.", extra=log_info)
-            except ExecutionError as execution_error:
-                log_info['output'] = execution_error.output
-                self.logger.exception("Failed to remove stack.",
-                                      extra=log_info)
-
         return 'CF:{}'.format(cloud_formation_status)
 
     def handle(self) -> str:
