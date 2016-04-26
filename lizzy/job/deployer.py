@@ -1,6 +1,5 @@
 import logging
 
-from lizzy.apps.common import ExecutionError
 from lizzy.apps.senza import Senza
 from lizzy.models.stack import REMOVED_STACK, Stack
 
@@ -44,29 +43,7 @@ class Deployer:
             cf_status = None
         return cf_status
 
-    def default(self) -> str:
-        """
-        Handler for all other deployment status
-
-        It replaces the status with the one from Cloud Formation or marks the
-        deployment as removed if it no
-        longer exists.
-        """
-
-        self.logger.debug("Updating stack status based on AWS CF.",
-                          extra=self.log_info)
-        cloud_formation_status = self._get_stack_status()
-        if cloud_formation_status is not None:
-            self.logger.debug("Stack status updated", extra=self.log_info)
-            new_status = 'CF:{}'.format(cloud_formation_status)
-            return new_status
-        else:
-            # If this happens is because the stack was removed from aws
-            self.logger.info("Stack no longer exists, marking as removed",
-                             extra=self.log_info)
-            return REMOVED_STACK
-
-    def deploying(self) -> str:
+    def handle(self) -> str:
         """
         Handler for when deployment status=='CF:CREATE_IN_PROGRESS'
 
@@ -78,10 +55,6 @@ class Deployer:
             self.logger.info("Stack no longer exists, marking as removed.",
                              extra=self.log_info)
             return REMOVED_STACK
-
-        if cloud_formation_status == 'CREATE_COMPLETE':
-            self.logger.info("Stack created.", extra=self.log_info)
-            new_status = 'LIZZY:DEPLOYED'
         elif cloud_formation_status == 'CREATE_IN_PROGRESS':
             # Stack is still deploying
             # While this condition is mostly equivalent to the else it is
@@ -94,31 +67,3 @@ class Deployer:
             new_status = 'CF:{}'.format(cloud_formation_status)
 
         return new_status
-
-    def deployed(self):
-        """
-        Handler for when deployment status=='LIZZY:DEPLOYED'
-
-        Removes old versions and switches the traffic.
-        """
-
-        cloud_formation_status = self._get_stack_status()
-        if cloud_formation_status is None:  # Stack no longer exist.
-            self.logger.info("Stack no longer exists, marking as removed",
-                             extra=self.log_info)
-            return REMOVED_STACK
-
-        return 'CF:{}'.format(cloud_formation_status)
-
-    def handle(self) -> str:
-        """
-        Does the right step for deployment status.
-        """
-        # TODO remove LIZZY:DEPLOYING in a future version (1.9?)
-        action_by_status = {
-            'LIZZY:DEPLOYING': self.deploying,
-            'CF:CREATE_IN_PROGRESS': self.deploying,
-            'LIZZY:DEPLOYED': self.deployed,
-        }
-        handler = action_by_status.get(self.stack.status, self.default)
-        return handler()
