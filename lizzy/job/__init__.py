@@ -54,15 +54,6 @@ def check_status(region: str):
                          extra={'lizzy.stack.id': stack_name})
 
     for lizzy_stack in all_stacks:
-        if lizzy_stack.status in ['LIZZY:REMOVED', 'LIZZY:ERROR']:
-            # Delete broken and removed stacks as it makes no sense to keep
-            # them around
-            # TODO remove this in a later version (2.0???)
-            logger.info('Deleting stack from Redis.',
-                        extra={'lizzy.stack.id': lizzy_stack.stack_id})
-            lizzy_stack.delete()
-            continue
-
         if lizzy_stack.lock(3600000):
             controller = Deployer(region, lizzy_stacks, cf_stacks, lizzy_stack)
             try:

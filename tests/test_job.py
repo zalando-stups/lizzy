@@ -97,18 +97,15 @@ def test_check_status(monkeypatch, cf):
     assert mock_senza.list.called
 
     mock_deployer.assert_any_call('abc', ANY, ANY, ANY)
-    assert mock_deployer.call_count == 1
+    assert mock_deployer.call_count == 3
     mock_deployer.handle.assert_any_call()
-    assert mock_deployer.handle.call_count == 1
+    assert mock_deployer.handle.call_count == 3
 
     mock_log.debug.assert_any_call("In Job")
     mock_log.debug.assert_any_call('Stack found in Redis.',
                                    extra={'lizzy.stack.id': 'stack-1'})
     mock_log.debug.assert_any_call('Stack found in Redis.',
                                    extra={'lizzy.stack.id': 'lizzyremoved-1'})
-
-    # Delete should be called twice (lizzyremoved and lizzyerror)
-    assert FakeStack.delete.call_count == 2
 
 
 def test_check_status_remove(monkeypatch):
@@ -133,8 +130,10 @@ def test_check_status_remove(monkeypatch):
 
     check_status('abc')
 
-    assert mock_deployer.call_count == 1
-    assert mock_deployer.handle.call_count == 1
+    # The deleted and errored stacks now will go to the handler and be
+    # deleted after
+    assert mock_deployer.call_count == 3
+    assert mock_deployer.handle.call_count == 3
     assert FakeStack.delete.call_count == 3
     mock_deployer.assert_any_call('abc', ANY, ANY, ANY)
 
