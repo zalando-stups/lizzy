@@ -263,37 +263,23 @@ definitions:
   stack:
     type: object
     properties:
-      stack_id:
-        type: string
-        description: Unique ID for the stack. Will be the same as the stack if the stack is successfully created.
       creation_time:
         type: string
         format: dateTime
         example: 2015-07-08T12:53:58+0000
         description: Date and time of stack creation on lizzy in ISO 8601 format
-      image_version:
+      description:
         type: string
-        description: Docker image version of the stack
-      parameters:
-        type: array
-        description: List of parameters to be passed to senza
-        items:
-          type: string
-      senza_yaml:
-        type: string
-        description: YAML to provide to senza
+        description: Stack description including used arguments
       stack_name:
         type: string
         description: Cloud formation stack name prefix
-      stack_version:
+      version:
         type: string
         description: Cloud formation stack version
       status:
         type: string
         description: Status of stack, can be be CF:STATUS_IN_CLOUD_FORMATION or some lizzy specific status
-      application_version:
-        type: string
-        description: Version of the application used for stack name and kio
   stack_patch:
     type: object
     properties:

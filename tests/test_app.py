@@ -9,6 +9,7 @@ from fixtures.cloud_formation import (BAD_CF_DEFINITION,
                                       BAD_CF_MISSING_TAUPAGE_AUTOSCALING_GROUP,
                                       GOOD_CF_DEFINITION,
                                       GOOD_CF_DEFINITION_WITH_UNUSUAL_AUTOSCALING_RESOURCE)
+from fixtures.senza import mock_senza
 from lizzy.exceptions import (AMIImageNotUpdated, ObjectNotFound,
                               SenzaRenderError, StackDeleteException,
                               TrafficNotUpdated)
@@ -210,22 +211,21 @@ def test_bad_senza_yaml(app, oauth_requests, monkeypatch):
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
 
-def test_new_stack(monkeypatch, app, oauth_requests):
+def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
     data = {'keep_stacks': 0,
             'new_traffic': 100,
             'image_version': '1.0',
             'senza_yaml': 'SenzaInfo:\n  StackName: abc'}
 
-    mock_senza = MagicMock()
-    mock_senza.return_value = mock_senza
-    monkeypatch.setattr('lizzy.api.Senza', mock_senza)
     mock_kio = MagicMock()
     mock_kio.return_value = mock_kio
     monkeypatch.setattr('lizzy.api.Kio', mock_kio)
     mock_senza.render_definition.return_value = GOOD_CF_DEFINITION
 
     mock_senza.create.return_value = True
-    request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
+    request = app.post('/api/stacks',
+                       headers=GOOD_HEADERS,
+                       data=json.dumps(data))  # type: flask.Response
     mock_kio.assert_not_called()
     mock_senza.assert_called_with('eu-west-1')
     mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc',
@@ -234,6 +234,9 @@ def test_new_stack(monkeypatch, app, oauth_requests):
                                           'LizzyKeepStacks': 0})
     assert request.status_code == 201
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    response = json.loads(request.get_data().decode())
+    assert len(response) == 5
+    assert response['creation_time'] == '2016-04-14T11:59:27+0000'
     stack_version = FakeStack.last_save['stack_version']
     assert FakeStack.last_save['application_version'] is None
     assert FakeStack.last_save['image_version'] == '1.0'
@@ -423,15 +426,14 @@ def test_new_stack(monkeypatch, app, oauth_requests):
     assert response.status_code == 400
 
 
-def test_get_stack(app, oauth_requests):
-    parameters = ['stack_version', 'stack_name', 'senza_yaml', 'creation_time', 'image_version', 'status', 'stack_id']
+def test_get_stack(app, oauth_requests, mock_senza):
+    parameters = {'version', 'description', 'stack_name', 'status', 'creation_time'}
 
     request = app.get('/api/stacks/stack1', headers=GOOD_HEADERS)
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
     response = json.loads(request.data.decode())  # type: dict
     keys = response.keys()
-    for parameter in parameters:
-        assert parameter in keys
+    assert parameters == keys
 
 
 def test_get_stack_404(app, oauth_requests):
@@ -466,7 +468,7 @@ def test_delete(app, monkeypatch, oauth_requests):
     assert len(mock_deployer.delete_stack.mock_calls) == 3
 
 
-def test_patch(monkeypatch, app, oauth_requests):
+def test_patch(monkeypatch, app, oauth_requests, mock_senza):
     mock_deployer = MagicMock()
     mock_deployer.return_value = mock_deployer
     monkeypatch.setattr('lizzy.api.InstantDeployer', mock_deployer)

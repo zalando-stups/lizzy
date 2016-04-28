@@ -70,11 +70,11 @@ class Senza(Application):
         except ExecutionError as exception:
             raise SenzaDomainsError(exception.error, exception.output)
 
-    def list(self) -> List[Dict]:
+    def list(self, *args, **kwargs) -> List[Dict]:
         """
         Returns a list of all the stacks
         """
-        return self._execute('list', expect_json=True)  # type: list
+        return self._execute('list', *args, **kwargs, expect_json=True)  # type: list
 
     def remove(self, stack_name: str, stack_version: str) -> bool:
         """
