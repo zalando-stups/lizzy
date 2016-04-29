@@ -446,6 +446,7 @@ def test_get_stack(app, oauth_requests, mock_senza):
 
 
 def test_get_stack_404(app, oauth_requests, mock_senza):
+    mock_senza.list = lambda *a, **k: []
     request = app.get('/api/stacks/stack-404', headers=GOOD_HEADERS)
     assert request.status_code == 404
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
