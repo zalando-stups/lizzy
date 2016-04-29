@@ -260,6 +260,7 @@ definitions:
       - keep_stacks
       - new_traffic
       - senza_yaml
+      - stack_version
   stack:
     type: object
     properties:

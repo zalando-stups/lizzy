@@ -12,7 +12,7 @@ from lizzy.apps.senza import Senza
 from lizzy.deployer import InstantDeployer
 from lizzy.exceptions import (AMIImageNotUpdated, ObjectNotFound,
                               ExecutionError, SenzaRenderError,
-                              StackDeleteException, TrafficNotUpdated)
+                              TrafficNotUpdated)
 from lizzy.models.stack import Stack
 from lizzy.security import bouncer
 from lizzy.util import filter_empty_values, timestamp_to_uct
@@ -84,7 +84,7 @@ def create_stack(new_stack: dict) -> dict:
     new_traffic = new_stack['new_traffic']  # type: int
     image_version = new_stack['image_version']  # type: str
     application_version = new_stack.get('application_version')  # type: Optional[str]
-    stack_version = new_stack.get('stack_version')  # type: Optional[str]
+    stack_version = new_stack['stack_version']  # type: str
     senza_yaml = new_stack['senza_yaml']  # type: str
     parameters = new_stack.get('parameters', [])
     disable_rollback = new_stack.get('disable_rollback', False)
@@ -105,8 +105,8 @@ def create_stack(new_stack: dict) -> dict:
 
     try:
         cf_raw_definition = senza.render_definition(senza_yaml,
-                                                    stack.stack_version,
-                                                    stack.image_version,
+                                                    stack_version,
+                                                    application_version,
                                                     parameters)
     except SenzaRenderError as exception:
         return connexion.problem(400,

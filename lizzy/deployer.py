@@ -5,7 +5,7 @@ from lizzy.logging import logger
 from lizzy.configuration import config
 from lizzy.exceptions import (AMIImageNotUpdated, ExecutionError,
                               SenzaDomainsError, SenzaTrafficError,
-                              TrafficNotUpdated, StackDeleteException)
+                              TrafficNotUpdated)
 
 
 class InstantDeployer:

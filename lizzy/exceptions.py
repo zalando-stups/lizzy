@@ -63,7 +63,3 @@ class AMIImageNotUpdated(LizzyError):
 class TrafficNotUpdated(LizzyError):
     """Raised when 'senza traffic' command to update the stack traffic does
     not succeed."""
-
-
-class StackDeleteException(LizzyError):
-    """Raised when there is a problem deleting a stack."""
