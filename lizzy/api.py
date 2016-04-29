@@ -24,13 +24,13 @@ def _make_headers() -> dict:
     return {'X-Lizzy-Version': VERSION}
 
 
-def _get_stack_dict(stack: Stack) -> dict:
+def _get_stack_dict(stack_name: str, stack_version: str) -> dict:
     """
     .. seealso:: lizzy/swagger/lizzy.yaml#/definitions/stack
     """
 
     senza = Senza(config.region)
-    list_stack = senza.list(stack.stack_name, stack.stack_version)
+    list_stack = senza.list(stack_name, stack_version)
     dict_stack = list_stack[0]
 
     # Return time according to
@@ -57,7 +57,7 @@ def all_stacks() -> dict:
     """
     GET /stacks/
     """
-    stacks = [_get_stack_dict(stack) for stack in Stack.all()]
+    stacks = [_get_stack_dict(stack.stack_name, stack.stack_version) for stack in Stack.all()]
     stacks.sort(key=lambda stack: stack['creation_time'])
     return stacks, 200, _make_headers()
 
@@ -164,7 +164,7 @@ def create_stack(new_stack: dict) -> dict:
         # this will be handled in the job anyway
         stack.status = 'CF:CREATE_IN_PROGRESS'
         stack.save()
-        return _get_stack_dict(stack), 201, _make_headers()
+        return _get_stack_dict(stack_name, stack.stack_version), 201, _make_headers()
     else:
         logger.error("Error creating stack.", extra=stack_extra)
         return connexion.problem(400, 'Deployment Failed',
@@ -179,7 +179,7 @@ def get_stack(stack_id: str) -> dict:
     GET /stacks/{id}
     """
     stack = Stack.get(stack_id)
-    return _get_stack_dict(stack), 200, _make_headers()
+    return _get_stack_dict(stack.stack_name, stack.stack_version), 200, _make_headers()
 
 
 @bouncer
@@ -215,7 +215,7 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
 
     stack.save()
 
-    return _get_stack_dict(stack), 202, _make_headers()
+    return _get_stack_dict(stack.stack_name, stack.stack_version), 202, _make_headers()
 
 
 @bouncer
