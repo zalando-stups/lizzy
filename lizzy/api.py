@@ -11,8 +11,8 @@ from lizzy.apps.kio import Kio
 from lizzy.apps.senza import Senza
 from lizzy.deployer import InstantDeployer
 from lizzy.exceptions import (AMIImageNotUpdated, ObjectNotFound,
-                              SenzaRenderError, StackDeleteException,
-                              TrafficNotUpdated)
+                              ExecutionError, SenzaRenderError,
+                              StackDeleteException, TrafficNotUpdated)
 from lizzy.models.stack import Stack
 from lizzy.security import bouncer
 from lizzy.util import filter_empty_values, timestamp_to_uct
@@ -189,8 +189,12 @@ def get_stack(stack_id: str) -> dict:
     """
     GET /stacks/{id}
     """
-    stack = Stack.get(stack_id)
-    stack_dict = _get_api_stacks(stack.stack_name, stack.stack_version)[0]
+    stack_name, stack_version = stack_id.rsplit('-', 1)
+    stack_list = _get_api_stacks(stack_name, stack_version)
+    if stack_list:
+        stack_dict = _get_api_stacks(stack_name, stack_version)[0]
+    else:
+        raise ObjectNotFound(stack_id)
     return stack_dict, 200, _make_headers()
 
 
@@ -238,21 +242,21 @@ def delete_stack(stack_id: str) -> dict:
 
     Delete a stack
     """
-    try:
-        stack = Stack.get(stack_id)
-    except ObjectNotFound:
-        # delete is idempotent, if the stack is not there it just
-        # doesn't do anything.
-        pass
-    else:
-        deployer = InstantDeployer(stack)
-        try:
-            deployer.delete_stack()
-        except StackDeleteException as exception:
-            return connexion.problem(500, 'Stack deletion failed', exception.message,
-                                     headers=_make_headers())
+    stack_name, stack_version = stack_id.rsplit('-', 1)
+    senza = Senza(config.region)
 
-    return '', 204, _make_headers()
+    logger.info("Removing stack %s...", stack_id)
+
+    try:
+        senza.remove(stack_name, stack_version)
+        logger.info("Stack %s removed.", stack_id)
+    except ExecutionError as exception:
+        logger.exception("Failed to remove stack %s.", stack_id)
+        return connexion.problem(500, 'Stack deletion failed',
+                                 exception.output,
+                                 headers=_make_headers())
+    else:
+        return '', 204, _make_headers()
 
 
 def not_found_path_handler(error):

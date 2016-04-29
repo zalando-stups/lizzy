@@ -64,19 +64,3 @@ class InstantDeployer:
         except ExecutionError as exception:
             self.logger.info(exception.message, extra=self.log_info)
             raise AMIImageNotUpdated(exception.message)
-
-    def delete_stack(self) -> None:
-        """
-        Delete the stack.
-
-        :raises: StackDeleteException
-        """
-        self.logger.info("Removing stack...", extra=self.log_info)
-
-        try:
-            self.senza.remove(self.stack.stack_name, self.stack.stack_version)
-            self.logger.info("Stack removed.", extra=self.log_info)
-        except ExecutionError as exception:
-            self.logger.exception("Failed to remove stack.",
-                                  extra=self.log_info)
-            raise StackDeleteException(exception.output)

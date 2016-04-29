@@ -12,7 +12,7 @@ from fixtures.cloud_formation import (BAD_CF_DEFINITION,
 from fixtures.senza import mock_senza
 from lizzy.exceptions import (AMIImageNotUpdated, ObjectNotFound,
                               SenzaRenderError, StackDeleteException,
-                              TrafficNotUpdated)
+                              TrafficNotUpdated, ExecutionError)
 from lizzy.models.stack import Stack
 from lizzy.service import setup_webapp
 from lizzy.version import VERSION
@@ -429,7 +429,7 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
 def test_get_stack(app, oauth_requests, mock_senza):
     parameters = {'version', 'description', 'stack_name', 'status', 'creation_time'}
 
-    request = app.get('/api/stacks/stack1', headers=GOOD_HEADERS)
+    request = app.get('/api/stacks/stack-1', headers=GOOD_HEADERS)
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
     response = json.loads(request.data.decode())  # type: dict
     keys = response.keys()
@@ -437,35 +437,36 @@ def test_get_stack(app, oauth_requests, mock_senza):
 
 
 def test_get_stack_404(app, oauth_requests):
-    request = app.get('/api/stacks/stack404', headers=GOOD_HEADERS)
+    request = app.get('/api/stacks/stack-404', headers=GOOD_HEADERS)
     assert request.status_code == 404
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
 
-def test_delete(app, monkeypatch, oauth_requests):
-    mock_deployer = MagicMock()
-    mock_deployer.return_value = mock_deployer
-    monkeypatch.setattr('lizzy.api.InstantDeployer', mock_deployer)
-    request = app.delete('/api/stacks/stack1', headers=GOOD_HEADERS)
+def test_delete(app, monkeypatch, mock_senza, oauth_requests):
+
+    request = app.delete('/api/stacks/stack-1', headers=GOOD_HEADERS)
     assert request.status_code == 204
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
-    assert len(mock_deployer.delete_stack.mock_calls) == 1
+    assert len(mock_senza.remove.mock_calls) == 1
 
     # delete is idempotent
-    request = app.delete('/api/stacks/stack1', headers=GOOD_HEADERS)
+    request = app.delete('/api/stacks/stack-1', headers=GOOD_HEADERS)
     assert request.status_code == 204
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
-    assert len(mock_deployer.delete_stack.mock_calls) == 2
+    assert len(mock_senza.remove.mock_calls) == 2
 
-    request = app.delete('/api/stacks/stack404', headers=GOOD_HEADERS)
+    request = app.delete('/api/stacks/stack-404', headers=GOOD_HEADERS)
     assert request.status_code == 204
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
-    assert len(mock_deployer.delete_stack.mock_calls) == 2
+    assert len(mock_senza.remove.mock_calls) == 3
 
-    mock_deployer.delete_stack.side_effect = StackDeleteException('test')
-    request = app.delete('/api/stacks/stack1', headers=GOOD_HEADERS)
+    mock_senza.remove.side_effect = ExecutionError('test', 'Error msg')
+    request = app.delete('/api/stacks/stack-1', headers=GOOD_HEADERS)
     assert request.status_code == 500
-    assert len(mock_deployer.delete_stack.mock_calls) == 3
+    # TODO test message
+    problem = json.loads(request.data.decode())
+    assert problem['detail'] == "Error msg"
+    assert len(mock_senza.remove.mock_calls) == 4
 
 
 def test_patch(monkeypatch, app, oauth_requests, mock_senza):
