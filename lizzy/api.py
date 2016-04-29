@@ -1,9 +1,10 @@
-from typing import Optional  # noqa pylint: disable=unused-import
+from typing import Optional, List  # noqa pylint: disable=unused-import
 
 import logging
 import connexion
 import yaml
 from decorator import decorator
+from copy import deepcopy
 
 from lizzy import config
 from lizzy.apps.kio import Kio
@@ -24,21 +25,30 @@ def _make_headers() -> dict:
     return {'X-Lizzy-Version': VERSION}
 
 
-def _get_stack_dict(stack_name: str, stack_version: str) -> dict:
+def _get_api_stacks(*stack_ref: List[str]) -> List[dict]:
     """
+    Returns a List of stack dicts compliant with the API spec.
+
     .. seealso:: lizzy/swagger/lizzy.yaml#/definitions/stack
     """
 
     senza = Senza(config.region)
-    list_stack = senza.list(stack_name, stack_version)
-    dict_stack = list_stack[0]
+    stacks = [_make_stack_api_compliant(stack)
+              for stack in senza.list(*stack_ref)]
+    return stacks
+
+
+def _make_stack_api_compliant(stack: dict):
+    stack = deepcopy(stack)  # avoid bugs
 
     # Return time according to
     # http://zalando.github.io/restful-api-guidelines/data-formats/DataFormats.html#must-use-standard-date-and-time-formats
-    creation_date = timestamp_to_uct(dict_stack['creation_time'])
-    dict_stack['creation_time'] = '{:%FT%T%z}'.format(creation_date)
+    creation_date = timestamp_to_uct(stack['creation_time'])
+    stack['creation_time'] = '{:%FT%T%z}'.format(creation_date)
 
-    return dict_stack
+    # TODO check if all and only the parameters in the api are given
+
+    return stack
 
 
 @decorator
@@ -57,7 +67,7 @@ def all_stacks() -> dict:
     """
     GET /stacks/
     """
-    stacks = [_get_stack_dict(stack.stack_name, stack.stack_version) for stack in Stack.all()]
+    stacks = _get_api_stacks()
     stacks.sort(key=lambda stack: stack['creation_time'])
     return stacks, 200, _make_headers()
 
@@ -164,7 +174,8 @@ def create_stack(new_stack: dict) -> dict:
         # this will be handled in the job anyway
         stack.status = 'CF:CREATE_IN_PROGRESS'
         stack.save()
-        return _get_stack_dict(stack_name, stack.stack_version), 201, _make_headers()
+        stack_dict = _get_api_stacks(stack_name, stack.stack_version)[0]
+        return stack_dict, 201, _make_headers()
     else:
         logger.error("Error creating stack.", extra=stack_extra)
         return connexion.problem(400, 'Deployment Failed',
@@ -179,7 +190,8 @@ def get_stack(stack_id: str) -> dict:
     GET /stacks/{id}
     """
     stack = Stack.get(stack_id)
-    return _get_stack_dict(stack.stack_name, stack.stack_version), 200, _make_headers()
+    stack_dict = _get_api_stacks(stack.stack_name, stack.stack_version)[0]
+    return stack_dict, 200, _make_headers()
 
 
 @bouncer
@@ -215,7 +227,8 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
 
     stack.save()
 
-    return _get_stack_dict(stack.stack_name, stack.stack_version), 202, _make_headers()
+    stack_dict = _get_api_stacks(stack.stack_name, stack.stack_version)[0]
+    return stack_dict, 202, _make_headers()
 
 
 @bouncer
