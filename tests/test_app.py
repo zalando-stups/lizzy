@@ -113,7 +113,7 @@ def oauth_requests(monkeypatch: '_pytest.monkeypatch.monkeypatch'):
     monkeypatch.setattr('connexion.decorators.security.session', Session())
 
 
-def test_security(app, oauth_requests):
+def test_security(app, oauth_requests, mock_senza):
     get_swagger = app.get('/api/swagger.json')  # type:flask.Response
     assert get_swagger.status_code == 200
 
@@ -134,7 +134,7 @@ def test_security(app, oauth_requests):
     assert invalid_access.status_code == 401
 
 
-def test_security_allowed_user_pattern(monkeypatch):
+def test_security_allowed_user_pattern(monkeypatch, mock_senza):
     os.environ['TOKENINFO_URL'] = 'https://ouath.example/token_info'
 
     class AllowedOtherUsersConfig(FakeConfig):
