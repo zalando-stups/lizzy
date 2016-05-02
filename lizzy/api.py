@@ -9,10 +9,9 @@ from copy import deepcopy
 from lizzy import config
 from lizzy.apps.kio import Kio
 from lizzy.apps.senza import Senza
-from lizzy.deployer import InstantDeployer
-from lizzy.exceptions import (AMIImageNotUpdated, ObjectNotFound,
-                              ExecutionError, SenzaRenderError,
-                              TrafficNotUpdated)
+from lizzy.exceptions import (ObjectNotFound, ExecutionError, SenzaRenderError,
+                              TrafficNotUpdated, SenzaDomainsError,
+                              SenzaTrafficError)
 from lizzy.models.stack import Stack
 from lizzy.security import bouncer
 from lizzy.util import filter_empty_values, timestamp_to_uct
@@ -212,11 +211,11 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
     """
     stack_patch = filter_empty_values(stack_patch)
 
-    stack = Stack.get(stack_id)
     stack_name, stack_version = stack_id.rsplit('-', 1)
     stack_dict = _get_stack(stack_name, stack_version)
     senza = Senza(config.region)
-    deployer = InstantDeployer(stack)
+    log_info = {'stack_id': stack_id,
+                'stack_name': stack_name}
 
     if 'new_ami_image' in stack_patch:
         # Change the AMI image of the Auto Scaling Group (ASG) and respawn the
@@ -226,8 +225,7 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
             senza.patch(stack_name, stack_version, new_ami_image)
             senza.respawn_instances(stack_name, stack_version)
         except ExecutionError as exception:
-            logger.info(exception.message, extra={'stack_id': stack_id,
-                                                  'stack_name': stack_name})
+            logger.info(exception.message, extra=log_info)
             return connexion.problem(400, 'Image update failed',
                                      exception.message,
                                      headers=_make_headers())
@@ -235,13 +233,30 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
     if 'new_traffic' in stack_patch:
         new_traffic = stack_patch['new_traffic']
         try:
-            deployer.change_traffic(new_traffic)
-        except TrafficNotUpdated as exception:
-            return connexion.problem(400, 'Traffic update failed', exception.message,
+            domains = senza.domains(stack_name)
+            if domains:
+                logger.info("Switching app traffic to stack.",
+                            extra=log_info)
+                senza.traffic(stack_name=stack_name,
+                              stack_version=stack_version,
+                              percentage=new_traffic)
+            else:
+                logger.info("App does not have a domain so traffic will not be switched.",
+                            extra=log_info)
+                raise TrafficNotUpdated("App does not have a domain.")
+        except SenzaDomainsError as exception:
+            logger.exception(
+                "Failed to get domains. Traffic will not be switched.",
+                extra=log_info)
+            return connexion.problem(400, 'Traffic update failed',
+                                     exception.message,
                                      headers=_make_headers())
-        stack.traffic = new_traffic
+        except SenzaTrafficError as exception:
+            logger.exception("Failed to switch app traffic.", extra=log_info)
+            return connexion.problem(400, 'Traffic update failed',
+                                     exception.message,
+                                     headers=_make_headers())
 
-    stack.save()
     # refresh the dict
     stack_dict = _get_stack(stack_name, stack_version)
 

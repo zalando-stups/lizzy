@@ -12,7 +12,7 @@ from fixtures.cloud_formation import (BAD_CF_DEFINITION,
 from fixtures.senza import mock_senza
 from lizzy.exceptions import (AMIImageNotUpdated, ObjectNotFound,
                               SenzaRenderError, TrafficNotUpdated,
-                              ExecutionError)
+                              ExecutionError, SenzaDomainsError)
 from lizzy.models.stack import Stack
 from lizzy.service import setup_webapp
 from lizzy.version import VERSION
@@ -480,26 +480,24 @@ def test_delete(app, monkeypatch, mock_senza, oauth_requests):
 
 
 def test_patch(monkeypatch, app, oauth_requests, mock_senza):
-    mock_deployer = MagicMock()
-    mock_deployer.return_value = mock_deployer
-    monkeypatch.setattr('lizzy.api.InstantDeployer', mock_deployer)
-
     data = {'new_traffic': 50}
 
     # Only changes the traffic
     request = app.patch('/api/stacks/stack-1', headers=GOOD_HEADERS,
                         data=json.dumps(data))
     assert request.status_code == 202
-    assert FakeStack.last_save['traffic'] == 50
-    mock_deployer.change_traffic.assert_called_once_with(50)
+    mock_senza.traffic.assert_called_once_with(percentage=50,
+                                               stack_name='stack',
+                                               stack_version='1')
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
     # Should return 400 when not possible to change the traffic
-    mock_deployer.change_traffic.side_effect = TrafficNotUpdated(
-        'fake error')
+    # while running the one of the senza commands an error occurs
+    mock_senza.traffic.side_effect = SenzaDomainsError('', '')
     request = app.patch('/api/stacks/stack-1', headers=GOOD_HEADERS,
                         data=json.dumps(data))
     assert request.status_code == 400
+    mock_senza.traffic.reset()
 
     # Does not change anything
     request = app.patch('/api/stacks/stack-1', headers=GOOD_HEADERS,
@@ -511,7 +509,9 @@ def test_patch(monkeypatch, app, oauth_requests, mock_senza):
 
     # Should change the AMI image used by the stack and respawnn the instances
     # using the new AMI image.
-    request = app.patch('/api/stacks/stack-1', headers=GOOD_HEADERS, data=json.dumps(update_image))
+    request = app.patch('/api/stacks/stack-1',
+                        headers=GOOD_HEADERS,
+                        data=json.dumps(update_image))
     assert request.status_code == 202
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
     mock_senza.patch.assert_called_once_with('stack', '1', 'ami-2323')
@@ -523,9 +523,10 @@ def test_patch(monkeypatch, app, oauth_requests, mock_senza):
     assert request.status_code == 400
 
 
-def test_patch404(app, oauth_requests):
+def test_patch404(app, oauth_requests, mock_senza):
     data = {'new_ami_image': 'ami-2323', }
-
-    request = app.patch('/api/stacks/stack-404', headers=GOOD_HEADERS, data=json.dumps(data))
+    mock_senza.list = lambda *a, **k: []
+    request = app.patch('/api/stacks/stack-404', headers=GOOD_HEADERS,
+                        data=json.dumps(data))
     assert request.status_code == 404
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
