@@ -72,14 +72,6 @@ class FakeStack(Stack):
     def delete(self):
         pass
 
-    @classmethod
-    def get(cls, uid):
-        if uid not in STACKS:
-            raise ObjectNotFound(uid)
-
-        stack = STACKS[uid]
-        return cls(**stack)
-
     def save(self):
         FakeStack.last_save = vars(self)
 
@@ -240,15 +232,7 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
     response = json.loads(request.get_data().decode())
     assert len(response) == 5
     assert response['creation_time'] == '2016-04-14T11:59:27+0000'
-    stack_version = FakeStack.last_save['stack_version']
-    assert FakeStack.last_save['application_version'] is None
-    assert FakeStack.last_save['image_version'] == '1.0'
-    assert FakeStack.last_save['keep_stacks'] == 0
-    assert FakeStack.last_save['parameters'] == []
-    assert FakeStack.last_save['stack_id'] == 'abc-' + stack_version
-    assert FakeStack.last_save['stack_name'] == 'abc'
-    assert FakeStack.last_save['status'] == 'CF:CREATE_IN_PROGRESS'
-    assert FakeStack.last_save['traffic'] == 100
+
 
     data = {'keep_stacks': 0,
             'new_traffic': 100,
@@ -266,15 +250,6 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
                                           'LizzyKeepStacks': 0})
     assert request.status_code == 201
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
-    stack_version = FakeStack.last_save['stack_version']
-    assert FakeStack.last_save['application_version'] is None
-    assert FakeStack.last_save['image_version'] == '1.0'
-    assert FakeStack.last_save['keep_stacks'] == 0
-    assert FakeStack.last_save['parameters'] == ['abc', 'def']
-    assert FakeStack.last_save['stack_id'] == 'abc-' + stack_version
-    assert FakeStack.last_save['stack_name'] == 'abc'
-    assert FakeStack.last_save['status'] == 'CF:CREATE_IN_PROGRESS'
-    assert FakeStack.last_save['traffic'] == 100
 
     data = {'keep_stacks': 0,
             'new_traffic': 100,
@@ -298,14 +273,13 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
                                                      version='42')
     assert request.status_code == 201
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
-    assert FakeStack.last_save['application_version'] == '42'
-    assert FakeStack.last_save['image_version'] == '1.0'
-    assert FakeStack.last_save['keep_stacks'] == 0
-    assert FakeStack.last_save['parameters'] == ['abc', 'def']
-    assert FakeStack.last_save['stack_id'] == 'abc-42'
-    assert FakeStack.last_save['stack_name'] == 'abc'
-    assert FakeStack.last_save['status'] == 'CF:CREATE_IN_PROGRESS'
-    assert FakeStack.last_save['traffic'] == 100
+    request_data = json.loads(request.data.decode())
+    assert request_data == {'creation_time': '2016-04-14T11:59:27+0000',
+                           'description': 'Lizzy Bus (ImageVersion: 257)',
+                           'stack_name': 'lizzy-bus',
+                           'status': 'CREATE_COMPLETE',
+                           'version': '257'}
+
 
     mock_kio.reset_mock()
     mock_senza.reset_mock()
@@ -335,14 +309,12 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
                                                      version='42')
     assert request.status_code == 201
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
-    assert FakeStack.last_save['application_version'] == '42'
-    assert FakeStack.last_save['image_version'] == '1.0'
-    assert FakeStack.last_save['keep_stacks'] == 0
-    assert FakeStack.last_save['parameters'] == ['abc', 'def']
-    assert FakeStack.last_save['stack_id'] == 'abc-7'
-    assert FakeStack.last_save['stack_name'] == 'abc'
-    assert FakeStack.last_save['status'] == 'CF:CREATE_IN_PROGRESS'
-    assert FakeStack.last_save['traffic'] == 100
+    request_data = json.loads(request.data.decode())
+    assert request_data == {'creation_time': '2016-04-14T11:59:27+0000',
+                            'description': 'Lizzy Bus (ImageVersion: 257)',
+                            'stack_name': 'lizzy-bus',
+                            'status': 'CREATE_COMPLETE',
+                            'version': '257'}
 
     # kio version creation doesn't affect the rest of the process
     mock_kio.versions_create.reset_mock()
@@ -356,14 +328,12 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
                                                      version='42')
     assert request.status_code == 201
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
-    assert FakeStack.last_save['application_version'] == '42'
-    assert FakeStack.last_save['image_version'] == '1.0'
-    assert FakeStack.last_save['keep_stacks'] == 0
-    assert FakeStack.last_save['parameters'] == ['abc', 'def']
-    assert FakeStack.last_save['stack_id'] == 'abc-7'
-    assert FakeStack.last_save['stack_name'] == 'abc'
-    assert FakeStack.last_save['status'] == 'CF:CREATE_IN_PROGRESS'
-    assert FakeStack.last_save['traffic'] == 100
+    request_data = json.loads(request.data.decode())
+    assert request_data == {'creation_time': '2016-04-14T11:59:27+0000',
+                            'description': 'Lizzy Bus (ImageVersion: 257)',
+                            'stack_name': 'lizzy-bus',
+                            'status': 'CREATE_COMPLETE',
+                            'version': '257'}
 
     mock_senza.create.return_value = False
     request = app.post('/api/stacks',
@@ -392,9 +362,12 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
                                                  'ImageVersion=28'], False,
                                          {'LizzyKeepStacks': 0,
                                           'LizzyTargetTraffic': 100})
-    stack_version = FakeStack.last_save['stack_version']
-    assert FakeStack.last_save['parameters'] == ['MintBucket=bk-bucket',
-                                                 'ImageVersion=28']
+    request_data = json.loads(request.data.decode())
+    assert request_data == {'creation_time': '2016-04-14T11:59:27+0000',
+                            'description': 'Lizzy Bus (ImageVersion: 257)',
+                            'stack_name': 'lizzy-bus',
+                            'status': 'CREATE_COMPLETE',
+                            'version': '257'}
 
     # unusual launch configuration name (usually is AppServer)
     mock_kio.reset_mock()

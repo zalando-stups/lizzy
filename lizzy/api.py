@@ -24,27 +24,6 @@ def _make_headers() -> dict:
     return {'X-Lizzy-Version': VERSION}
 
 
-def _get_stack(stack_name: str, stack_version: str) -> Optional[dict]:
-    stacks = _get_api_stacks(stack_name, stack_version)
-    if not stacks:
-        raise ObjectNotFound('{}-{}'.format(stack_name, stack_version))
-    else:
-        return stacks[0]
-
-
-def _get_api_stacks(*stack_ref: List[str]) -> List[dict]:
-    """
-    Returns a List of stack dicts compliant with the API spec.
-
-    .. seealso:: lizzy/swagger/lizzy.yaml#/definitions/stack
-    """
-
-    senza = Senza(config.region)
-    stacks = [_make_stack_api_compliant(stack)
-              for stack in senza.list(*stack_ref)]
-    return stacks
-
-
 def _make_stack_api_compliant(stack: dict):
     stack = deepcopy(stack)  # avoid bugs
 
@@ -74,7 +53,7 @@ def all_stacks() -> dict:
     """
     GET /stacks/
     """
-    stacks = _get_api_stacks()
+    stacks = Stack.list()
     stacks.sort(key=lambda stack: stack['creation_time'])
     return stacks, 200, _make_headers()
 
@@ -95,20 +74,9 @@ def create_stack(new_stack: dict) -> dict:
     senza_yaml = new_stack['senza_yaml']  # type: str
     parameters = new_stack.get('parameters', [])
     disable_rollback = new_stack.get('disable_rollback', False)
-    stack_name = None
     artifact_name = None
-    cf_raw_definition = None
 
     senza = Senza(config.region)
-
-    stack = Stack(keep_stacks=keep_stacks,
-                  traffic=new_traffic,
-                  image_version=image_version,
-                  senza_yaml=senza_yaml,
-                  stack_name=stack_name,
-                  stack_version=stack_version,
-                  application_version=application_version,
-                  parameters=parameters)
 
     try:
         cf_raw_definition = senza.render_definition(senza_yaml,
@@ -153,15 +121,13 @@ def create_stack(new_stack: dict) -> dict:
 
     # Create the Stack
     logger.info("Creating stack %s...", stack_name)
-    stack.stack_name = stack_name
-    stack.stack_id = stack.generate_id()
 
-    if stack.application_version:
+    if application_version:
         kio_extra = {'stack_name': stack_name, 'version': application_version}
         logger.info("Registering version on kio...", extra=kio_extra)
         kio = Kio()
-        if kio.versions_create(application_id=stack.stack_name,
-                               version=stack.application_version,
+        if kio.versions_create(application_id=stack_name,
+                               version=application_version,
                                artifact=artifact_name):
             logger.info("Version registered in Kio.", extra=kio_extra)
         else:
@@ -169,19 +135,17 @@ def create_stack(new_stack: dict) -> dict:
 
     senza = Senza(config.region)
     stack_extra = {'stack_name': stack_name,
-                   'stack_version': stack.stack_version,
-                   'image_version': stack.image_version,
-                   'parameters': stack.parameters}
+                   'stack_version': stack_version,
+                   'image_version': image_version,
+                   'parameters': parameters}
     tags = {'LizzyKeepStacks': keep_stacks,
             'LizzyTargetTraffic': new_traffic}
-    if senza.create(stack.senza_yaml, stack.stack_version, stack.image_version,
-                    stack.parameters, disable_rollback, tags):
+    if senza.create(senza_yaml, stack_version, image_version, parameters,
+                    disable_rollback, tags):
         logger.info("Stack created.", extra=stack_extra)
         # Mark the stack as CREATE_IN_PROGRESS. Even if this isn't true anymore
         # this will be handled in the job anyway
-        stack.status = 'CF:CREATE_IN_PROGRESS'
-        stack.save()
-        stack_dict = _get_stack(stack_name, stack.stack_version)
+        stack_dict = Stack.get(stack_name, stack_version)
         return stack_dict, 201, _make_headers()
     else:
         logger.error("Error creating stack.", extra=stack_extra)
@@ -197,7 +161,7 @@ def get_stack(stack_id: str) -> dict:
     GET /stacks/{id}
     """
     stack_name, stack_version = stack_id.rsplit('-', 1)
-    stack_dict = _get_stack(stack_name, stack_version)
+    stack_dict = Stack.get(stack_name, stack_version)
     return stack_dict, 200, _make_headers()
 
 
@@ -212,7 +176,7 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
     stack_patch = filter_empty_values(stack_patch)
 
     stack_name, stack_version = stack_id.rsplit('-', 1)
-    stack_dict = _get_stack(stack_name, stack_version)
+    stack_dict = Stack.get(stack_name, stack_version)
     senza = Senza(config.region)
     log_info = {'stack_id': stack_id,
                 'stack_name': stack_name}
@@ -258,7 +222,7 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
                                      headers=_make_headers())
 
     # refresh the dict
-    stack_dict = _get_stack(stack_name, stack_version)
+    stack_dict = Stack.get(stack_name, stack_version)
 
     return stack_dict, 202, _make_headers()
 

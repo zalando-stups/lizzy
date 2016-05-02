@@ -1,15 +1,29 @@
 from typing import Dict, Any, List, Optional  # NOQA  pylint: disable=unused-import
 
 from datetime import datetime
-import rod.model
+from copy import deepcopy
 import boto3
 import botocore.exceptions
 
 from lizzy.exceptions import ObjectNotFound
-from ..util import now, parse_date
+from ..apps.senza import Senza
+from ..util import now, parse_date, timestamp_to_uct
 from ..configuration import config
 
 REMOVED_STACK = object()
+
+
+def _make_stack_api_compliant(stack: dict):
+    stack = deepcopy(stack)  # avoid bugs
+
+    # Return time according to
+    # http://zalando.github.io/restful-api-guidelines/data-formats/DataFormats.html#must-use-standard-date-and-time-formats
+    creation_date = timestamp_to_uct(stack['creation_time'])
+    stack['creation_time'] = '{:%FT%T%z}'.format(creation_date)
+
+    # TODO check if all and only the parameters in the api are given
+
+    return stack
 
 
 class Stack():
@@ -21,7 +35,6 @@ class Stack():
                  stack_id: str=None,
                  creation_time: datetime=None,
                  keep_stacks: int,
-                 traffic: int,
                  image_version: str,
                  senza_yaml: str,
                  stack_name: str,
@@ -56,12 +69,33 @@ class Stack():
         self.stack_id = stack_id if stack_id is not None else self.generate_id()  # type str
         self.ami_image = ami_image
         self.keep_stacks = keep_stacks
-        self.traffic = traffic
         self.senza_yaml = senza_yaml
         self.parameters = parameters or []  # type: list
         self.status = status  # status is cloud formation status or LIZZY_NEW
         self.application_version = application_version
         self.__cf_stack = None
+
+    @classmethod
+    def get(cls, stack_name: str, stack_version: str) -> Optional[dict]:
+        # TODO return Stack object and convert to dict on api decorator.
+        stacks = cls.list(stack_name, stack_version)
+        if not stacks:
+            raise ObjectNotFound('{}-{}'.format(stack_name, stack_version))
+        else:
+            return stacks[0]
+
+    @classmethod
+    def list(cls, *stack_ref: List[str]) -> List[dict]:
+        """
+        Returns a List of stack dicts compliant with the API spec.
+
+        .. seealso:: lizzy/swagger/lizzy.yaml#/definitions/stack
+        """
+
+        senza = Senza(config.region)
+        stacks = [_make_stack_api_compliant(stack)
+                  for stack in senza.list(*stack_ref)]
+        return stacks
 
     def generate_id(self) -> str:
         """
