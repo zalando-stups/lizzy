@@ -52,9 +52,7 @@ class Stack(rod.model.Model):
         self.creation_time = parse_date(creation_time or now())
         self.image_version = image_version
         self.stack_version = (stack_version or
-                              application_version or
-                              self.generate_version(self.creation_time,
-                                                    image_version))
+                              application_version)
         self.stack_id = stack_id if stack_id is not None else self.generate_id()  # type str
         self.ami_image = ami_image
         self.keep_stacks = keep_stacks
@@ -64,20 +62,6 @@ class Stack(rod.model.Model):
         self.status = status  # status is cloud formation status or LIZZY_NEW
         self.application_version = application_version
         self.__cf_stack = None
-
-    @staticmethod
-    def generate_version(creation_time: datetime, version: str) -> str:
-        """
-        Generates a version for the stack based on the image version and timestamp.
-        It replaces `.`s with `o`s and removes `_`s to return a valid Cloud Formation Identification
-
-        :param creation_time:  Date and time of stack creation
-        :param version: Docker image version to deploy
-        :return: CF stack version
-        """
-        version = version.lower().replace('-snapshot', 's').replace('.', 'o').replace('_', '')
-        return '{version}T{time:%Y%m%d%H%M%S}'.format(version=version,
-                                                      time=creation_time)
 
     def generate_id(self) -> str:
         """

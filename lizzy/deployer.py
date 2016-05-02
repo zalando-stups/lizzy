@@ -45,22 +45,3 @@ class InstantDeployer:
             self.logger.exception("Failed to switch app traffic.",
                                   extra=self.log_info)
             raise TrafficNotUpdated(exception.message)
-
-    def update_ami_image(self, new_ami_image: str):
-        """Change the AMI image of the Auto Scaling Group (ASG) and respawn the
-        instances to use new image.
-
-        :param new_ami_image: specified image (AMI ID or "latest")
-        :raises AMIImageNotUpdated: when a unexpected error occour while
-                                    running the senza commands.
-        """
-        try:
-
-            self.senza.patch(self.stack.stack_name, self.stack.stack_version,
-                             new_ami_image)
-            self.senza.respawn_instances(self.stack.stack_name,
-                                         self.stack.stack_version)
-
-        except ExecutionError as exception:
-            self.logger.info(exception.message, extra=self.log_info)
-            raise AMIImageNotUpdated(exception.message)

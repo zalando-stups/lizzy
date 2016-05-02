@@ -25,6 +25,14 @@ def _make_headers() -> dict:
     return {'X-Lizzy-Version': VERSION}
 
 
+def _get_stack(stack_name: str, stack_version: str) -> Optional[dict]:
+    stacks = _get_api_stacks(stack_name, stack_version)
+    if not stacks:
+        raise ObjectNotFound('{}-{}'.format(stack_name, stack_version))
+    else:
+        return stacks[0]
+
+
 def _get_api_stacks(*stack_ref: List[str]) -> List[dict]:
     """
     Returns a List of stack dicts compliant with the API spec.
@@ -174,7 +182,7 @@ def create_stack(new_stack: dict) -> dict:
         # this will be handled in the job anyway
         stack.status = 'CF:CREATE_IN_PROGRESS'
         stack.save()
-        stack_dict = _get_api_stacks(stack_name, stack.stack_version)[0]
+        stack_dict = _get_stack(stack_name, stack.stack_version)
         return stack_dict, 201, _make_headers()
     else:
         logger.error("Error creating stack.", extra=stack_extra)
@@ -190,11 +198,7 @@ def get_stack(stack_id: str) -> dict:
     GET /stacks/{id}
     """
     stack_name, stack_version = stack_id.rsplit('-', 1)
-    stack_list = _get_api_stacks(stack_name, stack_version)
-    if stack_list:
-        stack_dict = _get_api_stacks(stack_name, stack_version)[0]
-    else:
-        raise ObjectNotFound(stack_id)
+    stack_dict = _get_stack(stack_name, stack_version)
     return stack_dict, 200, _make_headers()
 
 
@@ -209,15 +213,23 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
     stack_patch = filter_empty_values(stack_patch)
 
     stack = Stack.get(stack_id)
+    stack_name, stack_version = stack_id.rsplit('-', 1)
+    stack_dict = _get_stack(stack_name, stack_version)
+    senza = Senza(config.region)
     deployer = InstantDeployer(stack)
 
     if 'new_ami_image' in stack_patch:
+        # Change the AMI image of the Auto Scaling Group (ASG) and respawn the
+        # instances to use new image.
         new_ami_image = stack_patch['new_ami_image']
         try:
-            deployer.update_ami_image(new_ami_image)
-            stack.ami_image = new_ami_image
-        except AMIImageNotUpdated as exception:
-            return connexion.problem(400, 'Image update failed', exception.message,
+            senza.patch(stack_name, stack_version, new_ami_image)
+            senza.respawn_instances(stack_name, stack_version)
+        except ExecutionError as exception:
+            logger.info(exception.message, extra={'stack_id': stack_id,
+                                                  'stack_name': stack_name})
+            return connexion.problem(400, 'Image update failed',
+                                     exception.message,
                                      headers=_make_headers())
 
     if 'new_traffic' in stack_patch:
@@ -230,8 +242,9 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
         stack.traffic = new_traffic
 
     stack.save()
+    # refresh the dict
+    stack_dict = _get_stack(stack_name, stack_version)
 
-    stack_dict = _get_api_stacks(stack.stack_name, stack.stack_version)[0]
     return stack_dict, 202, _make_headers()
 
 

@@ -21,16 +21,16 @@ CURRENT_VERSION = VERSION
 
 GOOD_HEADERS = {'Authorization': 'Bearer 100', 'Content-type': 'application/json'}
 
-STACKS = {'stack1': {'stack_id': None,
-                     'creation_time': None,
-                     'keep_stacks': 1,
-                     'traffic': 100,
-                     'image_version': 'version',
-                     'ami_image': 'latest',
-                     'senza_yaml': 'yaml',
-                     'stack_name': 'stackno1',
-                     'stack_version': 'v1',
-                     'status': 'LIZZY:NEW', }}
+STACKS = {'stack-1': {'stack_id': None,
+                      'creation_time': None,
+                      'keep_stacks': 1,
+                      'traffic': 100,
+                      'image_version': 'version',
+                      'ami_image': 'latest',
+                      'senza_yaml': 'yaml',
+                      'stack_name': 'stackno1',
+                      'stack_version': 'v1',
+                      'status': 'LIZZY:NEW', }}
 
 
 class FakeConfig:
@@ -487,7 +487,7 @@ def test_patch(monkeypatch, app, oauth_requests, mock_senza):
     data = {'new_traffic': 50}
 
     # Only changes the traffic
-    request = app.patch('/api/stacks/stack1', headers=GOOD_HEADERS,
+    request = app.patch('/api/stacks/stack-1', headers=GOOD_HEADERS,
                         data=json.dumps(data))
     assert request.status_code == 202
     assert FakeStack.last_save['traffic'] == 50
@@ -497,12 +497,12 @@ def test_patch(monkeypatch, app, oauth_requests, mock_senza):
     # Should return 400 when not possible to change the traffic
     mock_deployer.change_traffic.side_effect = TrafficNotUpdated(
         'fake error')
-    request = app.patch('/api/stacks/stack1', headers=GOOD_HEADERS,
+    request = app.patch('/api/stacks/stack-1', headers=GOOD_HEADERS,
                         data=json.dumps(data))
     assert request.status_code == 400
 
     # Does not change anything
-    request = app.patch('/api/stacks/stack1', headers=GOOD_HEADERS,
+    request = app.patch('/api/stacks/stack-1', headers=GOOD_HEADERS,
                         data=json.dumps({}))
     assert request.status_code == 202
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
@@ -511,21 +511,21 @@ def test_patch(monkeypatch, app, oauth_requests, mock_senza):
 
     # Should change the AMI image used by the stack and respawnn the instances
     # using the new AMI image.
-    request = app.patch('/api/stacks/stack1', headers=GOOD_HEADERS, data=json.dumps(update_image))
+    request = app.patch('/api/stacks/stack-1', headers=GOOD_HEADERS, data=json.dumps(update_image))
     assert request.status_code == 202
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
-    assert FakeStack.last_save['ami_image'] == 'ami-2323'
-    mock_deployer.update_ami_image.assert_called_once_with('ami-2323')
+    mock_senza.patch.assert_called_once_with('stack', '1', 'ami-2323')
+    mock_senza.respawn_instances.assert_called_once_with('stack', '1')
 
     # Should return 400 when not possible to change the AMI image
-    mock_deployer.update_ami_image.side_effect = AMIImageNotUpdated('fake error')
-    request = app.patch('/api/stacks/stack1', headers=GOOD_HEADERS, data=json.dumps(update_image))
+    mock_senza.patch.side_effect = ExecutionError(1, 'fake error')
+    request = app.patch('/api/stacks/stack-1', headers=GOOD_HEADERS, data=json.dumps(update_image))
     assert request.status_code == 400
 
 
 def test_patch404(app, oauth_requests):
-    data = {'new_traffic': 50, }
+    data = {'new_ami_image': 'ami-2323', }
 
-    request = app.patch('/api/stacks/stack404', headers=GOOD_HEADERS, data=json.dumps(data))
+    request = app.patch('/api/stacks/stack-404', headers=GOOD_HEADERS, data=json.dumps(data))
     assert request.status_code == 404
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
