@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
-# The functions in this module all have `pragma: no cover` because they only setup stuff and don't do "real" work
+# The functions in this module all have `pragma: no cover` because they only
+# setup stuff and don't do "real" work
 
 import logging
 
 import connexion
-import rod.connection
-import uwsgi_metrics
 
 from lizzy.api import not_found_path_handler
 import lizzy.configuration as configuration
@@ -34,14 +33,8 @@ def setup_webapp(config: configuration.Configuration):  # pragma: no cover
 def main(run=True):  # pragma: no cover
     config = configuration.Configuration()
 
-    logger.info('Connecting to Redis', extra={'redis_host': config.redis_host, 'redis_port': config.redis_port})
-    rod.connection.setup(redis_host=config.redis_host, port=config.redis_port)
-    logger.info('Connected to Redis')
-
     logger.info('Starting web app')
     app = setup_webapp(config)
-    # initialization for /metrics endpoint (ZMON support)
-    uwsgi_metrics.initialize()
     if run:
         app.run()
     else:

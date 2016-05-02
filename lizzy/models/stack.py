@@ -12,7 +12,7 @@ from ..configuration import config
 REMOVED_STACK = object()
 
 
-class Stack(rod.model.Model):
+class Stack():
     prefix = 'lizzy_stack'
     key = 'stack_id'
     search_properties = ['stack_id']
@@ -67,14 +67,8 @@ class Stack(rod.model.Model):
         """
         The id will be the same as the stack name on aws
         """
-        return '{name}-{version}'.format(name=self.stack_name, version=self.stack_version)
-
-    @classmethod
-    def get(cls, *args, **kwargs) -> "Stack":
-        try:
-            return super().get(*args, **kwargs)
-        except KeyError:
-            raise ObjectNotFound(args[0])
+        return '{name}-{version}'.format(name=self.stack_name,
+                                         version=self.stack_version)
 
     @property
     def cf_stack(self) -> Dict[str, Any]:
