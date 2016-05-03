@@ -19,7 +19,8 @@ from lizzy.version import VERSION
 
 CURRENT_VERSION = VERSION
 
-GOOD_HEADERS = {'Authorization': 'Bearer 100', 'Content-type': 'application/json'}
+GOOD_HEADERS = {'Authorization': 'Bearer 100',
+                'Content-type': 'application/json'}
 
 STACKS = {'stack-1': {'stack_id': None,
                       'creation_time': None,
@@ -30,7 +31,7 @@ STACKS = {'stack-1': {'stack_id': None,
                       'senza_yaml': 'yaml',
                       'stack_name': 'stackno1',
                       'stack_version': 'v1',
-                      'status': 'LIZZY:NEW', }}
+                      'status': 'LIZZY:NEW'}}
 
 
 class FakeConfig:
@@ -95,9 +96,11 @@ def oauth_requests(monkeypatch: '_pytest.monkeypatch.monkeypatch'):
             if url == "https://ouath.example/token_info":
                 token = params['access_token']
                 if token == "100":
-                    return FakeResponse(200, '{"scope": ["myscope"], "uid": "test_user"}')
+                    return FakeResponse(200,
+                                        '{"scope": ["myscope"], "uid": "test_user"}')
                 if token == "200":
-                    return FakeResponse(200, '{"scope": ["wrongscope"], , "uid": "test_user"}')
+                    return FakeResponse(200,
+                                        '{"scope": ["wrongscope"], , "uid": "test_user"}')
                 if token == "300":
                     return FakeResponse(404, '')
             return url
@@ -122,7 +125,8 @@ def test_security(app, oauth_requests, mock_senza):
     invalid_access = app.get('/api/does-not-exist')
     assert invalid_access.status_code == 401
 
-    invalid_access = app.get('/random-access-that-does-not-exist-outside-of-api')
+    invalid_access = app.get(
+        '/random-access-that-does-not-exist-outside-of-api')
     assert invalid_access.status_code == 401
 
 
@@ -138,7 +142,8 @@ def test_security_allowed_user_pattern(monkeypatch, mock_senza):
     app = setup_webapp(AllowedOtherUsersConfig())
     app_client = app.app.test_client()
 
-    monkeypatch.setattr(lizzy.security, 'Configuration', AllowedOtherUsersConfig)
+    monkeypatch.setattr(lizzy.security, 'Configuration',
+                        AllowedOtherUsersConfig)
     monkeypatch.setattr(lizzy.api, 'Stack', FakeStack)
 
     stacks_response = app_client.get('/api/stacks', headers=GOOD_HEADERS)
@@ -157,7 +162,8 @@ def test_security_now_allowed_user_pattern(monkeypatch):
     app = setup_webapp(AllowedOtherUsersConfig())
     app_client = app.app.test_client()
 
-    monkeypatch.setattr(lizzy.security, 'Configuration', AllowedOtherUsersConfig)
+    monkeypatch.setattr(lizzy.security, 'Configuration',
+                        AllowedOtherUsersConfig)
     monkeypatch.setattr(lizzy.api, 'Stack', FakeStack)
 
     stacks_response = app_client.get('/api/stacks', headers=GOOD_HEADERS)
@@ -166,7 +172,8 @@ def test_security_now_allowed_user_pattern(monkeypatch):
 
 def test_empty_new_stack(monkeypatch, app, oauth_requests):
     data = {}
-    request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
+    request = app.post('/api/stacks', headers=GOOD_HEADERS,
+                       data=json.dumps(data))  # type: flask.Response
     assert request.status_code == 400
     response = json.loads(request.data.decode())
     assert response['title'] == 'Bad Request'
@@ -183,9 +190,11 @@ def test_bad_senza_yaml(app, oauth_requests, monkeypatch):
     mock_senza = MagicMock()
     mock_senza.return_value = mock_senza
     monkeypatch.setattr('lizzy.api.Senza', mock_senza)
-    mock_senza.render_definition.side_effect = SenzaRenderError("Some error", "output error")
+    mock_senza.render_definition.side_effect = SenzaRenderError("Some error",
+                                                                "output error")
 
-    request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
+    request = app.post('/api/stacks', headers=GOOD_HEADERS,
+                       data=json.dumps(data))  # type: flask.Response
     assert request.status_code == 400
     response = json.loads(request.data.decode())
     assert response['title'] == 'Invalid senza yaml'
@@ -197,7 +206,8 @@ def test_bad_senza_yaml(app, oauth_requests, monkeypatch):
     mock_senza.render_definition.return_value = BAD_CF_DEFINITION
 
     data['senza_yaml'] = '[]'
-    request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
+    request = app.post('/api/stacks', headers=GOOD_HEADERS,
+                       data=json.dumps(data))  # type: flask.Response
     assert request.status_code == 400
     response = json.loads(request.data.decode())
     assert response['title'] == 'Invalid senza yaml'
@@ -231,8 +241,7 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
     response = json.loads(request.get_data().decode())
     assert len(response) == 5
-    assert response['creation_time'] == '2016-04-14T11:59:27+0000'
-
+    assert response['creation_time'] == '2016-04-14T11:59:27+00:00'
 
     data = {'keep_stacks': 0,
             'new_traffic': 100,
@@ -241,7 +250,8 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
             'stack_version': '2b',
             'parameters': ['abc', 'def']}
 
-    request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
+    request = app.post('/api/stacks', headers=GOOD_HEADERS,
+                       data=json.dumps(data))  # type: flask.Response
     mock_kio.assert_not_called()
     mock_senza.assert_called_with('eu-west-1')
     mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc',
@@ -261,7 +271,8 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
     mock_senza.reset_mock()
     mock_senza.render_definition.return_value = GOOD_CF_DEFINITION
     mock_kio.versions_create.return_value = True
-    request = app.post('/api/stacks', headers=GOOD_HEADERS, data=json.dumps(data))  # type: flask.Response
+    request = app.post('/api/stacks', headers=GOOD_HEADERS,
+                       data=json.dumps(data))  # type: flask.Response
     mock_senza.assert_called_with('eu-west-1')
     mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc',
                                          '42', '1.0', ['abc', 'def'], False,
@@ -274,12 +285,11 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
     assert request.status_code == 201
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
     request_data = json.loads(request.data.decode())
-    assert request_data == {'creation_time': '2016-04-14T11:59:27+0000',
-                           'description': 'Lizzy Bus (ImageVersion: 257)',
-                           'stack_name': 'lizzy-bus',
-                           'status': 'CREATE_COMPLETE',
-                           'version': '257'}
-
+    assert request_data == {'creation_time': '2016-04-14T11:59:27+00:00',
+                            'description': 'Lizzy Bus (ImageVersion: 257)',
+                            'stack_name': 'lizzy-bus',
+                            'status': 'CREATE_COMPLETE',
+                            'version': '257'}
 
     mock_kio.reset_mock()
     mock_senza.reset_mock()
@@ -310,7 +320,7 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
     assert request.status_code == 201
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
     request_data = json.loads(request.data.decode())
-    assert request_data == {'creation_time': '2016-04-14T11:59:27+0000',
+    assert request_data == {'creation_time': '2016-04-14T11:59:27+00:00',
                             'description': 'Lizzy Bus (ImageVersion: 257)',
                             'stack_name': 'lizzy-bus',
                             'status': 'CREATE_COMPLETE',
@@ -329,7 +339,7 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
     assert request.status_code == 201
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
     request_data = json.loads(request.data.decode())
-    assert request_data == {'creation_time': '2016-04-14T11:59:27+0000',
+    assert request_data == {'creation_time': '2016-04-14T11:59:27+00:00',
                             'description': 'Lizzy Bus (ImageVersion: 257)',
                             'stack_name': 'lizzy-bus',
                             'status': 'CREATE_COMPLETE',
@@ -363,7 +373,7 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
                                          {'LizzyKeepStacks': 0,
                                           'LizzyTargetTraffic': 100})
     request_data = json.loads(request.data.decode())
-    assert request_data == {'creation_time': '2016-04-14T11:59:27+0000',
+    assert request_data == {'creation_time': '2016-04-14T11:59:27+00:00',
                             'description': 'Lizzy Bus (ImageVersion: 257)',
                             'stack_name': 'lizzy-bus',
                             'status': 'CREATE_COMPLETE',
@@ -409,7 +419,8 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
 
 
 def test_get_stack(app, oauth_requests, mock_senza):
-    parameters = {'version', 'description', 'stack_name', 'status', 'creation_time'}
+    parameters = {'version', 'description', 'stack_name', 'status',
+                  'creation_time'}
 
     request = app.get('/api/stacks/stack-1', headers=GOOD_HEADERS)
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
@@ -426,7 +437,6 @@ def test_get_stack_404(app, oauth_requests, mock_senza):
 
 
 def test_delete(app, monkeypatch, mock_senza, oauth_requests):
-
     request = app.delete('/api/stacks/stack-1', headers=GOOD_HEADERS)
     assert request.status_code == 204
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
@@ -492,12 +502,13 @@ def test_patch(monkeypatch, app, oauth_requests, mock_senza):
 
     # Should return 400 when not possible to change the AMI image
     mock_senza.patch.side_effect = ExecutionError(1, 'fake error')
-    request = app.patch('/api/stacks/stack-1', headers=GOOD_HEADERS, data=json.dumps(update_image))
+    request = app.patch('/api/stacks/stack-1', headers=GOOD_HEADERS,
+                        data=json.dumps(update_image))
     assert request.status_code == 400
 
 
 def test_patch404(app, oauth_requests, mock_senza):
-    data = {'new_ami_image': 'ami-2323', }
+    data = {'new_ami_image': 'ami-2323'}
     mock_senza.list = lambda *a, **k: []
     request = app.patch('/api/stacks/stack-404', headers=GOOD_HEADERS,
                         data=json.dumps(data))

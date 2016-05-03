@@ -4,7 +4,6 @@ import logging
 import connexion
 import yaml
 from decorator import decorator
-from copy import deepcopy
 
 from lizzy import config
 from lizzy.apps.kio import Kio
@@ -14,7 +13,7 @@ from lizzy.exceptions import (ObjectNotFound, ExecutionError, SenzaRenderError,
                               SenzaTrafficError)
 from lizzy.models.stack import Stack
 from lizzy.security import bouncer
-from lizzy.util import filter_empty_values, timestamp_to_uct
+from lizzy.util import filter_empty_values
 from lizzy.version import VERSION
 
 logger = logging.getLogger('lizzy.api')  # pylint: disable=invalid-name
@@ -22,19 +21,6 @@ logger = logging.getLogger('lizzy.api')  # pylint: disable=invalid-name
 
 def _make_headers() -> dict:
     return {'X-Lizzy-Version': VERSION}
-
-
-def _make_stack_api_compliant(stack: dict):
-    stack = deepcopy(stack)  # avoid bugs
-
-    # Return time according to
-    # http://zalando.github.io/restful-api-guidelines/data-formats/DataFormats.html#must-use-standard-date-and-time-formats
-    creation_date = timestamp_to_uct(stack['creation_time'])
-    stack['creation_time'] = '{:%FT%T%z}'.format(creation_date)
-
-    # TODO check if all and only the parameters in the api are given
-
-    return stack
 
 
 @decorator
@@ -54,7 +40,7 @@ def all_stacks() -> dict:
     GET /stacks/
     """
     stacks = Stack.list()
-    stacks.sort(key=lambda stack: stack['creation_time'])
+    stacks.sort(key=lambda stack: stack.creation_time)
     return stacks, 200, _make_headers()
 
 
