@@ -179,7 +179,7 @@ def test_empty_new_stack(monkeypatch, app, oauth_requests):
     assert response['title'] == 'Bad Request'
 
 
-def test_bad_senza_yaml(app, oauth_requests, monkeypatch):
+def test_bad_senza_yaml(app, oauth_requests, monkeypatch, mock_senza):
     data = {'keep_stacks': 0,
             'stack_version': 1,
             'new_traffic': 100,
@@ -205,15 +205,6 @@ def test_bad_senza_yaml(app, oauth_requests, monkeypatch):
     monkeypatch.setattr('lizzy.api.Senza', mock_senza)
     mock_senza.render_definition.return_value = BAD_CF_DEFINITION
 
-    data['senza_yaml'] = '[]'
-    request = app.post('/api/stacks', headers=GOOD_HEADERS,
-                       data=json.dumps(data))  # type: flask.Response
-    assert request.status_code == 400
-    response = json.loads(request.data.decode())
-    assert response['title'] == 'Invalid senza yaml'
-    assert response['detail'] == "Missing property in senza yaml: 'Fn::Base64'"
-    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
-
 
 def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
     data = {'keep_stacks': 0,
@@ -222,16 +213,12 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
             'stack_version': '1',
             'senza_yaml': 'SenzaInfo:\n  StackName: abc'}
 
-    mock_kio = MagicMock()
-    mock_kio.return_value = mock_kio
-    monkeypatch.setattr('lizzy.api.Kio', mock_kio)
     mock_senza.render_definition.return_value = GOOD_CF_DEFINITION
 
     mock_senza.create.return_value = True
     request = app.post('/api/stacks',
                        headers=GOOD_HEADERS,
                        data=json.dumps(data))  # type: flask.Response
-    mock_kio.assert_not_called()
     mock_senza.assert_called_with('eu-west-1')
     mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc',
                                          ANY, '1.0', [], False,
@@ -252,7 +239,6 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
 
     request = app.post('/api/stacks', headers=GOOD_HEADERS,
                        data=json.dumps(data))  # type: flask.Response
-    mock_kio.assert_not_called()
     mock_senza.assert_called_with('eu-west-1')
     mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc',
                                          '2b', '1.0', ['abc', 'def'], False,
@@ -270,7 +256,6 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
             'application_version': '42'}
     mock_senza.reset_mock()
     mock_senza.render_definition.return_value = GOOD_CF_DEFINITION
-    mock_kio.versions_create.return_value = True
     request = app.post('/api/stacks', headers=GOOD_HEADERS,
                        data=json.dumps(data))  # type: flask.Response
     mock_senza.assert_called_with('eu-west-1')
@@ -278,10 +263,6 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
                                          '42', '1.0', ['abc', 'def'], False,
                                          {'LizzyKeepStacks': 0,
                                           'LizzyTargetTraffic': 100})
-    mock_kio.assert_called_with()
-    mock_kio.versions_create.assert_called_once_with(application_id='abc',
-                                                     artifact='pierone.example.com/lizzy/lizzy:12',
-                                                     version='42')
     assert request.status_code == 201
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
     request_data = json.loads(request.data.decode())
@@ -291,7 +272,6 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
                             'status': 'CREATE_COMPLETE',
                             'version': '257'}
 
-    mock_kio.reset_mock()
     mock_senza.reset_mock()
     mock_senza.render_definition.return_value = GOOD_CF_DEFINITION
     data = {'keep_stacks': 0,
@@ -303,7 +283,6 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
             'application_version': '42',
             'disable_rollback': True}
 
-    mock_kio.versions_create.return_value = True
     request = app.post('/api/stacks', headers=GOOD_HEADERS,
                        data=json.dumps(data))  # type: flask.Response
     mock_senza.assert_called_with('eu-west-1')
@@ -313,29 +292,6 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
                                          True,
                                          {'LizzyKeepStacks': 0,
                                           'LizzyTargetTraffic': 100})
-    mock_kio.assert_called_with()
-    mock_kio.versions_create.assert_called_once_with(application_id='abc',
-                                                     artifact='pierone.example.com/lizzy/lizzy:12',
-                                                     version='42')
-    assert request.status_code == 201
-    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
-    request_data = json.loads(request.data.decode())
-    assert request_data == {'creation_time': '2016-04-14T11:59:27+00:00',
-                            'description': 'Lizzy Bus (ImageVersion: 257)',
-                            'stack_name': 'lizzy-bus',
-                            'status': 'CREATE_COMPLETE',
-                            'version': '257'}
-
-    # kio version creation doesn't affect the rest of the process
-    mock_kio.versions_create.reset_mock()
-    mock_kio.versions_create.return_value = False
-    request = app.post('/api/stacks',
-                       headers=GOOD_HEADERS,
-                       data=json.dumps(data))  # type: flask.Response
-    mock_kio.assert_called_with()
-    mock_kio.versions_create.assert_called_once_with(application_id='abc',
-                                                     artifact='pierone.example.com/lizzy/lizzy:12',
-                                                     version='42')
     assert request.status_code == 201
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
     request_data = json.loads(request.data.decode())
@@ -355,8 +311,6 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
     mock_senza.reset_mock()
     mock_senza.create.return_value = True
     mock_senza.render_definition.return_value = GOOD_CF_DEFINITION
-    mock_kio.versions_create.reset_mock()
-    mock_kio.versions_create.return_value = True
     data = {'keep_stacks': 0,
             'new_traffic': 100,
             'image_version': '1.0',
@@ -380,7 +334,6 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
                             'version': '257'}
 
     # unusual launch configuration name (usually is AppServer)
-    mock_kio.reset_mock()
     mock_senza.reset_mock()
     mock_senza.render_definition.return_value = GOOD_CF_DEFINITION_WITH_UNUSUAL_AUTOSCALING_RESOURCE
     data = {'keep_stacks': 0,
@@ -391,31 +344,6 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
             'application_version': '42',
             'stack_version': '10',
             'disable_rollback': True}
-
-    mock_kio.versions_create.return_value = True
-    response = app.post('/api/stacks', headers=GOOD_HEADERS,
-                        data=json.dumps(data))  # type: flask.Response
-
-    assert response.status_code == 201
-
-    # unusual launch missing TaupageAutoScalingGroup
-    mock_kio.reset_mock()
-    mock_senza.reset_mock()
-    mock_senza.render_definition.return_value = BAD_CF_MISSING_TAUPAGE_AUTOSCALING_GROUP
-    data = {'keep_stacks': 0,
-            'new_traffic': 100,
-            'image_version': '1.0',
-            'senza_yaml': 'SenzaInfo:\n  StackName: abc',
-            'parameters': ['abc', 'def'],
-            'application_version': '42',
-            'stack_version': '100',
-            'disable_rollback': True}
-
-    mock_kio.versions_create.return_value = True
-    response = app.post('/api/stacks', headers=GOOD_HEADERS,
-                        data=json.dumps(data))  # type: flask.Response
-
-    assert response.status_code == 400
 
 
 def test_get_stack(app, oauth_requests, mock_senza):

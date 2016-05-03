@@ -6,9 +6,8 @@ import yaml
 from decorator import decorator
 
 from lizzy import config
-from lizzy.apps.kio import Kio
 from lizzy.apps.senza import Senza
-from lizzy.exceptions import (ObjectNotFound, ExecutionError, SenzaRenderError,
+from lizzy.exceptions import (ObjectNotFound, ExecutionError,
                               TrafficNotUpdated, SenzaDomainsError,
                               SenzaTrafficError)
 from lizzy.models.stack import Stack
@@ -55,49 +54,24 @@ def create_stack(new_stack: dict) -> dict:
     keep_stacks = new_stack['keep_stacks']  # type: int
     new_traffic = new_stack['new_traffic']  # type: int
     image_version = new_stack['image_version']  # type: str
-    application_version = new_stack.get('application_version')  # type: Optional[str]
     stack_version = new_stack['stack_version']  # type: str
     senza_yaml = new_stack['senza_yaml']  # type: str
     parameters = new_stack.get('parameters', [])
     disable_rollback = new_stack.get('disable_rollback', False)
-    artifact_name = None
-
-    senza = Senza(config.region)
 
     try:
-        cf_raw_definition = senza.render_definition(senza_yaml,
-                                                    stack_version,
-                                                    application_version,
-                                                    parameters)
-    except SenzaRenderError as exception:
+        senza_definition = yaml.load(senza_yaml)
+    except yaml.YAMLError as exception:
         return connexion.problem(400,
                                  'Invalid senza yaml',
                                  exception.message,
                                  headers=_make_headers())
 
     try:
-        stack_name = cf_raw_definition['Mappings']['Senza']['Info']['StackName']
-
-        for resource, definition in cf_raw_definition['Resources'].items():
-            if definition['Type'] == 'AWS::AutoScaling::LaunchConfiguration':
-                taupage_yaml = definition['Properties']['UserData']['Fn::Base64']
-                taupage_config = yaml.safe_load(taupage_yaml)
-                artifact_name = taupage_config['source']
-
-        if artifact_name is None:
-            missing_component_error = "Missing component type Senza::TaupageAutoScalingGroup"
-            problem = connexion.problem(400,
-                                        'Invalid senza yaml',
-                                        missing_component_error,
-                                        headers=_make_headers())
-
-            logger.error(missing_component_error, extra={
-                'cf_definition': repr(cf_raw_definition)})
-            return problem
-
+        stack_name = senza_definition['SenzaInfo']['StackName']
     except KeyError as exception:
         logger.error("Couldn't get stack name from definition.",
-                     extra={'cf_definition': repr(cf_raw_definition)})
+                     extra={'senza_yaml': repr(senza_yaml)})
         missing_property = str(exception)
         problem = connexion.problem(400,
                                     'Invalid senza yaml',
@@ -107,17 +81,6 @@ def create_stack(new_stack: dict) -> dict:
 
     # Create the Stack
     logger.info("Creating stack %s...", stack_name)
-
-    if application_version:
-        kio_extra = {'stack_name': stack_name, 'version': application_version}
-        logger.info("Registering version on kio...", extra=kio_extra)
-        kio = Kio()
-        if kio.versions_create(application_id=stack_name,
-                               version=application_version,
-                               artifact=artifact_name):
-            logger.info("Version registered in Kio.", extra=kio_extra)
-        else:
-            logger.error("Error registering version in Kio.", extra=kio_extra)
 
     senza = Senza(config.region)
     stack_extra = {'stack_name': stack_name,
