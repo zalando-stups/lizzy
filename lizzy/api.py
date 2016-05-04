@@ -100,7 +100,7 @@ def create_stack(new_stack: dict) -> dict:
                      disable_rollback, tags)
     except ExecutionError as error:
         logger.error("Error creating stack.", extra=stack_extra)
-        return connexion.problem(500,
+        return connexion.problem(400,
                                  title='Failed to create stack',
                                  detail=error.output,
                                  headers=_make_headers())

@@ -301,11 +301,14 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
                             'status': 'CREATE_COMPLETE',
                             'version': '257'}
 
-    mock_senza.create.return_value = False
+    mock_senza.create.side_effect = ExecutionError(2, "error")
     request = app.post('/api/stacks',
                        headers=GOOD_HEADERS,
                        data=json.dumps(data))  # type: flask.Response
     assert request.status_code == 400
+    error_data = json.loads(request.data.decode())
+    assert error_data['detail'] == 'error'
+    mock_senza.create.side_effect = None
 
     # Test creating stack with parameters to senza
     mock_senza.reset_mock()
