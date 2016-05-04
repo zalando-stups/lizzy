@@ -13,4 +13,5 @@ def mock_senza(monkeypatch):
                                   "status": "CREATE_COMPLETE",
                                   "version": "257"}]
     monkeypatch.setattr('lizzy.api.Senza', mock)
+    monkeypatch.setattr('lizzy.models.stack.Senza', mock)
     return mock

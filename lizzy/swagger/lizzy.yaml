@@ -213,14 +213,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/stack_patch'
-  /metrics:  # metrics endpoint is mostly for ZMON support
-    get:
-      tags: [System]
-      operationId: uwsgi_metrics.view
-      summary: Get request metrics
-      responses:
-        200:
-          description: Dropwizard metrics
 definitions:
   new_stack:
     type: object
@@ -260,6 +252,7 @@ definitions:
       - keep_stacks
       - new_traffic
       - senza_yaml
+      - stack_version
   stack:
     type: object
     properties:
