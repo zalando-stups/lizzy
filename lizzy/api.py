@@ -38,7 +38,13 @@ def all_stacks() -> dict:
     """
     GET /stacks/
     """
-    stacks = Stack.list()
+    try:
+        stacks = Stack.list()
+    except ExecutionError as error:
+        return connexion.problem(500,
+                                 title='Failed to get stacks',
+                                 detail=error.output,
+                                 headers=_make_headers())
     stacks.sort(key=lambda stack: stack.creation_time)
     return stacks, 200, _make_headers()
 
@@ -89,18 +95,19 @@ def create_stack(new_stack: dict) -> dict:
                    'parameters': parameters}
     tags = {'LizzyKeepStacks': keep_stacks,
             'LizzyTargetTraffic': new_traffic}
-    if senza.create(senza_yaml, stack_version, image_version, parameters,
-                    disable_rollback, tags):
+    try:
+        senza.create(senza_yaml, stack_version, image_version, parameters,
+                     disable_rollback, tags)
+    except ExecutionError as error:
+        logger.error("Error creating stack.", extra=stack_extra)
+        return connexion.problem(500,
+                                 title='Failed to create stack',
+                                 detail=error.output,
+                                 headers=_make_headers())
+    else:
         logger.info("Stack created.", extra=stack_extra)
-        # Mark the stack as CREATE_IN_PROGRESS. Even if this isn't true anymore
-        # this will be handled in the job anyway
         stack_dict = Stack.get(stack_name, stack_version)
         return stack_dict, 201, _make_headers()
-    else:
-        logger.error("Error creating stack.", extra=stack_extra)
-        return connexion.problem(400, 'Deployment Failed',
-                                 "Senza create command failed.",
-                                 headers=_make_headers())
 
 
 @bouncer

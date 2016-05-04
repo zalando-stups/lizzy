@@ -28,7 +28,7 @@ class Application:  # pylint: disable=too-few-public-methods
         self.logger.debug('Executing %s.', self.application,
                           extra={'command': ' '.join(command)})
         process = Popen(command, stdout=PIPE, stderr=stderr_to)
-        stdout, _ = process.communicate()
+        stdout, stderr = process.communicate()
         output = stdout.decode()
         if process.returncode == 0:
             if expect_json and (output or not accept_empty):
@@ -41,6 +41,9 @@ class Application:  # pylint: disable=too-few-public-methods
             else:
                 return output
         else:
-            self.logger.error("Error executing command.", extra={'command': ' '.join(command),
-                                                                 'command.output': output.strip()})
+            if expect_json:
+                output += '\n' + stderr.decode()
+            self.logger.error("Error executing command.",
+                              extra={'command': ' '.join(command),
+                                     'command.output': output.strip()})
             raise ExecutionError(process.returncode, output)

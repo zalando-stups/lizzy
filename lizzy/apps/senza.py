@@ -29,26 +29,19 @@ class Senza(Application):
         with tempfile.NamedTemporaryFile() as temp_yaml:
             temp_yaml.write(senza_yaml.encode())
             temp_yaml.file.flush()
-            try:
-                args = ['--force']
-                if disable_rollback:
-                    args.append('--disable-rollback')
+            args = ['--force']
+            if disable_rollback:
+                args.append('--disable-rollback')
 
-                parameters.extend(['-t', 'LizzyVersion={}'.format(VERSION)])
+            parameters.extend(['-t', 'LizzyVersion={}'.format(VERSION)])
 
-                for key, value in tags.items():
-                    # Adds the tags prepended with Lizzy
-                    tag = '{0}={1}'.format(key, value)
-                    parameters.extend(['-t', tag])
+            for key, value in tags.items():
+                # Adds the tags prepended with Lizzy
+                tag = '{0}={1}'.format(key, value)
+                parameters.extend(['-t', tag])
 
-                self._execute('create', *args, temp_yaml.name, stack_version,
-                              image_version, *parameters)
-
-                return True
-            except ExecutionError as exception:
-                self.logger.error('Failed to create stack.',
-                                  extra={'command.output': exception.output})
-                return False
+            self._execute('create', *args, temp_yaml.name, stack_version,
+                          image_version, *parameters)
 
     def domains(self, stack_name: Optional[str]=None) -> List[Dict[str, str]]:
         """
