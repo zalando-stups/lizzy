@@ -39,6 +39,7 @@ def exception_to_connexion_problem(func, *args, **kwargs):
 
 
 @bouncer
+@exception_to_connexion_problem
 def all_stacks() -> dict:
     """
     GET /stacks/
@@ -49,6 +50,7 @@ def all_stacks() -> dict:
 
 
 @bouncer
+@exception_to_connexion_problem
 def create_stack(new_stack: dict) -> dict:
     """
     POST /stacks/
