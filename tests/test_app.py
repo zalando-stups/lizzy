@@ -150,7 +150,7 @@ def test_security_allowed_user_pattern(monkeypatch, mock_senza):
     assert stacks_response.status_code == 200
 
 
-def test_security_now_allowed_user_pattern(monkeypatch):
+def test_security_now_allowed_user_pattern(monkeypatch, mock_senza):
     os.environ['TOKENINFO_URL'] = 'https://ouath.example/token_info'
 
     class AllowedOtherUsersConfig(FakeConfig):
