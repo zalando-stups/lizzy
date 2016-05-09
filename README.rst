@@ -4,8 +4,6 @@
 Lizzy
 =====
 
-**DISCLAIMER: Lizzy is still in alpha state.**
-
 REST Service to deploy AWS Cloud Formation templates using `Senza`_
 CLI tool.
 
@@ -24,8 +22,6 @@ Lizzy uses the following environment variables for configuration:
 +----------------------+----------------------------------------+-----------+
 | DEPLOYER_SCOPE       | OAUTH scope needed to deploy           |           |
 +----------------------+----------------------------------------+-----------+
-| JOB_INTERVAL         | Interval between executions of the job | 15        |
-+----------------------+----------------------------------------+-----------+
 | LOG_LEVEL            | Sets the minimum log level             | INFO      |
 +----------------------+----------------------------------------+-----------+
 | LOG_FORMAT           | Sets the log format (human or default) | default   |
@@ -34,10 +30,6 @@ Lizzy uses the following environment variables for configuration:
 +----------------------+----------------------------------------+-----------+
 | PORT                 | TCP port to use for lizzy              | 8080      |
 +----------------------+----------------------------------------+-----------+
-| REDIS_HOST           | Hostname of the Redis Server           | localhost |
-+----------------------+----------------------------------------+-----------+
-| REDIS_PORT           | Port of the Redis Server               | 6379      |
-+----------------------+----------------------------------------+-----------+
 | REGION               | AWS Region to use                      | eu-west-1 |
 +----------------------+----------------------------------------+-----------+
 | TOKEN_URL            | URL to get a new token                 |           |
@@ -45,19 +37,14 @@ Lizzy uses the following environment variables for configuration:
 | TOKEN_INFO_URL       | URL to validate the token              |           |
 +----------------------+----------------------------------------+-----------+
 
-Stack Version Naming
+Client Documentation
 --------------------
-The order of precedence to set the stack version is as follows:
-
-1. `stack_version` argument, if present;
-2. `application_version` argument, if present;
-3. Automatically generated version name based on the stack's creation time.
+Lizzy Client documentation is available in `zalando/lizzy-client`_
 
 Limitations
 -----------
 Currently Lizzy doesn't support:
 
-- senza definitions with more than one AppServer;
 - parameters specified by name;
 
 License
@@ -77,3 +64,4 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 .. _Senza: https://github.com/zalando-stups/senza
+.. _zalando/lizzy-client: https://github.com/zalando/lizzy-client
