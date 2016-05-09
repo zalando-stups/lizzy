@@ -69,10 +69,8 @@ def test_create(monkeypatch, popen):
     popen.returncode = 1
     senza.logger.reset_mock()
 
-    senza.create('yaml: yaml', '10', '42', ['param1', 'param2'], False, {})
-    senza.logger.error.assert_called_with('Failed to create stack.', extra={
-        'command.output': '{"stream": "stdout"}'
-    })
+    with pytest.raises(ExecutionError):
+        senza.create('yaml: yaml', '10', '42', ['param1', 'param2'], False, {})
 
     popen.returncode = 0
     senza.logger.reset_mock()

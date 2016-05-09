@@ -1,4 +1,4 @@
-from typing import Dict, Any, List, Optional  # NOQA  pylint: disable=unused-import
+from typing import List  # NOQA  pylint: disable=unused-import
 
 from lizzy.exceptions import ObjectNotFound
 from ..apps.senza import Senza

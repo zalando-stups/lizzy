@@ -31,9 +31,15 @@ def exception_to_connexion_problem(func, *args, **kwargs):
                                     "Stack not found: {}".format(exception.uid),
                                     headers=_make_headers())
         return problem
+    except ExecutionError as error:
+        return connexion.problem(500,
+                                 title='Execution Error',
+                                 detail=error.output,
+                                 headers=_make_headers())
 
 
 @bouncer
+@exception_to_connexion_problem
 def all_stacks() -> dict:
     """
     GET /stacks/
@@ -44,6 +50,7 @@ def all_stacks() -> dict:
 
 
 @bouncer
+@exception_to_connexion_problem
 def create_stack(new_stack: dict) -> dict:
     """
     POST /stacks/
@@ -89,18 +96,19 @@ def create_stack(new_stack: dict) -> dict:
                    'parameters': parameters}
     tags = {'LizzyKeepStacks': keep_stacks,
             'LizzyTargetTraffic': new_traffic}
-    if senza.create(senza_yaml, stack_version, image_version, parameters,
-                    disable_rollback, tags):
+    try:
+        senza.create(senza_yaml, stack_version, image_version, parameters,
+                     disable_rollback, tags)
+    except ExecutionError as error:
+        logger.error("Error creating stack.", extra=stack_extra)
+        return connexion.problem(400,
+                                 title='Failed to create stack',
+                                 detail=error.output,
+                                 headers=_make_headers())
+    else:
         logger.info("Stack created.", extra=stack_extra)
-        # Mark the stack as CREATE_IN_PROGRESS. Even if this isn't true anymore
-        # this will be handled in the job anyway
         stack_dict = Stack.get(stack_name, stack_version)
         return stack_dict, 201, _make_headers()
-    else:
-        logger.error("Error creating stack.", extra=stack_extra)
-        return connexion.problem(400, 'Deployment Failed',
-                                 "Senza create command failed.",
-                                 headers=_make_headers())
 
 
 @bouncer
@@ -125,7 +133,6 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
     stack_patch = filter_empty_values(stack_patch)
 
     stack_name, stack_version = stack_id.rsplit('-', 1)
-    stack_dict = Stack.get(stack_name, stack_version)
     senza = Senza(config.region)
     log_info = {'stack_id': stack_id,
                 'stack_name': stack_name}
@@ -177,6 +184,7 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
 
 
 @bouncer
+@exception_to_connexion_problem
 def delete_stack(stack_id: str) -> dict:
     """
     DELETE /stacks/{id}
@@ -188,16 +196,10 @@ def delete_stack(stack_id: str) -> dict:
 
     logger.info("Removing stack %s...", stack_id)
 
-    try:
-        senza.remove(stack_name, stack_version)
-        logger.info("Stack %s removed.", stack_id)
-    except ExecutionError as exception:
-        logger.exception("Failed to remove stack %s.", stack_id)
-        return connexion.problem(500, 'Stack deletion failed',
-                                 exception.output,
-                                 headers=_make_headers())
-    else:
-        return '', 204, _make_headers()
+    senza.remove(stack_name, stack_version)
+    logger.info("Stack %s removed.", stack_id)
+
+    return '', 204, _make_headers()
 
 
 def not_found_path_handler(error):
