@@ -5,14 +5,10 @@ from unittest.mock import ANY, MagicMock
 import lizzy.api
 import pytest
 import requests
-from fixtures.cloud_formation import (BAD_CF_DEFINITION,
-                                      BAD_CF_MISSING_TAUPAGE_AUTOSCALING_GROUP,
-                                      GOOD_CF_DEFINITION,
+from fixtures.cloud_formation import (BAD_CF_DEFINITION, GOOD_CF_DEFINITION,
                                       GOOD_CF_DEFINITION_WITH_UNUSUAL_AUTOSCALING_RESOURCE)
-from fixtures.senza import mock_senza
-from lizzy.exceptions import (AMIImageNotUpdated, ObjectNotFound,
-                              SenzaRenderError, TrafficNotUpdated,
-                              ExecutionError, SenzaDomainsError)
+from lizzy.exceptions import (ExecutionError, SenzaDomainsError,
+                              SenzaRenderError)
 from lizzy.models.stack import Stack
 from lizzy.service import setup_webapp
 from lizzy.version import VERSION
@@ -108,7 +104,7 @@ def oauth_requests(monkeypatch: '_pytest.monkeypatch.monkeypatch'):
     monkeypatch.setattr('connexion.decorators.security.session', Session())
 
 
-def test_security(app, oauth_requests, mock_senza):
+def test_security(app, mock_senza):
     get_swagger = app.get('/api/swagger.json')  # type:flask.Response
     assert get_swagger.status_code == 200
 
@@ -170,7 +166,7 @@ def test_security_now_allowed_user_pattern(monkeypatch, mock_senza):
     assert stacks_response.status_code == 403
 
 
-def test_empty_new_stack(monkeypatch, app, oauth_requests):
+def test_empty_new_stack(monkeypatch, app):
     data = {}
     request = app.post('/api/stacks', headers=GOOD_HEADERS,
                        data=json.dumps(data))  # type: flask.Response
@@ -179,7 +175,7 @@ def test_empty_new_stack(monkeypatch, app, oauth_requests):
     assert response['title'] == 'Bad Request'
 
 
-def test_bad_senza_yaml(app, oauth_requests, monkeypatch, mock_senza):
+def test_bad_senza_yaml(app, monkeypatch, mock_senza):
     data = {'keep_stacks': 0,
             'stack_version': 1,
             'new_traffic': 100,
@@ -206,7 +202,7 @@ def test_bad_senza_yaml(app, oauth_requests, monkeypatch, mock_senza):
     mock_senza.render_definition.return_value = BAD_CF_DEFINITION
 
 
-def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
+def test_new_stack(monkeypatch, app, mock_senza):
     data = {'keep_stacks': 0,
             'new_traffic': 100,
             'image_version': '1.0',
@@ -349,7 +345,7 @@ def test_new_stack(monkeypatch, app, mock_senza, oauth_requests):
             'disable_rollback': True}
 
 
-def test_get_stack(app, oauth_requests, mock_senza):
+def test_get_stack(app, mock_senza):
     parameters = {'version', 'description', 'stack_name', 'status',
                   'creation_time'}
 
@@ -360,14 +356,14 @@ def test_get_stack(app, oauth_requests, mock_senza):
     assert parameters == keys
 
 
-def test_get_stack_404(app, oauth_requests, mock_senza):
+def test_get_stack_404(app, mock_senza):
     mock_senza.list = lambda *a, **k: []
     request = app.get('/api/stacks/stack-404', headers=GOOD_HEADERS)
     assert request.status_code == 404
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
 
-def test_delete(app, monkeypatch, mock_senza, oauth_requests):
+def test_delete(app, monkeypatch, mock_senza):
     request = app.delete('/api/stacks/stack-1', headers=GOOD_HEADERS)
     assert request.status_code == 204
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
@@ -393,7 +389,7 @@ def test_delete(app, monkeypatch, mock_senza, oauth_requests):
     assert len(mock_senza.remove.mock_calls) == 4
 
 
-def test_patch(monkeypatch, app, oauth_requests, mock_senza):
+def test_patch(monkeypatch, app, mock_senza):
     data = {'new_traffic': 50}
 
     # Only changes the traffic
@@ -438,10 +434,20 @@ def test_patch(monkeypatch, app, oauth_requests, mock_senza):
     assert request.status_code == 400
 
 
-def test_patch404(app, oauth_requests, mock_senza):
+def test_patch404(app, mock_senza):
     data = {'new_ami_image': 'ami-2323'}
     mock_senza.list = lambda *a, **k: []
-    request = app.patch('/api/stacks/stack-404', headers=GOOD_HEADERS,
-                        data=json.dumps(data))
-    assert request.status_code == 404
-    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    response = app.patch('/api/stacks/stack-404', headers=GOOD_HEADERS,
+                         data=json.dumps(data))
+    assert response.status_code == 404
+    assert response.headers['X-Lizzy-Version'] == CURRENT_VERSION
+
+
+def test_api_discovery_endpoint(app):
+    response = app.get('/.well-known/schema-discovery')
+    assert response.status_code == 200
+
+    payload = json.loads(response.data.decode())
+    assert payload['schema_type'] == 'swagger-2.0'
+    assert payload['schema_url'] == '/api/swagger.json'
+    assert payload['ui_url'] == '/api/ui/'

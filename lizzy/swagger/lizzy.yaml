@@ -213,6 +213,7 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/stack_patch'
+
 definitions:
   new_stack:
     type: object

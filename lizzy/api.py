@@ -1,15 +1,17 @@
-from typing import Optional, List  # noqa pylint: disable=unused-import
-
+import json
 import logging
-import connexion
-import yaml
+from typing import List, Optional  # noqa pylint: disable=unused-import
+
 from decorator import decorator
 
+import connexion
+import yaml
+from flask import Response
 from lizzy import config
 from lizzy.apps.senza import Senza
-from lizzy.exceptions import (ObjectNotFound, ExecutionError,
-                              TrafficNotUpdated, SenzaDomainsError,
-                              SenzaTrafficError)
+from lizzy.exceptions import (ExecutionError, ObjectNotFound,
+                              SenzaDomainsError, SenzaTrafficError,
+                              TrafficNotUpdated)
 from lizzy.models.stack import Stack
 from lizzy.security import bouncer
 from lizzy.util import filter_empty_values
@@ -204,3 +206,14 @@ def delete_stack(stack_id: str) -> dict:
 
 def not_found_path_handler(error):
     return connexion.problem(401, 'Unauthorized', '')
+
+
+def expose_api_schema():
+    api_description = json.dumps({
+        'schema_type': 'swagger-2.0',
+        'schema_url': '/api/swagger.json',
+        'ui_url': '/api/ui/'
+    })
+    return Response(api_description, status=200,
+                    headers=_make_headers(),
+                    mimetype='application/json')
