@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
-# The functions in this module all have `pragma: no cover` because they only setup stuff and don't do "real" work
+# The functions in this module all have `pragma: no cover` because they only
+# setup stuff and don't do "real" work
 
 import logging
 
 import connexion
-import rod.connection
-import uwsgi_metrics
 
-from lizzy.api import not_found_path_handler
+from lizzy.api import not_found_path_handler, expose_api_schema
+from .serialization import JSONEncoder
 import lizzy.configuration as configuration
 
 logger = logging.getLogger('lizzy')  # pylint: disable=invalid-name
@@ -26,7 +26,11 @@ def setup_webapp(config: configuration.Configuration):  # pragma: no cover
     app.add_api('lizzy.yaml')
 
     flask_app = app.app
+    flask_app.json_encoder = JSONEncoder
     flask_app.errorhandler(404)(not_found_path_handler)
+    flask_app.add_url_rule('/.well-known/schema-discovery',
+                           'schema_discovery_endpoint',
+                           expose_api_schema)
 
     return app
 
@@ -34,14 +38,8 @@ def setup_webapp(config: configuration.Configuration):  # pragma: no cover
 def main(run=True):  # pragma: no cover
     config = configuration.Configuration()
 
-    logger.info('Connecting to Redis', extra={'redis_host': config.redis_host, 'redis_port': config.redis_port})
-    rod.connection.setup(redis_host=config.redis_host, port=config.redis_port)
-    logger.info('Connected to Redis')
-
     logger.info('Starting web app')
     app = setup_webapp(config)
-    # initialization for /metrics endpoint (ZMON support)
-    uwsgi_metrics.initialize()
     if run:
         app.run()
     else:

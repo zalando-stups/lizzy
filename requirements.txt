@@ -4,8 +4,6 @@ decorator
 pytz
 pyyaml
 pystache
-rod
 stups-kio
 stups-senza>=1.0.40
 uwsgi
-uwsgi_metrics3

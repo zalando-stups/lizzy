@@ -29,26 +29,19 @@ class Senza(Application):
         with tempfile.NamedTemporaryFile() as temp_yaml:
             temp_yaml.write(senza_yaml.encode())
             temp_yaml.file.flush()
-            try:
-                args = ['--force']
-                if disable_rollback:
-                    args.append('--disable-rollback')
+            args = ['--force']
+            if disable_rollback:
+                args.append('--disable-rollback')
 
-                parameters.extend(['-t', 'LizzyVersion={}'.format(VERSION)])
+            parameters.extend(['-t', 'LizzyVersion={}'.format(VERSION)])
 
-                for key, value in tags.items():
-                    # Adds the tags prepended with Lizzy
-                    tag = '{0}={1}'.format(key, value)
-                    parameters.extend(['-t', tag])
+            for key, value in tags.items():
+                # Adds the tags prepended with Lizzy
+                tag = '{0}={1}'.format(key, value)
+                parameters.extend(['-t', tag])
 
-                self._execute('create', *args, temp_yaml.name, stack_version,
-                              image_version, *parameters)
-
-                return True
-            except ExecutionError as exception:
-                self.logger.error('Failed to create stack.',
-                                  extra={'command.output': exception.output})
-                return False
+            self._execute('create', *args, temp_yaml.name, stack_version,
+                          image_version, *parameters)
 
     def domains(self, stack_name: Optional[str]=None) -> List[Dict[str, str]]:
         """
@@ -70,21 +63,23 @@ class Senza(Application):
         except ExecutionError as exception:
             raise SenzaDomainsError(exception.error, exception.output)
 
-    def list(self) -> List[Dict]:
+    def list(self, *args, **kwargs) -> List[Dict]:
         """
         Returns a list of all the stacks
         """
-        return self._execute('list', expect_json=True)  # type: list
+        return self._execute('list', *args, **kwargs, expect_json=True)  # type: list
 
     def remove(self, stack_name: str, stack_version: str) -> bool:
         """
         Removes a stack
+
 
         :param stack_name: Name of the application stack
         :param stack_version: Name of the application version that will be removed
         :raises: ExecutionError
         :return: Success of the operation
         """
+        # TODO rename to delete
         self._execute('delete', stack_name, stack_version)
         return True
 

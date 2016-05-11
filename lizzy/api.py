@@ -1,15 +1,16 @@
-from typing import Optional  # noqa pylint: disable=unused-import
-
+import json
 import logging
+from typing import List, Optional  # noqa pylint: disable=unused-import
+
+from decorator import decorator
+
 import connexion
 import yaml
-from decorator import decorator
+from flask import Response
 from lizzy import config
-from lizzy.apps.kio import Kio
 from lizzy.apps.senza import Senza
-from lizzy.deployer import InstantDeployer
-from lizzy.exceptions import (AMIImageNotUpdated, ObjectNotFound,
-                              SenzaRenderError, StackDeleteException,
+from lizzy.exceptions import (ExecutionError, ObjectNotFound,
+                              SenzaDomainsError, SenzaTrafficError,
                               TrafficNotUpdated)
 from lizzy.models.stack import Stack
 from lizzy.security import bouncer
@@ -23,22 +24,6 @@ def _make_headers() -> dict:
     return {'X-Lizzy-Version': VERSION}
 
 
-def _get_stack_dict(stack: Stack) -> dict:
-    """
-    .. seealso:: lizzy/swagger/lizzy.yaml#/definitions/stack
-    """
-    stack_dict = {'stack_id': stack.stack_id,
-                  'creation_time': '{:%FT%T%z}'.format(stack.creation_time),
-                  'image_version': stack.image_version,
-                  'parameters': stack.parameters,
-                  'application_version': stack.application_version,
-                  'senza_yaml': stack.senza_yaml,
-                  'stack_name': stack.stack_name,
-                  'stack_version': stack.stack_version,
-                  'status': stack.status}
-    return stack_dict
-
-
 @decorator
 def exception_to_connexion_problem(func, *args, **kwargs):
     try:
@@ -48,19 +33,26 @@ def exception_to_connexion_problem(func, *args, **kwargs):
                                     "Stack not found: {}".format(exception.uid),
                                     headers=_make_headers())
         return problem
+    except ExecutionError as error:
+        return connexion.problem(500,
+                                 title='Execution Error',
+                                 detail=error.output,
+                                 headers=_make_headers())
 
 
 @bouncer
+@exception_to_connexion_problem
 def all_stacks() -> dict:
     """
     GET /stacks/
     """
-    stacks = [_get_stack_dict(stack) for stack in Stack.all()]
-    stacks.sort(key=lambda stack: stack['creation_time'])
+    stacks = Stack.list()
+    stacks.sort(key=lambda stack: stack.creation_time)
     return stacks, 200, _make_headers()
 
 
 @bouncer
+@exception_to_connexion_problem
 def create_stack(new_stack: dict) -> dict:
     """
     POST /stacks/
@@ -71,60 +63,24 @@ def create_stack(new_stack: dict) -> dict:
     keep_stacks = new_stack['keep_stacks']  # type: int
     new_traffic = new_stack['new_traffic']  # type: int
     image_version = new_stack['image_version']  # type: str
-    application_version = new_stack.get('application_version')  # type: Optional[str]
-    stack_version = new_stack.get('stack_version')  # type: Optional[str]
+    stack_version = new_stack['stack_version']  # type: str
     senza_yaml = new_stack['senza_yaml']  # type: str
     parameters = new_stack.get('parameters', [])
     disable_rollback = new_stack.get('disable_rollback', False)
-    stack_name = None
-    artifact_name = None
-    cf_raw_definition = None
-
-    senza = Senza(config.region)
-
-    stack = Stack(keep_stacks=keep_stacks,
-                  traffic=new_traffic,
-                  image_version=image_version,
-                  senza_yaml=senza_yaml,
-                  stack_name=stack_name,
-                  stack_version=stack_version,
-                  application_version=application_version,
-                  parameters=parameters)
 
     try:
-        cf_raw_definition = senza.render_definition(senza_yaml,
-                                                    stack.stack_version,
-                                                    stack.image_version,
-                                                    parameters)
-    except SenzaRenderError as exception:
+        senza_definition = yaml.load(senza_yaml)
+    except yaml.YAMLError as exception:
         return connexion.problem(400,
                                  'Invalid senza yaml',
                                  exception.message,
                                  headers=_make_headers())
 
     try:
-        stack_name = cf_raw_definition['Mappings']['Senza']['Info']['StackName']
-
-        for resource, definition in cf_raw_definition['Resources'].items():
-            if definition['Type'] == 'AWS::AutoScaling::LaunchConfiguration':
-                taupage_yaml = definition['Properties']['UserData']['Fn::Base64']
-                taupage_config = yaml.safe_load(taupage_yaml)
-                artifact_name = taupage_config['source']
-
-        if artifact_name is None:
-            missing_component_error = "Missing component type Senza::TaupageAutoScalingGroup"
-            problem = connexion.problem(400,
-                                        'Invalid senza yaml',
-                                        missing_component_error,
-                                        headers=_make_headers())
-
-            logger.error(missing_component_error, extra={
-                'cf_definition': repr(cf_raw_definition)})
-            return problem
-
+        stack_name = senza_definition['SenzaInfo']['StackName']
     except KeyError as exception:
         logger.error("Couldn't get stack name from definition.",
-                     extra={'cf_definition': repr(cf_raw_definition)})
+                     extra={'senza_yaml': repr(senza_yaml)})
         missing_property = str(exception)
         problem = connexion.problem(400,
                                     'Invalid senza yaml',
@@ -134,40 +90,27 @@ def create_stack(new_stack: dict) -> dict:
 
     # Create the Stack
     logger.info("Creating stack %s...", stack_name)
-    stack.stack_name = stack_name
-    stack.stack_id = stack.generate_id()
-
-    if stack.application_version:
-        kio_extra = {'stack_name': stack_name, 'version': application_version}
-        logger.info("Registering version on kio...", extra=kio_extra)
-        kio = Kio()
-        if kio.versions_create(application_id=stack.stack_name,
-                               version=stack.application_version,
-                               artifact=artifact_name):
-            logger.info("Version registered in Kio.", extra=kio_extra)
-        else:
-            logger.error("Error registering version in Kio.", extra=kio_extra)
 
     senza = Senza(config.region)
     stack_extra = {'stack_name': stack_name,
-                   'stack_version': stack.stack_version,
-                   'image_version': stack.image_version,
-                   'parameters': stack.parameters}
+                   'stack_version': stack_version,
+                   'image_version': image_version,
+                   'parameters': parameters}
     tags = {'LizzyKeepStacks': keep_stacks,
             'LizzyTargetTraffic': new_traffic}
-    if senza.create(stack.senza_yaml, stack.stack_version, stack.image_version,
-                    stack.parameters, disable_rollback, tags):
-        logger.info("Stack created.", extra=stack_extra)
-        # Mark the stack as CREATE_IN_PROGRESS. Even if this isn't true anymore
-        # this will be handled in the job anyway
-        stack.status = 'CF:CREATE_IN_PROGRESS'
-        stack.save()
-        return _get_stack_dict(stack), 201, _make_headers()
-    else:
+    try:
+        senza.create(senza_yaml, stack_version, image_version, parameters,
+                     disable_rollback, tags)
+    except ExecutionError as error:
         logger.error("Error creating stack.", extra=stack_extra)
-        return connexion.problem(400, 'Deployment Failed',
-                                 "Senza create command failed.",
+        return connexion.problem(400,
+                                 title='Failed to create stack',
+                                 detail=error.output,
                                  headers=_make_headers())
+    else:
+        logger.info("Stack created.", extra=stack_extra)
+        stack_dict = Stack.get(stack_name, stack_version)
+        return stack_dict, 201, _make_headers()
 
 
 @bouncer
@@ -176,8 +119,9 @@ def get_stack(stack_id: str) -> dict:
     """
     GET /stacks/{id}
     """
-    stack = Stack.get(stack_id)
-    return _get_stack_dict(stack), 200, _make_headers()
+    stack_name, stack_version = stack_id.rsplit('-', 1)
+    stack_dict = Stack.get(stack_name, stack_version)
+    return stack_dict, 200, _make_headers()
 
 
 @bouncer
@@ -190,55 +134,86 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
     """
     stack_patch = filter_empty_values(stack_patch)
 
-    stack = Stack.get(stack_id)
-    deployer = InstantDeployer(stack)
+    stack_name, stack_version = stack_id.rsplit('-', 1)
+    senza = Senza(config.region)
+    log_info = {'stack_id': stack_id,
+                'stack_name': stack_name}
 
     if 'new_ami_image' in stack_patch:
+        # Change the AMI image of the Auto Scaling Group (ASG) and respawn the
+        # instances to use new image.
         new_ami_image = stack_patch['new_ami_image']
         try:
-            deployer.update_ami_image(new_ami_image)
-            stack.ami_image = new_ami_image
-        except AMIImageNotUpdated as exception:
-            return connexion.problem(400, 'Image update failed', exception.message,
+            senza.patch(stack_name, stack_version, new_ami_image)
+            senza.respawn_instances(stack_name, stack_version)
+        except ExecutionError as exception:
+            logger.info(exception.message, extra=log_info)
+            return connexion.problem(400, 'Image update failed',
+                                     exception.message,
                                      headers=_make_headers())
 
     if 'new_traffic' in stack_patch:
         new_traffic = stack_patch['new_traffic']
         try:
-            deployer.change_traffic(new_traffic)
-        except TrafficNotUpdated as exception:
-            return connexion.problem(400, 'Traffic update failed', exception.message,
+            domains = senza.domains(stack_name)
+            if domains:
+                logger.info("Switching app traffic to stack.",
+                            extra=log_info)
+                senza.traffic(stack_name=stack_name,
+                              stack_version=stack_version,
+                              percentage=new_traffic)
+            else:
+                logger.info("App does not have a domain so traffic will not be switched.",
+                            extra=log_info)
+                raise TrafficNotUpdated("App does not have a domain.")
+        except SenzaDomainsError as exception:
+            logger.exception(
+                "Failed to get domains. Traffic will not be switched.",
+                extra=log_info)
+            return connexion.problem(400, 'Traffic update failed',
+                                     exception.message,
                                      headers=_make_headers())
-        stack.traffic = new_traffic
+        except SenzaTrafficError as exception:
+            logger.exception("Failed to switch app traffic.", extra=log_info)
+            return connexion.problem(400, 'Traffic update failed',
+                                     exception.message,
+                                     headers=_make_headers())
 
-    stack.save()
+    # refresh the dict
+    stack_dict = Stack.get(stack_name, stack_version)
 
-    return _get_stack_dict(stack), 202, _make_headers()
+    return stack_dict, 202, _make_headers()
 
 
 @bouncer
+@exception_to_connexion_problem
 def delete_stack(stack_id: str) -> dict:
     """
     DELETE /stacks/{id}
 
     Delete a stack
     """
-    try:
-        stack = Stack.get(stack_id)
-    except ObjectNotFound:
-        # delete is idempotent, if the stack is not there it just
-        # doesn't do anything.
-        pass
-    else:
-        deployer = InstantDeployer(stack)
-        try:
-            deployer.delete_stack()
-        except StackDeleteException as exception:
-            return connexion.problem(500, 'Stack deletion failed', exception.message,
-                                     headers=_make_headers())
+    stack_name, stack_version = stack_id.rsplit('-', 1)
+    senza = Senza(config.region)
+
+    logger.info("Removing stack %s...", stack_id)
+
+    senza.remove(stack_name, stack_version)
+    logger.info("Stack %s removed.", stack_id)
 
     return '', 204, _make_headers()
 
 
 def not_found_path_handler(error):
     return connexion.problem(401, 'Unauthorized', '')
+
+
+def expose_api_schema():
+    api_description = json.dumps({
+        'schema_type': 'swagger-2.0',
+        'schema_url': '/api/swagger.json',
+        'ui_url': '/api/ui/'
+    })
+    return Response(api_description, status=200,
+                    headers=_make_headers(),
+                    mimetype='application/json')
