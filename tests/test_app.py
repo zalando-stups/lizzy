@@ -437,7 +437,17 @@ def test_patch(monkeypatch, app, mock_senza):
 def test_patch404(app, mock_senza):
     data = {'new_ami_image': 'ami-2323'}
     mock_senza.list = lambda *a, **k: []
-    request = app.patch('/api/stacks/stack-404', headers=GOOD_HEADERS,
-                        data=json.dumps(data))
-    assert request.status_code == 404
-    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    response = app.patch('/api/stacks/stack-404', headers=GOOD_HEADERS,
+                         data=json.dumps(data))
+    assert response.status_code == 404
+    assert response.headers['X-Lizzy-Version'] == CURRENT_VERSION
+
+
+def test_api_discovery_endpoint(app):
+    response = app.get('/.well-known/schema-discovery')
+    assert response.status_code == 200
+
+    payload = json.loads(response.data.decode())
+    assert payload['schema_type'] == 'swagger-2.0'
+    assert payload['schema_url'] == '/api/swagger.json'
+    assert payload['ui_url'] == '/api/ui/'
