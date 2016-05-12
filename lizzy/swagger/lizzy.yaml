@@ -214,6 +214,54 @@ paths:
         schema:
           $ref: '#/definitions/stack_patch'
 
+  /status:
+    get:
+      summary: Retrieves the application status
+      description: Retrieves how the lizzy instance is configured and if it is health
+      operationId: lizzy.api.get_app_status
+      security:
+        - oauth:
+            - "{{deployer_scope}}"
+      responses:
+        200:
+          description: Status information
+          headers:
+            X-Lizzy-Version:
+              description: Lizzy Version
+              type: string
+          schema:
+            type: object
+            properties:
+              version:
+                type: string
+                description: Lizzy version running
+              status:
+                type: string
+              APIConfig:
+                type: object
+                properties:
+                  allowed_users:
+                    type: string
+                  allowed_user_pattern:
+                    type: string
+                  deployer_scope:
+                    type: string
+                  log_level:
+                    type: string
+                  log_format:
+                    type: string
+                  region:
+                    type: string
+                  token_url:
+                    type: string
+                  token_info_url:
+                    type: string
+        401:
+          description: |
+            Status was not retrieved because the access token was not provided or was not valid for this operation
+          schema:
+            $ref: '#/definitions/problem'
+
 definitions:
   new_stack:
     type: object

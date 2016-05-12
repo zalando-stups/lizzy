@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 from typing import List, Optional  # noqa pylint: disable=unused-import
 
 from decorator import decorator
@@ -217,3 +218,21 @@ def expose_api_schema():
     return Response(api_description, status=200,
                     headers=_make_headers(),
                     mimetype='application/json')
+
+
+def get_app_status():
+    status = 'OK'
+    try:
+        Senza(config.region).list()
+    except ExecutionError:
+        status = 'NOK'
+
+    status_info = {
+        'version': os.environ.get("APPLICATION_VERSION", ""),
+        'status': status,
+        'APIConfig': {
+            name: getattr(config, name)
+            for name in dir(config) if not name.startswith('__')
+        }
+    }
+    return status_info, 200, _make_headers()
