@@ -210,3 +210,10 @@ def get_app_status():
         }
     }
     return status_info, 200, _make_headers()
+
+
+@exception_to_connexion_problem
+def health_check():
+    Senza(config.region).list()
+    return Response(status=200,
+                    headers=_make_headers())

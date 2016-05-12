@@ -67,7 +67,8 @@ class Senza(Application):
         """
         Returns a list of all the stacks
         """
-        return self._execute('list', *args, **kwargs, expect_json=True)  # type: list
+        return self._execute('list', *args, **kwargs,
+                             expect_json=True)  # type: list
 
     def remove(self, stack_name: str, stack_version: str) -> bool:
         """
@@ -75,7 +76,8 @@ class Senza(Application):
 
 
         :param stack_name: Name of the application stack
-        :param stack_version: Name of the application version that will be removed
+        :param stack_version: Name of the application version that will
+                              be removed
         :raises: ExecutionError
         :return: Success of the operation
         """
@@ -83,18 +85,23 @@ class Senza(Application):
         self._execute('delete', stack_name, stack_version)
         return True
 
-    def traffic(self, stack_name: str, stack_version: str, percentage: int) -> List[Dict]:
+    def traffic(self, stack_name: str, stack_version: str,
+                percentage: int) -> List[Dict]:
         """
         Changes the application traffic percentage.
 
         :param stack_name: Name of the application stack
-        :param stack_version: Name of the application version that will be changed
+        :param stack_version: Name of the application version that will be
+                              changed
         :param percentage: New percentage
         :return: Traffic weights for the application
-        :raises SenzaTrafficError: when a ExecutionError is thrown to allow more specific error handing.
+        :raises SenzaTrafficError: when a ExecutionError is thrown to allow
+                                   more specific error handing.
         """
         try:
-            traffic_weights = self._execute('traffic', stack_name, stack_version, str(percentage), expect_json=True)
+            traffic_weights = self._execute('traffic', stack_name,
+                                            stack_version, str(percentage),
+                                            expect_json=True)
             return traffic_weights
         except ExecutionError as exception:
             raise SenzaTrafficError(exception.error, exception.output)
