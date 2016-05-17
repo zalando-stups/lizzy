@@ -8,7 +8,6 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 ADD uwsgi.yaml /
-ADD job.py /
 ADD setup.py /
 ADD requirements.txt /
 ADD lizzy /lizzy
