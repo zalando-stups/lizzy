@@ -3,7 +3,5 @@ environmental>=1.1
 decorator
 pytz
 pyyaml
-pystache
-stups-kio
 stups-senza>=1.0.40
 uwsgi
