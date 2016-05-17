@@ -10,7 +10,6 @@ from flask import Response
 from lizzy import config
 from lizzy.apps.senza import Senza
 from lizzy.exceptions import (ExecutionError, ObjectNotFound,
-                              SenzaDomainsError, SenzaTrafficError,
                               TrafficNotUpdated)
 from lizzy.models.stack import Stack
 from lizzy.security import bouncer
