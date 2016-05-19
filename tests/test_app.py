@@ -301,7 +301,7 @@ def test_new_stack(monkeypatch, app, mock_senza):
     request = app.post('/api/stacks',
                        headers=GOOD_HEADERS,
                        data=json.dumps(data))  # type: flask.Response
-    assert request.status_code == 400
+    assert request.status_code == 500
     error_data = json.loads(request.data.decode())
     assert error_data['detail'] == 'error'
     mock_senza.create.side_effect = None
@@ -401,12 +401,13 @@ def test_patch(monkeypatch, app, mock_senza):
                                                stack_version='1')
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
-    # Should return 400 when not possible to change the traffic
+    # Should return 500 when not possible to change the traffic
     # while running the one of the senza commands an error occurs
+    # the error is exposed to the client
     mock_senza.traffic.side_effect = SenzaDomainsError('', '')
     request = app.patch('/api/stacks/stack-1', headers=GOOD_HEADERS,
                         data=json.dumps(data))
-    assert request.status_code == 400
+    assert request.status_code == 500
     mock_senza.traffic.reset()
 
     # Does not change anything
@@ -427,11 +428,11 @@ def test_patch(monkeypatch, app, mock_senza):
     mock_senza.patch.assert_called_once_with('stack', '1', 'ami-2323')
     mock_senza.respawn_instances.assert_called_once_with('stack', '1')
 
-    # Should return 400 when not possible to change the AMI image
+    # Should return 500 when not possible to change the AMI image
     mock_senza.patch.side_effect = ExecutionError(1, 'fake error')
     request = app.patch('/api/stacks/stack-1', headers=GOOD_HEADERS,
                         data=json.dumps(update_image))
-    assert request.status_code == 400
+    assert request.status_code == 500
 
 
 def test_patch404(app, mock_senza):
