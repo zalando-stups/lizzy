@@ -58,7 +58,6 @@ Limitations
 Currently Lizzy doesn't support:
 
 - senza definitions with more than one AppServer;
-- parameters specified by name;
 
 License
 -------
