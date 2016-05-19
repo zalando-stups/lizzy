@@ -451,3 +451,30 @@ def test_api_discovery_endpoint(app):
     assert payload['schema_type'] == 'swagger-2.0'
     assert payload['schema_url'] == '/api/swagger.json'
     assert payload['ui_url'] == '/api/ui/'
+
+
+def test_application_status_endpoint(app, mock_senza):
+    os.environ['DEPLOYER_SCOPE'] = 'can_deploy'
+    os.environ['TOKEN_URL'] = 'https://tokenservice.example.com'
+    response = app.get('/api/status', headers=GOOD_HEADERS)
+    assert response.status_code == 200
+
+    payload = json.loads(response.data.decode())
+    assert payload['status'] == 'OK'
+
+
+def test_application_status_endpoint_when_nok(app, mock_senza):
+    os.environ['DEPLOYER_SCOPE'] = 'can_deploy'
+    os.environ['TOKEN_URL'] = 'https://tokenservice.example.com'
+    mock_senza.list = MagicMock(side_effect=ExecutionError('test', 'Error'))
+
+    response = app.get('/api/status', headers=GOOD_HEADERS)
+    assert response.status_code == 200
+
+    payload = json.loads(response.data.decode())
+    assert payload['status'] == 'NOK'
+
+
+def test_application_status_endpoint_when_not_authenticated(app, mock_senza):
+    response = app.get('/api/status')
+    assert response.status_code == 401
