@@ -479,3 +479,19 @@ def test_application_status_endpoint_when_nok(app, mock_senza):
 def test_application_status_endpoint_when_not_authenticated(app, mock_senza):
     response = app.get('/api/status')
     assert response.status_code == 401
+
+
+def test_health_check_endpoint(app, mock_senza):
+    mock_senza.list = MagicMock()
+
+    response = app.get('/health')
+    assert response.status_code == 200
+
+    mock_senza.list.assert_called_with()
+
+
+def test_health_check_failing(app, mock_senza):
+    mock_senza.list = MagicMock(side_effect=ExecutionError(2, "error"))
+
+    response = app.get('/health')
+    assert response.status_code == 500
