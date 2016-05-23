@@ -269,14 +269,9 @@ definitions:
       image_version:
         type: string
         description: Docker image version to deploy
-      application_version:
-        type: string
-        description: Version of the application to use for stack name and kio
       stack_version:
         type: string
-        description: |
-            Version of the application to use for stack name, this will
-            override the version provided in the application_version
+        description: Version of the application to use for stack name
       keep_stacks:
         type: integer
         format: int32
