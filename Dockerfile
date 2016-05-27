@@ -1,4 +1,4 @@
-FROM registry.opensource.zalan.do/stups/python:3.5.0-12
+FROM registry.opensource.zalan.do/stups/python:3.5.1-18
 
 EXPOSE 8080
 
@@ -16,4 +16,3 @@ RUN pip3 install -r requirements.txt
 ADD scm-source.json /
 
 CMD uwsgi --yaml uwsgi.yaml
-
