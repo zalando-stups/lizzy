@@ -5,3 +5,4 @@ pytz
 pyyaml
 stups-senza>=1.0.40
 uwsgi
+flask==0.10.1
