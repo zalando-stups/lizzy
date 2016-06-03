@@ -1,11 +1,11 @@
-from typing import Optional, List, Dict, Any
 import tempfile
+from typing import Any, Dict, List, Optional
 
+from ..exceptions import (ExecutionError, SenzaDomainsError, SenzaPatchError,
+                          SenzaRenderError, SenzaRespawnInstancesError,
+                          SenzaTrafficError)
 from ..version import VERSION
 from .common import Application
-from ..exceptions import (ExecutionError, SenzaDomainsError, SenzaTrafficError,
-                          SenzaRespawnInstancesError, SenzaPatchError,
-                          SenzaRenderError)
 
 
 class Senza(Application):
@@ -13,7 +13,7 @@ class Senza(Application):
         super().__init__('senza', extra_parameters=['--region', region])
 
     def create(self, senza_yaml: str, stack_version: str,
-               parameters: List[str], disable_rollback: bool,
+               parameters: List[str], disable_rollback: bool, dry_run: bool,
                tags: Dict[str, Any]) -> bool:
         """
         Create a new stack
@@ -29,8 +29,12 @@ class Senza(Application):
             temp_yaml.write(senza_yaml.encode())
             temp_yaml.file.flush()
             args = ['--force']
+
             if disable_rollback:
                 args.append('--disable-rollback')
+
+            if dry_run:
+                args.append('--dry-run')
 
             parameters.extend(['-t', 'LizzyVersion={}'.format(VERSION)])
 

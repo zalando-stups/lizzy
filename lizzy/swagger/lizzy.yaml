@@ -269,14 +269,6 @@ definitions:
       stack_version:
         type: string
         description: Version of the application to use for stack name
-      keep_stacks:
-        type: integer
-        format: int32
-        description: Number of older stacks to keep
-      new_traffic:
-        type: integer
-        format: int32
-        description: Percentage of the traffic to be routed to new version
       parameters:
         type: array
         description: List of parameters to pass to senza
@@ -287,10 +279,11 @@ definitions:
         description: YAML to provide to senza
       disable_rollback:
         type: boolean
+        description: No-op mode, return what would be created
+      dry_run:
+        type: boolean
         description: Disable stack rollback on error
     required:
-      - keep_stacks
-      - new_traffic
       - senza_yaml
       - stack_version
   stack:

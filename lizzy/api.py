@@ -3,15 +3,13 @@ import logging
 import os
 from typing import List, Optional  # noqa pylint: disable=unused-import
 
-from decorator import decorator
-
 import connexion
 import yaml
+from decorator import decorator
 from flask import Response
 from lizzy import config
 from lizzy.apps.senza import Senza
-from lizzy.exceptions import (ExecutionError, ObjectNotFound,
-                              TrafficNotUpdated)
+from lizzy.exceptions import ExecutionError, ObjectNotFound, TrafficNotUpdated
 from lizzy.models.stack import Stack
 from lizzy.security import bouncer
 from lizzy.util import filter_empty_values
@@ -66,6 +64,7 @@ def create_stack(new_stack: dict) -> dict:
     senza_yaml = new_stack['senza_yaml']  # type: str
     parameters = new_stack.get('parameters', [])
     disable_rollback = new_stack.get('disable_rollback', False)
+    dry_run = new_stack.get('dry_run', False)
 
     try:
         senza_definition = yaml.load(senza_yaml)
@@ -95,12 +94,20 @@ def create_stack(new_stack: dict) -> dict:
     tags = {'LizzyKeepStacks': keep_stacks,
             'LizzyTargetTraffic': new_traffic}
 
-    senza.create(senza_yaml, stack_version, parameters, disable_rollback, tags)
+    senza.create(senza_yaml, stack_version, parameters, disable_rollback,
+                 dry_run, tags)
 
     logger.info("Stack created.", extra={'stack_name': stack_name,
                                          'stack_version': stack_version,
                                          'parameters': parameters})
-    stack_dict = Stack.get(stack_name, stack_version)
+    stack_dict = (Stack.get(stack_name, stack_version)
+                  if not dry_run
+                  else {'stack_name': stack_name,
+                        'creation_time': '',
+                        'description': '',
+                        'status': 'DRY-RUN',
+                        'version': stack_version})
+
     return stack_dict, 201, _make_headers()
 
 

@@ -30,7 +30,7 @@ def test_create(monkeypatch, popen):
 
     senza = Senza('region')
     senza.logger = MagicMock()
-    senza.create('yaml: yaml', '10', ['param1', 'param2'], False,
+    senza.create('yaml: yaml', '10', ['param1', 'param2'], False, False,
                  {'RandomTag': 'tag_value'})
 
     mock_named_tempfile.assert_called_with()
@@ -53,15 +53,15 @@ def test_create(monkeypatch, popen):
     assert not senza.logger.error.called
 
     popen.reset_mock()
-    senza.create('yaml: yaml', '10', ['param1', 'param2'], True, {})
+    senza.create('yaml: yaml', '10', ['param1', 'param2'], True, True, {})
 
     mock_named_tempfile.assert_called_with()
     mock_tempfile.write.assert_called_with(b'yaml: yaml')
 
     popen.assert_called_with(['senza', 'create',
                               '--region', 'region',
-                              '--force', '--disable-rollback', 'filename',
-                              '10', 'param1', 'param2', '-t',
+                              '--force', '--disable-rollback', '--dry-run',
+                              'filename', '10', 'param1', 'param2', '-t',
                               lizzy_version_tag],
                              stdout=-1,
                              stderr=-2)
@@ -70,12 +70,12 @@ def test_create(monkeypatch, popen):
     senza.logger.reset_mock()
 
     with pytest.raises(ExecutionError):
-        senza.create('yaml: yaml', '10', ['param1', 'param2'], False, {})
+        senza.create('yaml: yaml', '10', ['param1', 'param2'], False, False, {})
 
     popen.returncode = 0
     senza.logger.reset_mock()
     senza.create('yaml: yaml', '10',
-                 ['Param1Here=Simple', 'ParamTwo=100'], False, {})
+                 ['Param1Here=Simple', 'ParamTwo=100'], False, False, {})
 
     popen.assert_called_with(['senza', 'create',
                               '--region', 'region',

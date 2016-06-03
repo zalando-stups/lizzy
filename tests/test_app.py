@@ -217,7 +217,7 @@ def test_new_stack(monkeypatch, app, mock_senza):
                        data=json.dumps(data))  # type: flask.Response
     mock_senza.assert_called_with('eu-west-1')
     mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc',
-                                         ANY, ['1.0'], False,
+                                         ANY, ['1.0'], False, False,
                                          {'LizzyTargetTraffic': 100,
                                           'LizzyKeepStacks': 0})
     assert request.status_code == 201
@@ -236,7 +236,7 @@ def test_new_stack(monkeypatch, app, mock_senza):
                        data=json.dumps(data))  # type: flask.Response
     mock_senza.assert_called_with('eu-west-1')
     mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc',
-                                         '2b', ['abc', 'def'], False,
+                                         '2b', ['abc', 'def'], False, False,
                                          {'LizzyTargetTraffic': 100,
                                           'LizzyKeepStacks': 0})
     assert request.status_code == 201
@@ -254,7 +254,7 @@ def test_new_stack(monkeypatch, app, mock_senza):
                        data=json.dumps(data))  # type: flask.Response
     mock_senza.assert_called_with('eu-west-1')
     mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc',
-                                         '42', ['abc', 'def'], False,
+                                         '42', ['abc', 'def'], False, False,
                                          {'LizzyKeepStacks': 0,
                                           'LizzyTargetTraffic': 100})
     assert request.status_code == 201
@@ -280,7 +280,7 @@ def test_new_stack(monkeypatch, app, mock_senza):
                        data=json.dumps(data))  # type: flask.Response
     mock_senza.assert_called_with('eu-west-1')
     mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc',
-                                         '7', ['abc', 'def'], True,
+                                         '7', ['abc', 'def'], True, False,
                                          {'LizzyKeepStacks': 0,
                                           'LizzyTargetTraffic': 100})
     assert request.status_code == 201
@@ -309,22 +309,23 @@ def test_new_stack(monkeypatch, app, mock_senza):
             'new_traffic': 100,
             'stack_version': '43',
             'senza_yaml': 'SenzaInfo:\n  StackName: abc',
-            'parameters': ['MintBucket=bk-bucket', 'ImageVersion=28']}
+            'parameters': ['MintBucket=bk-bucket', 'ImageVersion=28'],
+            'dry_run': True}
 
     request = app.post('/api/stacks',
                        headers=GOOD_HEADERS,
                        data=json.dumps(data))
     mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc', '43',
                                          ['MintBucket=bk-bucket',
-                                          'ImageVersion=28'], False,
+                                          'ImageVersion=28'], False, True,
                                          {'LizzyKeepStacks': 0,
                                           'LizzyTargetTraffic': 100})
     request_data = json.loads(request.data.decode())
-    assert request_data == {'creation_time': '2016-04-14T11:59:27+00:00',
-                            'description': 'Lizzy Bus (ImageVersion: 257)',
-                            'stack_name': 'lizzy-bus',
-                            'status': 'CREATE_COMPLETE',
-                            'version': '257'}
+    assert request_data == {'creation_time': '',
+                            'description': '',
+                            'stack_name': 'abc',
+                            'status': 'DRY-RUN',
+                            'version': '43'}
 
     # unusual launch configuration name (usually is AppServer)
     mock_senza.reset_mock()
