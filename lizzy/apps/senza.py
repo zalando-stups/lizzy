@@ -12,7 +12,7 @@ class Senza(Application):
     def __init__(self, region: str):
         super().__init__('senza', extra_parameters=['--region', region])
 
-    def create(self, senza_yaml: str, stack_version: str, image_version: str,
+    def create(self, senza_yaml: str, stack_version: str,
                parameters: List[str], disable_rollback: bool,
                tags: Dict[str, Any]) -> bool:
         """
@@ -20,7 +20,6 @@ class Senza(Application):
 
         :param senza_yaml: Senza Definition
         :param stack_version: New stack's version
-        :param image_version: Docker image to deployed
         :param parameters: Extra parameters for the deployment
         :param disable_rollback: Disables stack rollback on creation failure
         :param tags: Extra tags to add to the stack
@@ -41,7 +40,7 @@ class Senza(Application):
                 parameters.extend(['-t', tag])
 
             self._execute('create', *args, temp_yaml.name, stack_version,
-                          image_version, *parameters)
+                          *parameters)
 
     def domains(self, stack_name: Optional[str]=None) -> List[Dict[str, str]]:
         """

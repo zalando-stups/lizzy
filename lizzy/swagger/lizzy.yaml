@@ -3,7 +3,7 @@ swagger: "2.0"
 info:
   title: Lizzy
   description: REST Service to deploy AWS CF templates using Senza
-  version: "1.1"
+  version: "2.0"
 
 basePath: /api
 
@@ -266,9 +266,6 @@ definitions:
   new_stack:
     type: object
     properties:
-      image_version:
-        type: string
-        description: Docker image version to deploy
       stack_version:
         type: string
         description: Version of the application to use for stack name
@@ -292,7 +289,6 @@ definitions:
         type: boolean
         description: Disable stack rollback on error
     required:
-      - image_version
       - keep_stacks
       - new_traffic
       - senza_yaml

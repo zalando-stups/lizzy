@@ -62,7 +62,6 @@ def create_stack(new_stack: dict) -> dict:
 
     keep_stacks = new_stack['keep_stacks']  # type: int
     new_traffic = new_stack['new_traffic']  # type: int
-    image_version = new_stack['image_version']  # type: str
     stack_version = new_stack['stack_version']  # type: str
     senza_yaml = new_stack['senza_yaml']  # type: str
     parameters = new_stack.get('parameters', [])
@@ -96,12 +95,10 @@ def create_stack(new_stack: dict) -> dict:
     tags = {'LizzyKeepStacks': keep_stacks,
             'LizzyTargetTraffic': new_traffic}
 
-    senza.create(senza_yaml, stack_version, image_version, parameters,
-                 disable_rollback, tags)
+    senza.create(senza_yaml, stack_version, parameters, disable_rollback, tags)
 
     logger.info("Stack created.", extra={'stack_name': stack_name,
                                          'stack_version': stack_version,
-                                         'image_version': image_version,
                                          'parameters': parameters})
     stack_dict = Stack.get(stack_name, stack_version)
     return stack_dict, 201, _make_headers()
