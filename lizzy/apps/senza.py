@@ -14,7 +14,7 @@ class Senza(Application):
 
     def create(self, senza_yaml: str, stack_version: str,
                parameters: List[str], disable_rollback: bool, dry_run: bool,
-               tags: Dict[str, Any]) -> str:
+               tags: List[str]) -> str:
         """
         Create a new stack
 
@@ -36,15 +36,12 @@ class Senza(Application):
             if dry_run:
                 args.append('--dry-run')
 
-            parameters = parameters.copy()  # we don't want to change the provided list
-            parameters.extend(['-t', 'LizzyVersion={}'.format(VERSION)])
-
-            for key, value in tags.items():
+            cli_tags = ['-t', 'LizzyVersion={}'.format(VERSION)]
+            for tag in tags:
                 # Adds the tags prepended with Lizzy
-                tag = '{0}={1}'.format(key, value)
-                parameters.extend(['-t', tag])
+                cli_tags.extend(['-t', tag])
 
-            return self._execute('create', *args, temp_yaml.name,
+            return self._execute('create', *args, *cli_tags, temp_yaml.name,
                                  stack_version, *parameters)
 
     def domains(self, stack_name: Optional[str]=None) -> List[Dict[str, str]]:

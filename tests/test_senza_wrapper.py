@@ -22,10 +22,10 @@ def popen(monkeypatch):
 @pytest.mark.parametrize(
     "version, parameters, region, disable_rollback, dry_run, tags",
     [
-        ("new_version", ['param1', 'param2'], None, False, False, {'RandomTag': 'tag_value'}),
-        ("new_version", [], "eu-central-1", True, False, {'TagName': 'random_tag'}),
-        ("other_version", ['p1'], "us-central-1", False, True, {'RandomTag': 'value2'}),
-        ("42", ['param1', 'param2'], None, True, True, {'RandomTag': 'tag_value', 'TagName': 'random_tag'}),
+        ("new_version", ['param1', 'param2'], None, False, False, ['RandomTag=tag_value']),
+        ("new_version", [], "eu-central-1", True, False, ['TagName=tag_value']),
+        ("other_version", ['p1'], "us-central-1", False, True, ['tag2=value2']),
+        ("42", ['param1', 'param2'], None, True, True, ['TagName=tag_value', 'tag2=value2']),
     ])
 def test_create(monkeypatch, popen, version, parameters, region, disable_rollback, dry_run, tags):
     mock_named_tempfile = MagicMock()
@@ -48,19 +48,18 @@ def test_create(monkeypatch, popen, version, parameters, region, disable_rollbac
     expected_disabled_rollback = ['--disable-rollback'] if disable_rollback else []
     expected_dry_run = ['--dry-run'] if dry_run else []
 
-    extra_tags = []
-    for key, value in tags.items():
-        extra_tags.extend(['-t', '{0}={1}'.format(key, value)])
+    cli_tags = ['-t', lizzy_version_tag]
+    for tag in tags:
+        cli_tags.extend(['-t', tag])
 
     popen.assert_called_with(['senza', 'create',
                               '--region', region,
                               '--force']
                              + expected_disabled_rollback
                              + expected_dry_run
+                             + cli_tags
                              + ['filename', version]
-                             + parameters
-                             + ['-t', lizzy_version_tag]
-                             + extra_tags,
+                             + parameters,
                              stdout=-1,
                              stderr=-2)
     assert not senza.logger.error.called

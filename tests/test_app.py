@@ -210,6 +210,9 @@ def test_bad_senza_yaml(app, monkeypatch, mock_senza):
         (GOOD_CF_DEFINITION, "42", ['abc', 'def'], "eu-central-1", False, False, True, [], 42, 42),
         (GOOD_CF_DEFINITION, "7", ['abc', 'def'], "eu-central-1", True, False, True, [], 50, 40),
         (GOOD_CF_DEFINITION, "42", ['MintBucket=bk', 'ImageVersion=28'], None, True, False, True, [], 100, 0),
+        (GOOD_CF_DEFINITION,
+            "42", ['MintBucket=bk', 'ImageVersion=28'], None, True, False, True,
+            ['tag1=value1', 'tag2=value2'], 100, 0),
         (GOOD_CF_DEFINITION_WITH_UNUSUAL_AUTOSCALING_RESOURCE,
             "new_version", ['10'], None, True, False, False, [], 0, 100),
     ])
@@ -220,7 +223,8 @@ def test_new_stack(app, mock_senza,
             'new_traffic': new_traffic,
             'parameters': parameters,
             'stack_version': version,
-            'senza_yaml': 'SenzaInfo:\n  StackName: abc'}
+            'senza_yaml': 'SenzaInfo:\n  StackName: abc',
+            'tags': tags}
 
     if region:
         data["region"] = region
@@ -240,11 +244,12 @@ def test_new_stack(app, mock_senza,
                        data=json.dumps(data))  # type: flask.Response
     mock_senza.assert_called_with(region)
 
+    expected_tags = ['LizzyKeepStacks={}'.format(keep_stacks),
+                     'LizzyTargetTraffic={}'.format(new_traffic)] + tags
     mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc',
                                          version, parameters,
                                          disable_rollback, dry_run,
-                                         {'LizzyTargetTraffic': new_traffic,
-                                          'LizzyKeepStacks': keep_stacks})
+                                         expected_tags)
     assert request.status_code == 201
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
     response = json.loads(request.get_data().decode())

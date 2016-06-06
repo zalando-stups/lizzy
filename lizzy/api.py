@@ -69,6 +69,7 @@ def create_stack(new_stack: dict) -> dict:
     disable_rollback = new_stack.get('disable_rollback', False)
     region = new_stack.get('region', config.region)  # type: Optional[str]
     dry_run = new_stack.get('dry_run', False)
+    tags = new_stack.get('tags', [])
 
     try:
         senza_definition = yaml.load(senza_yaml)
@@ -96,8 +97,9 @@ def create_stack(new_stack: dict) -> dict:
 
     print(region)
     senza = Senza(region)
-    tags = {'LizzyKeepStacks': keep_stacks,
-            'LizzyTargetTraffic': new_traffic}
+    tags = ['LizzyKeepStacks={}'.format(keep_stacks),
+            'LizzyTargetTraffic={}'.format(new_traffic),
+            *tags]
 
     output = senza.create(senza_yaml, stack_version, parameters, disable_rollback,
                           dry_run, tags)
