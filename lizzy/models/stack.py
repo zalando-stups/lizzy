@@ -1,4 +1,4 @@
-from typing import List  # NOQA  pylint: disable=unused-import
+from typing import List, Optional  # NOQA  pylint: disable=unused-import
 
 from lizzy.exceptions import ObjectNotFound
 from ..apps.senza import Senza
@@ -35,22 +35,22 @@ class Stack():
         self.__cf_stack = None
 
     @classmethod
-    def get(cls, stack_name: str, stack_version: str) -> 'Stack':
-        stacks = cls.list(stack_name, stack_version)
+    def get(cls, stack_name: str, stack_version: str, region: Optional[str]=None) -> 'Stack':
+        stacks = cls.list(stack_name, stack_version, region=region)
         if not stacks:
             raise ObjectNotFound('{}-{}'.format(stack_name, stack_version))
         else:
             return stacks[0]
 
     @classmethod
-    def list(cls, *stack_ref: List[str]) -> List['Stack']:
+    def list(cls, *stack_ref: List[str], region: Optional[str]=None) -> List['Stack']:
         """
         Returns a List of stack dicts compliant with the API spec.
 
         .. seealso:: lizzy/swagger/lizzy.yaml#/definitions/stack
         """
 
-        senza = Senza(config.region)
+        senza = Senza(region or config.region)
         stacks = [Stack(**stack)
                   for stack in senza.list(*stack_ref)]
         return stacks

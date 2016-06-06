@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from typing import List, Optional  # noqa pylint: disable=unused-import
+from typing import List, Optional, Dict  # noqa pylint: disable=unused-import
 
 import connexion
 import yaml
@@ -18,8 +18,11 @@ from lizzy.version import VERSION
 logger = logging.getLogger('lizzy.api')  # pylint: disable=invalid-name
 
 
-def _make_headers() -> dict:
-    return {'X-Lizzy-Version': VERSION}
+def _make_headers(**kwargs: Dict[str, str]) -> dict:
+    headers = {'x-Lizzy-{key}'.format(key=k.title()): v.replace('\n', '\\n')
+               for k, v in kwargs.items()}
+    headers['X-Lizzy-Version'] = VERSION
+    return headers
 
 
 @decorator
@@ -64,6 +67,7 @@ def create_stack(new_stack: dict) -> dict:
     senza_yaml = new_stack['senza_yaml']  # type: str
     parameters = new_stack.get('parameters', [])
     disable_rollback = new_stack.get('disable_rollback', False)
+    region = new_stack.get('region', config.region)  # type: Optional[str]
     dry_run = new_stack.get('dry_run', False)
 
     try:
@@ -90,17 +94,18 @@ def create_stack(new_stack: dict) -> dict:
     # Create the Stack
     logger.info("Creating stack %s...", stack_name)
 
-    senza = Senza(config.region)
+    print(region)
+    senza = Senza(region)
     tags = {'LizzyKeepStacks': keep_stacks,
             'LizzyTargetTraffic': new_traffic}
 
-    senza.create(senza_yaml, stack_version, parameters, disable_rollback,
-                 dry_run, tags)
+    output = senza.create(senza_yaml, stack_version, parameters, disable_rollback,
+                          dry_run, tags)
 
     logger.info("Stack created.", extra={'stack_name': stack_name,
                                          'stack_version': stack_version,
                                          'parameters': parameters})
-    stack_dict = (Stack.get(stack_name, stack_version)
+    stack_dict = (Stack.get(stack_name, stack_version, region=region)
                   if not dry_run
                   else {'stack_name': stack_name,
                         'creation_time': '',
@@ -108,7 +113,7 @@ def create_stack(new_stack: dict) -> dict:
                         'status': 'DRY-RUN',
                         'version': stack_version})
 
-    return stack_dict, 201, _make_headers()
+    return stack_dict, 201, _make_headers(output=output)
 
 
 @bouncer

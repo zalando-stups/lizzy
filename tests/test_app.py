@@ -202,109 +202,70 @@ def test_bad_senza_yaml(app, monkeypatch, mock_senza):
     mock_senza.render_definition.return_value = BAD_CF_DEFINITION
 
 
-def test_new_stack(monkeypatch, app, mock_senza):
-    data = {'keep_stacks': 0,
-            'new_traffic': 100,
-            'parameters': ['1.0'],
-            'stack_version': '1',
+@pytest.mark.parametrize(
+    "definition, version, parameters, region, disable_rollback, dry_run, force, tags, keep_stacks, new_traffic",
+    [
+        (GOOD_CF_DEFINITION, "new_version", ['10'], None, True, False, False, [], 0, 100),
+        (GOOD_CF_DEFINITION, "1", ["1.0"], "eu-central-1", False, True, False, [], 0, 100),
+        (GOOD_CF_DEFINITION, "42", ['abc', 'def'], "eu-central-1", False, False, True, [], 42, 42),
+        (GOOD_CF_DEFINITION, "7", ['abc', 'def'], "eu-central-1", True, False, True, [], 50, 40),
+        (GOOD_CF_DEFINITION, "42", ['MintBucket=bk', 'ImageVersion=28'], None, True, False, True, [], 100, 0),
+        (GOOD_CF_DEFINITION_WITH_UNUSUAL_AUTOSCALING_RESOURCE,
+            "new_version", ['10'], None, True, False, False, [], 0, 100),
+    ])
+def test_new_stack(app, mock_senza,
+                   version, parameters, region, disable_rollback, dry_run,
+                   force, tags, keep_stacks, new_traffic, definition):
+    data = {'keep_stacks': keep_stacks,
+            'new_traffic': new_traffic,
+            'parameters': parameters,
+            'stack_version': version,
             'senza_yaml': 'SenzaInfo:\n  StackName: abc'}
 
-    mock_senza.render_definition.return_value = GOOD_CF_DEFINITION
+    if region:
+        data["region"] = region
+    else:
+        region = 'eu-west-1'
 
-    mock_senza.create.return_value = True
+    if disable_rollback is not None:
+        data["disable_rollback"] = disable_rollback
+
+    if dry_run is not None:
+        data["dry_run"] = dry_run
+    mock_senza.reset()
+    mock_senza.render_definition.return_value = definition
+
     request = app.post('/api/stacks',
                        headers=GOOD_HEADERS,
                        data=json.dumps(data))  # type: flask.Response
-    mock_senza.assert_called_with('eu-west-1')
+    mock_senza.assert_called_with(region)
+
     mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc',
-                                         ANY, ['1.0'], False, False,
-                                         {'LizzyTargetTraffic': 100,
-                                          'LizzyKeepStacks': 0})
+                                         version, parameters,
+                                         disable_rollback, dry_run,
+                                         {'LizzyTargetTraffic': new_traffic,
+                                          'LizzyKeepStacks': keep_stacks})
     assert request.status_code == 201
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
     response = json.loads(request.get_data().decode())
     assert len(response) == 5
-    assert response['creation_time'] == '2016-04-14T11:59:27+00:00'
+    assert response['stack_name'] == 'abc'
+    assert response['version'] == version
+    if dry_run:
+        assert response['creation_time'] == ''
+        assert response['status'] == 'DRY-RUN'
+        assert response['description'] == ''
+    else:
+        assert response['creation_time'] == '2016-04-14T11:59:27+00:00'
+        assert response['status'] == 'CREATE_COMPLETE'
+        assert response['description'] == 'Lizzy Bus (ImageVersion: 257)'
 
-    data = {'keep_stacks': 0,
-            'new_traffic': 100,
-            'senza_yaml': 'SenzaInfo:\n  StackName: abc',
-            'stack_version': '2b',
-            'parameters': ['abc', 'def']}
 
-    request = app.post('/api/stacks', headers=GOOD_HEADERS,
-                       data=json.dumps(data))  # type: flask.Response
-    mock_senza.assert_called_with('eu-west-1')
-    mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc',
-                                         '2b', ['abc', 'def'], False, False,
-                                         {'LizzyTargetTraffic': 100,
-                                          'LizzyKeepStacks': 0})
-    assert request.status_code == 201
-    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+def test_new_stack_execution_error(monkeypatch, app, mock_senza):
 
-    data = {'keep_stacks': 0,
-            'new_traffic': 100,
-            'stack_version': '42',
-            'senza_yaml': 'SenzaInfo:\n  StackName: abc',
-            'parameters': ['abc', 'def'],
-            'application_version': '42'}
-    mock_senza.reset_mock()
     mock_senza.render_definition.return_value = GOOD_CF_DEFINITION
-    request = app.post('/api/stacks', headers=GOOD_HEADERS,
-                       data=json.dumps(data))  # type: flask.Response
-    mock_senza.assert_called_with('eu-west-1')
-    mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc',
-                                         '42', ['abc', 'def'], False, False,
-                                         {'LizzyKeepStacks': 0,
-                                          'LizzyTargetTraffic': 100})
-    assert request.status_code == 201
-    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
-    request_data = json.loads(request.data.decode())
-    assert request_data == {'creation_time': '2016-04-14T11:59:27+00:00',
-                            'description': 'Lizzy Bus (ImageVersion: 257)',
-                            'stack_name': 'lizzy-bus',
-                            'status': 'CREATE_COMPLETE',
-                            'version': '257'}
-
-    mock_senza.reset_mock()
-    mock_senza.render_definition.return_value = GOOD_CF_DEFINITION
-    data = {'keep_stacks': 0,
-            'new_traffic': 100,
-            'stack_version': '7',
-            'senza_yaml': 'SenzaInfo:\n  StackName: abc',
-            'parameters': ['abc', 'def'],
-            'application_version': '42',
-            'disable_rollback': True}
-
-    request = app.post('/api/stacks', headers=GOOD_HEADERS,
-                       data=json.dumps(data))  # type: flask.Response
-    mock_senza.assert_called_with('eu-west-1')
-    mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc',
-                                         '7', ['abc', 'def'], True, False,
-                                         {'LizzyKeepStacks': 0,
-                                          'LizzyTargetTraffic': 100})
-    assert request.status_code == 201
-    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
-    request_data = json.loads(request.data.decode())
-    assert request_data == {'creation_time': '2016-04-14T11:59:27+00:00',
-                            'description': 'Lizzy Bus (ImageVersion: 257)',
-                            'stack_name': 'lizzy-bus',
-                            'status': 'CREATE_COMPLETE',
-                            'version': '257'}
 
     mock_senza.create.side_effect = ExecutionError(2, "error")
-    request = app.post('/api/stacks',
-                       headers=GOOD_HEADERS,
-                       data=json.dumps(data))  # type: flask.Response
-    assert request.status_code == 500
-    error_data = json.loads(request.data.decode())
-    assert error_data['detail'] == 'error'
-    mock_senza.create.side_effect = None
-
-    # Test creating stack with parameters to senza
-    mock_senza.reset_mock()
-    mock_senza.create.return_value = True
-    mock_senza.render_definition.return_value = GOOD_CF_DEFINITION
     data = {'keep_stacks': 0,
             'new_traffic': 100,
             'stack_version': '43',
@@ -314,30 +275,10 @@ def test_new_stack(monkeypatch, app, mock_senza):
 
     request = app.post('/api/stacks',
                        headers=GOOD_HEADERS,
-                       data=json.dumps(data))
-    mock_senza.create.assert_called_with('SenzaInfo:\n  StackName: abc', '43',
-                                         ['MintBucket=bk-bucket',
-                                          'ImageVersion=28'], False, True,
-                                         {'LizzyKeepStacks': 0,
-                                          'LizzyTargetTraffic': 100})
-    request_data = json.loads(request.data.decode())
-    assert request_data == {'creation_time': '',
-                            'description': '',
-                            'stack_name': 'abc',
-                            'status': 'DRY-RUN',
-                            'version': '43'}
-
-    # unusual launch configuration name (usually is AppServer)
-    mock_senza.reset_mock()
-    mock_senza.render_definition.return_value = GOOD_CF_DEFINITION_WITH_UNUSUAL_AUTOSCALING_RESOURCE
-    data = {'keep_stacks': 0,
-            'new_traffic': 100,
-            'image_version': '1.0',
-            'senza_yaml': 'SenzaInfo:\n  StackName: abc',
-            'parameters': ['abc', 'def'],
-            'application_version': '42',
-            'stack_version': '10',
-            'disable_rollback': True}
+                       data=json.dumps(data))  # type: flask.Response
+    assert request.status_code == 500
+    error_data = json.loads(request.data.decode())
+    assert error_data['detail'] == 'error'
 
 
 def test_get_stack(app, mock_senza):

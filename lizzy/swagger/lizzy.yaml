@@ -72,6 +72,9 @@ paths:
             X-Lizzy-Version:
               description: Lizzy Version
               type: string
+            X-Lizzy-Output:
+              description: Senza Output
+              type: string
         400:
           description: Stack was not created because request was invalid or because the deployment failed.
           headers:
@@ -280,6 +283,9 @@ definitions:
       disable_rollback:
         type: boolean
         description: No-op mode, return what would be created
+      region:
+        type: string
+        description: AWS region ID
       dry_run:
         type: boolean
         description: Disable stack rollback on error
