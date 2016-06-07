@@ -169,6 +169,11 @@ paths:
           description: Stack id
           required: true
           type: string
+        - name: delete_options
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/delete_options'
     patch:
       summary: Update stack
       description: Update stack. Currently the only parameters that can be changed are the instance traffic and Taupage image.
@@ -360,3 +365,11 @@ definitions:
         type: string
         description: |
           A human-readable description of the specific occurrence of the project represented by this object.
+  delete_options:
+    type: object
+    properties:
+      dry_run:
+        type: boolean
+        description: Disable stack rollback on error
+
+

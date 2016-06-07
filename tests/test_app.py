@@ -304,30 +304,46 @@ def test_get_stack_404(app, mock_senza):
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
 
-def test_delete(app, monkeypatch, mock_senza):
-    request = app.delete('/api/stacks/stack-1', headers=GOOD_HEADERS)
+@pytest.mark.parametrize(
+    "stack_id, dry_run",
+    [
+        ('stack-1', False),
+        ('stack-1', True),
+        ('stack-404', False),  # Non existing stack
+        ('stack-404', True),
+    ])
+def test_delete(app, mock_senza, stack_id, dry_run):
+    url = '/api/stacks/' + stack_id
+    data = {'dry_run': dry_run}
+    request = app.delete(url, data=json.dumps(data), headers=GOOD_HEADERS)
     assert request.status_code == 204
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    stack_name, stack_version = stack_id.split('-')
+    mock_senza.remove.assert_called_once_with(stack_name, stack_version, dry_run=dry_run)
     assert len(mock_senza.remove.mock_calls) == 1
 
     # delete is idempotent
-    request = app.delete('/api/stacks/stack-1', headers=GOOD_HEADERS)
+    request = app.delete(url, data=json.dumps(data), headers=GOOD_HEADERS)
     assert request.status_code == 204
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
     assert len(mock_senza.remove.mock_calls) == 2
 
-    request = app.delete('/api/stacks/stack-404', headers=GOOD_HEADERS)
-    assert request.status_code == 204
-    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
-    assert len(mock_senza.remove.mock_calls) == 3
 
+@pytest.mark.parametrize(
+    "dry_run",
+    [
+        (False),
+        (True),
+    ])
+def test_delete_error(app, mock_senza, dry_run):
+    data = {'dry_run': dry_run}
     mock_senza.remove.side_effect = ExecutionError('test', 'Error msg')
-    request = app.delete('/api/stacks/stack-1', headers=GOOD_HEADERS)
+    request = app.delete('/api/stacks/stack-1', data=json.dumps(data), headers=GOOD_HEADERS)
     assert request.status_code == 500
     # TODO test message
     problem = json.loads(request.data.decode())
     assert problem['detail'] == "Error msg"
-    assert len(mock_senza.remove.mock_calls) == 4
+    mock_senza.remove.assert_called_once_with('stack', '1', dry_run=dry_run)
 
 
 def test_patch(monkeypatch, app, mock_senza):
@@ -359,7 +375,7 @@ def test_patch(monkeypatch, app, mock_senza):
 
     update_image = {'new_ami_image': 'ami-2323'}
 
-    # Should change the AMI image used by the stack and respawnn the instances
+    # Should change the AMI image used by the stack and respawn the instances
     # using the new AMI image.
     request = app.patch('/api/stacks/stack-1',
                         headers=GOOD_HEADERS,

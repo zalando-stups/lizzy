@@ -1,5 +1,5 @@
 import tempfile
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from ..exceptions import (ExecutionError, SenzaDomainsError, SenzaPatchError,
                           SenzaRenderError, SenzaRespawnInstancesError,
@@ -71,7 +71,7 @@ class Senza(Application):
         return self._execute('list', *args, **kwargs,
                              expect_json=True)  # type: list
 
-    def remove(self, stack_name: str, stack_version: str) -> bool:
+    def remove(self, stack_name: str, stack_version: str, dry_run: bool) -> bool:
         """
         Removes a stack
 
@@ -83,7 +83,11 @@ class Senza(Application):
         :return: Success of the operation
         """
         # TODO rename to delete
-        self._execute('delete', stack_name, stack_version)
+        # TODO unit test dry-run
+        options = []
+        if dry_run:
+            options.append('--dry-run')
+        self._execute('delete', *options, stack_name, stack_version)
         return True
 
     def traffic(self, stack_name: str, stack_version: str,

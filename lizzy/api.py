@@ -173,18 +173,20 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
 
 @bouncer
 @exception_to_connexion_problem
-def delete_stack(stack_id: str) -> dict:
+def delete_stack(stack_id: str, delete_options: dict) -> dict:
     """
     DELETE /stacks/{id}
 
     Delete a stack
     """
+    dry_run = delete_options.get('dry_run', False)
+
     stack_name, stack_version = stack_id.rsplit('-', 1)
     senza = Senza(config.region)
 
     logger.info("Removing stack %s...", stack_id)
 
-    senza.remove(stack_name, stack_version)
+    senza.remove(stack_name, stack_version, dry_run=dry_run)
     logger.info("Stack %s removed.", stack_id)
 
     return '', 204, _make_headers()
