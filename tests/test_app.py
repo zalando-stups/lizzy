@@ -305,20 +305,21 @@ def test_get_stack_404(app, mock_senza):
 
 
 @pytest.mark.parametrize(
-    "stack_id, dry_run",
+    "stack_id, region, dry_run",
     [
-        ('stack-1', False),
-        ('stack-1', True),
-        ('stack-404', False),  # Non existing stack
-        ('stack-404', True),
+        ('stack-1', 'eu-west-1', False),
+        ('stack-1', 'eu-central-1', True),
+        ('stack-404', 'eu-west-1', False),  # Non existing stack
+        ('stack-404', 'eu-central-1', True),
     ])
-def test_delete(app, mock_senza, stack_id, dry_run):
+def test_delete(app, mock_senza, stack_id, region, dry_run):
     url = '/api/stacks/' + stack_id
-    data = {'dry_run': dry_run}
+    data = {'region': region, 'dry_run': dry_run}
     request = app.delete(url, data=json.dumps(data), headers=GOOD_HEADERS)
     assert request.status_code == 204
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
     stack_name, stack_version = stack_id.split('-')
+    mock_senza.assert_called_once_with(region)
     mock_senza.remove.assert_called_once_with(stack_name, stack_version, dry_run=dry_run)
     assert len(mock_senza.remove.mock_calls) == 1
 

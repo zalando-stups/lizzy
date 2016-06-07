@@ -180,15 +180,16 @@ def delete_stack(stack_id: str, delete_options: dict) -> dict:
     Delete a stack
     """
     dry_run = delete_options.get('dry_run', False)
+    region = delete_options.get('region', config.region)  # type: Optional[str]
 
     stack_name, stack_version = stack_id.rsplit('-', 1)
-    senza = Senza(config.region)
+    senza = Senza(region)
 
     logger.info("Removing stack %s...", stack_id)
 
     senza.remove(stack_name, stack_version, dry_run=dry_run)
     logger.info("Stack %s removed.", stack_id)
-
+    # TODO output
     return '', 204, _make_headers()
 
 

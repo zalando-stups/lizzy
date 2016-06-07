@@ -75,7 +75,6 @@ class Senza(Application):
         """
         Removes a stack
 
-
         :param stack_name: Name of the application stack
         :param stack_version: Name of the application version that will
                               be removed

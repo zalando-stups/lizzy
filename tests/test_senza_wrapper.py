@@ -141,22 +141,22 @@ def test_list(monkeypatch, popen):
 
 
 @pytest.mark.parametrize(
-    "stack_name, stack_version, dry_run",
+    "stack_name, stack_version, region, dry_run",
     [
-        ('stack', '1', False),
-        ('stack', '2', True),
-        ('weirdname', '42', False),
-        ('weirdname', '42', True),
+        ('stack', '1', 'eu-central-1', False),
+        ('stack', '2', 'eu-west-1', True),
+        ('weirdname', '42', 'eu-central-1', False),
+        ('weirdname', '42', 'eu-west-1', True),
     ])
-def test_remove(popen, stack_name, stack_version, dry_run):
-    senza = Senza('region')
+def test_remove(popen, stack_name, stack_version, region, dry_run):
+    senza = Senza(region)
     senza.logger = MagicMock()
     senza.remove(stack_name, stack_version, dry_run=dry_run)
 
     dry_run_flag = ['--dry-run'] if dry_run else []
 
     popen.assert_called_with(['senza', 'delete']
-                             + ['--region', 'region']
+                             + ['--region', region]
                              + dry_run_flag
                              + [stack_name, stack_version],
                              stdout=-1, stderr=-2)
