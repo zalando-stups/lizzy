@@ -187,10 +187,10 @@ def delete_stack(stack_id: str, delete_options: dict) -> dict:
 
     logger.info("Removing stack %s...", stack_id)
 
-    senza.remove(stack_name, stack_version, dry_run=dry_run)
+    output = senza.remove(stack_name, stack_version, dry_run=dry_run)
     logger.info("Stack %s removed.", stack_id)
     # TODO output
-    return '', 204, _make_headers()
+    return '', 204, _make_headers(output=output)
 
 
 def not_found_path_handler(error):

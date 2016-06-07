@@ -82,12 +82,10 @@ class Senza(Application):
         :return: Success of the operation
         """
         # TODO rename to delete
-        # TODO unit test dry-run
         options = []
         if dry_run:
             options.append('--dry-run')
-        self._execute('delete', *options, stack_name, stack_version)
-        return True
+        return self._execute('delete', *options, stack_name, stack_version)
 
     def traffic(self, stack_name: str, stack_version: str,
                 percentage: int) -> List[Dict]:

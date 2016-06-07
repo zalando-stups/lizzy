@@ -158,6 +158,9 @@ paths:
             X-Lizzy-Version:
               description: Lizzy Version
               type: string
+            X-Lizzy-Output:
+              description: Senza Output
+              type: string
           schema:
             $ref: '#/definitions/problem'
       security:
