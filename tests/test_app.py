@@ -305,46 +305,56 @@ def test_get_stack_404(app, mock_senza):
 
 
 @pytest.mark.parametrize(
-    "stack_id, region, dry_run",
+    "stack_id, region, dry_run, force",
     [
-        ('stack-1', 'eu-west-1', False),
-        ('stack-1', 'eu-central-1', True),
-        ('stack-404', 'eu-west-1', False),  # Non existing stack
-        ('stack-404', 'eu-central-1', True),
+        ('stack-1', 'eu-west-1', False, True),
+        ('stack-1', 'eu-central-1', True, True),
+        ('stack-1', 'eu-west-1', False, False),
+        ('stack-1', 'eu-central-1', True, False),
+        ('stack-404', 'eu-west-1', False, True),  # Non existing stack
+        ('stack-404', 'eu-central-1', True, True),
+        ('stack-404', 'eu-west-1', False, False),
+        ('stack-404', 'eu-central-1', True, False),
+        ('stackwithoutversion', 'eu-west-1', False, True),
+        ('stackwithoutversion', 'eu-central-1', True, True),
+        ('stackwithoutversion', 'eu-west-1', False, False),
+        ('stackwithoutversion', 'eu-central-1', True, False),
+
     ])
-def test_delete(app, mock_senza, stack_id, region, dry_run):
+def test_delete(app, mock_senza, stack_id, region, dry_run, force):
     url = '/api/stacks/' + stack_id
-    data = {'region': region, 'dry_run': dry_run}
+    data = {'region': region, 'dry_run': dry_run, 'force': force}
     request = app.delete(url, data=json.dumps(data), headers=GOOD_HEADERS)
     assert request.status_code == 204
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
-    stack_name, stack_version = stack_id.split('-')
     mock_senza.assert_called_once_with(region)
-    mock_senza.remove.assert_called_once_with(stack_name, stack_version, dry_run=dry_run)
-    assert len(mock_senza.remove.mock_calls) == 1
+    mock_senza.remove.assert_called_once_with(stack_id,
+                                              dry_run=dry_run, force=force)
 
     # delete is idempotent
     request = app.delete(url, data=json.dumps(data), headers=GOOD_HEADERS)
     assert request.status_code == 204
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
-    assert len(mock_senza.remove.mock_calls) == 2
 
 
 @pytest.mark.parametrize(
-    "dry_run",
+    "dry_run, force",
     [
-        (False),
-        (True),
+        (False, True),
+        (True, True),
+        (False, False),
+        (True, False),
     ])
-def test_delete_error(app, mock_senza, dry_run):
-    data = {'dry_run': dry_run}
+def test_delete_error(app, mock_senza, dry_run, force):
+    data = {'dry_run': dry_run, 'force': force}
     mock_senza.remove.side_effect = ExecutionError('test', 'Error msg')
     request = app.delete('/api/stacks/stack-1', data=json.dumps(data), headers=GOOD_HEADERS)
     assert request.status_code == 500
     # TODO test message
     problem = json.loads(request.data.decode())
     assert problem['detail'] == "Error msg"
-    mock_senza.remove.assert_called_once_with('stack', '1', dry_run=dry_run)
+    mock_senza.remove.assert_called_once_with('stack-1',
+                                              dry_run=dry_run, force=force)
 
 
 def test_patch(monkeypatch, app, mock_senza):

@@ -374,6 +374,9 @@ definitions:
       dry_run:
         type: boolean
         description: Disable stack rollback on error
+      force:
+        type: boolean
+        description: Allow deleting multiple stacks
       region:
         type: string
         description: AWS region ID

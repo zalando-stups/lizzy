@@ -141,24 +141,28 @@ def test_list(monkeypatch, popen):
 
 
 @pytest.mark.parametrize(
-    "stack_name, stack_version, region, dry_run",
+    "stack_id, region, dry_run, force",
     [
-        ('stack', '1', 'eu-central-1', False),
-        ('stack', '2', 'eu-west-1', True),
-        ('weirdname', '42', 'eu-central-1', False),
-        ('weirdname', '42', 'eu-west-1', True),
+        ('stack-1', 'eu-central-1', False, False),
+        ('stack-2', 'eu-west-1', True, False),
+        ('weirdname-42', 'eu-central-1', False, False),
+        ('weirdname-42', 'eu-west-1', True, False),
+        ('stack-1', 'eu-central-1', False, True),
+        ('stack-2', 'eu-west-1', True, True),
     ])
-def test_remove(popen, stack_name, stack_version, region, dry_run):
+def test_remove(popen, stack_id, region, dry_run, force):
     senza = Senza(region)
     senza.logger = MagicMock()
-    senza.remove(stack_name, stack_version, dry_run=dry_run)
+    senza.remove(stack_id, dry_run=dry_run, force=force)
 
     dry_run_flag = ['--dry-run'] if dry_run else []
+    force_flag = ['--force'] if force else []
 
     popen.assert_called_with(['senza', 'delete']
                              + ['--region', region]
                              + dry_run_flag
-                             + [stack_name, stack_version],
+                             + force_flag
+                             + [stack_id],
                              stdout=-1, stderr=-2)
 
     assert not senza.logger.error.called
@@ -166,19 +170,21 @@ def test_remove(popen, stack_name, stack_version, region, dry_run):
 
 
 @pytest.mark.parametrize(
-    "stack_name, stack_version, dry_run",
+    "stack_id, dry_run, force",
     [
-        ('stack', '1', False),
-        ('stack', '2', True),
-        ('weirdname', '42', False),
+        ('stack-1', False, False),
+        ('stack-2', True, False),
+        ('weirdname-42', False, False),
+        ('stack-1', False, True),
+        ('stack-2', True, True),
     ])
-def test_remove_error(popen, stack_name, stack_version, dry_run):
+def test_remove_error(popen, stack_id, dry_run, force):
     senza = Senza('region')
     senza.logger = MagicMock()
     popen.returncode = 1
 
     with pytest.raises(ExecutionError):
-        senza.remove(stack_name, stack_version, dry_run=dry_run)
+        senza.remove(stack_id, dry_run=dry_run, force=force)
 
 
 def test_traffic(monkeypatch, popen):

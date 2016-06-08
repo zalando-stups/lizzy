@@ -71,7 +71,7 @@ class Senza(Application):
         return self._execute('list', *args, **kwargs,
                              expect_json=True)  # type: list
 
-    def remove(self, stack_name: str, stack_version: str, dry_run: bool) -> bool:
+    def remove(self, stack_id: str, dry_run: bool, force: bool) -> bool:
         """
         Removes a stack
 
@@ -85,7 +85,9 @@ class Senza(Application):
         options = []
         if dry_run:
             options.append('--dry-run')
-        return self._execute('delete', *options, stack_name, stack_version)
+        if force:
+            options.append('--force')
+        return self._execute('delete', *options, stack_id)
 
     def traffic(self, stack_name: str, stack_version: str,
                 percentage: int) -> List[Dict]:
