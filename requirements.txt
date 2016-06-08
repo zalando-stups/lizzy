@@ -3,9 +3,6 @@ environmental>=1.1
 decorator
 pytz
 pyyaml
-pystache
-rod
-stups-kio
 stups-senza>=1.0.40
 uwsgi
-uwsgi_metrics3
+flask==0.10.1

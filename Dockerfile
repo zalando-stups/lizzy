@@ -1,4 +1,4 @@
-FROM registry.opensource.zalan.do/stups/python:3.5.0-12
+FROM registry.opensource.zalan.do/stups/python:3.5.1-20
 
 EXPOSE 8080
 
@@ -8,7 +8,6 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 ADD uwsgi.yaml /
-ADD job.py /
 ADD setup.py /
 ADD requirements.txt /
 ADD lizzy /lizzy
@@ -17,4 +16,3 @@ RUN pip3 install -r requirements.txt
 ADD scm-source.json /
 
 CMD uwsgi --yaml uwsgi.yaml
-

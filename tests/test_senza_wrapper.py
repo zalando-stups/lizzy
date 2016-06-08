@@ -19,7 +19,15 @@ def popen(monkeypatch):
     return mock_popen
 
 
-def test_create(monkeypatch, popen):
+@pytest.mark.parametrize(
+    "version, parameters, region, disable_rollback, dry_run, tags",
+    [
+        ("new_version", ['param1', 'param2'], None, False, False, ['RandomTag=tag_value']),
+        ("new_version", [], "eu-central-1", True, False, ['TagName=tag_value']),
+        ("other_version", ['p1'], "us-central-1", False, True, ['tag2=value2']),
+        ("42", ['param1', 'param2'], None, True, True, ['TagName=tag_value', 'tag2=value2']),
+    ])
+def test_create(monkeypatch, popen, version, parameters, region, disable_rollback, dry_run, tags):
     mock_named_tempfile = MagicMock()
     mock_tempfile = MagicMock()
     mock_tempfile.name = 'filename'
@@ -28,64 +36,49 @@ def test_create(monkeypatch, popen):
     monkeypatch.setattr('tempfile.NamedTemporaryFile', mock_named_tempfile)
     lizzy_version_tag = 'LizzyVersion={}'.format(VERSION)
 
-    senza = Senza('region')
+    region = region or 'region'
+    senza = Senza(region)
     senza.logger = MagicMock()
-    senza.create('yaml: yaml', '10', '42', ['param1', 'param2'], False,
-                 {'RandomTag': 'tag_value'})
+    senza.create('yaml: yaml', version, parameters, disable_rollback,
+                 dry_run, tags)
 
     mock_named_tempfile.assert_called_with()
     mock_tempfile.write.assert_called_with(b'yaml: yaml')
 
+    expected_disabled_rollback = ['--disable-rollback'] if disable_rollback else []
+    expected_dry_run = ['--dry-run'] if dry_run else []
+
+    cli_tags = ['-t', lizzy_version_tag]
+    for tag in tags:
+        cli_tags.extend(['-t', tag])
+
     popen.assert_called_with(['senza', 'create',
-                              '--region', 'region',
-                              '--force', 'filename',
-                              '10', '42', 'param1', 'param2',
-                              '-t', lizzy_version_tag,
-                              '-t', 'RandomTag=tag_value'],
+                              '--region', region,
+                              '--force']
+                             + expected_disabled_rollback
+                             + expected_dry_run
+                             + cli_tags
+                             + ['filename', version]
+                             + parameters,
                              stdout=-1,
                              stderr=-2)
-
-    cmd = 'senza create --region region --force filename 10 42 param1 param2 '\
-          '-t ' + lizzy_version_tag + ' -t RandomTag=tag_value'
-    senza.logger.debug.assert_called_with('Executing %s.', 'senza',
-                                          extra={'command': cmd})
-
     assert not senza.logger.error.called
 
-    popen.reset_mock()
-    senza.create('yaml: yaml', '10', '42', ['param1', 'param2'], True, {})
 
-    mock_named_tempfile.assert_called_with()
-    mock_tempfile.write.assert_called_with(b'yaml: yaml')
+def test_create_error(monkeypatch, popen):
+    mock_named_tempfile = MagicMock()
+    mock_tempfile = MagicMock()
+    mock_tempfile.name = 'filename'
+    mock_named_tempfile.__enter__.return_value = mock_tempfile
+    mock_named_tempfile.return_value = mock_named_tempfile
+    monkeypatch.setattr('tempfile.NamedTemporaryFile', mock_named_tempfile)
 
-    popen.assert_called_with(['senza', 'create',
-                              '--region', 'region',
-                              '--force', '--disable-rollback', 'filename',
-                              '10', '42', 'param1', 'param2', '-t',
-                              lizzy_version_tag],
-                             stdout=-1,
-                             stderr=-2)
-
+    senza = Senza('region')
+    senza.logger = MagicMock()
     popen.returncode = 1
-    senza.logger.reset_mock()
 
-    senza.create('yaml: yaml', '10', '42', ['param1', 'param2'], False, {})
-    senza.logger.error.assert_called_with('Failed to create stack.', extra={
-        'command.output': '{"stream": "stdout"}'
-    })
-
-    popen.returncode = 0
-    senza.logger.reset_mock()
-    senza.create('yaml: yaml', '10', '42',
-                 ['Param1Here=Simple', 'ParamTwo=100'], False, {})
-
-    popen.assert_called_with(['senza', 'create',
-                              '--region', 'region',
-                              '--force', mock_tempfile.name,
-                              '10', '42', 'Param1Here=Simple', 'ParamTwo=100',
-                              '-t', lizzy_version_tag],
-                             stdout=-1,
-                             stderr=-2)
+    with pytest.raises(ExecutionError):
+        senza.create('yaml: yaml', '10', ['param1', 'param2'], False, False, {})
 
 
 def test_domain(monkeypatch, popen):
@@ -147,23 +140,51 @@ def test_list(monkeypatch, popen):
         senza.list()
 
 
-def test_remove(monkeypatch, popen):
-    senza = Senza('region')
+@pytest.mark.parametrize(
+    "stack_id, region, dry_run, force",
+    [
+        ('stack-1', 'eu-central-1', False, False),
+        ('stack-2', 'eu-west-1', True, False),
+        ('weirdname-42', 'eu-central-1', False, False),
+        ('weirdname-42', 'eu-west-1', True, False),
+        ('stack-1', 'eu-central-1', False, True),
+        ('stack-2', 'eu-west-1', True, True),
+    ])
+def test_remove(popen, stack_id, region, dry_run, force):
+    senza = Senza(region)
     senza.logger = MagicMock()
-    senza.remove('lizzy', 'version')
+    senza.remove(stack_id, dry_run=dry_run, force=force)
 
-    popen.assert_called_with(['senza', 'delete', '--region', 'region', 'lizzy', 'version'], stdout=-1, stderr=-2)
+    dry_run_flag = ['--dry-run'] if dry_run else []
+    force_flag = ['--force'] if force else []
 
-    cmd = 'senza delete --region region lizzy version'
-    senza.logger.debug.assert_called_with('Executing %s.', 'senza', extra={'command': cmd})
+    popen.assert_called_with(['senza', 'delete']
+                             + ['--region', region]
+                             + dry_run_flag
+                             + force_flag
+                             + [stack_id],
+                             stdout=-1, stderr=-2)
+
     assert not senza.logger.error.called
     assert not senza.logger.exception.called
 
+
+@pytest.mark.parametrize(
+    "stack_id, dry_run, force",
+    [
+        ('stack-1', False, False),
+        ('stack-2', True, False),
+        ('weirdname-42', False, False),
+        ('stack-1', False, True),
+        ('stack-2', True, True),
+    ])
+def test_remove_error(popen, stack_id, dry_run, force):
+    senza = Senza('region')
+    senza.logger = MagicMock()
     popen.returncode = 1
-    senza.logger.reset_mock()
 
     with pytest.raises(ExecutionError):
-        senza.remove('lizzy', 'version')
+        senza.remove(stack_id, dry_run=dry_run, force=force)
 
 
 def test_traffic(monkeypatch, popen):

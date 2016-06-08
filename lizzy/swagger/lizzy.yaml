@@ -3,7 +3,7 @@ swagger: "2.0"
 info:
   title: Lizzy
   description: REST Service to deploy AWS CF templates using Senza
-  version: "1.1"
+  version: "2.0"
 
 basePath: /api
 
@@ -71,6 +71,9 @@ paths:
           headers:
             X-Lizzy-Version:
               description: Lizzy Version
+              type: string
+            X-Lizzy-Output:
+              description: Senza Output
               type: string
         400:
           description: Stack was not created because request was invalid or because the deployment failed.
@@ -155,6 +158,9 @@ paths:
             X-Lizzy-Version:
               description: Lizzy Version
               type: string
+            X-Lizzy-Output:
+              description: Senza Output
+              type: string
           schema:
             $ref: '#/definitions/problem'
       security:
@@ -166,6 +172,11 @@ paths:
           description: Stack id
           required: true
           type: string
+        - name: delete_options
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/delete_options'
     patch:
       summary: Update stack
       description: Update stack. Currently the only parameters that can be changed are the instance traffic and Taupage image.
@@ -213,37 +224,62 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/stack_patch'
-  /metrics:  # metrics endpoint is mostly for ZMON support
+
+  /status:
     get:
-      tags: [System]
-      operationId: uwsgi_metrics.view
-      summary: Get request metrics
+      summary: Retrieves the application status
+      description: Retrieves how the lizzy instance is configured and if it is health
+      operationId: lizzy.api.get_app_status
+      security:
+        - oauth:
+            - "{{deployer_scope}}"
       responses:
         200:
-          description: Dropwizard metrics
+          description: Status information
+          headers:
+            X-Lizzy-Version:
+              description: Lizzy Version
+              type: string
+          schema:
+            type: object
+            properties:
+              version:
+                type: string
+                description: Lizzy version running
+              status:
+                type: string
+              APIConfig:
+                type: object
+                properties:
+                  allowed_users:
+                    type: string
+                  allowed_user_pattern:
+                    type: string
+                  deployer_scope:
+                    type: string
+                  log_level:
+                    type: string
+                  log_format:
+                    type: string
+                  region:
+                    type: string
+                  token_url:
+                    type: string
+                  token_info_url:
+                    type: string
+        401:
+          description: |
+            Status was not retrieved because the access token was not provided or was not valid for this operation
+          schema:
+            $ref: '#/definitions/problem'
+
 definitions:
   new_stack:
     type: object
     properties:
-      image_version:
-        type: string
-        description: Docker image version to deploy
-      application_version:
-        type: string
-        description: Version of the application to use for stack name and kio
       stack_version:
         type: string
-        description: |
-            Version of the application to use for stack name, this will
-            override the version provided in the application_version
-      keep_stacks:
-        type: integer
-        format: int32
-        description: Number of older stacks to keep
-      new_traffic:
-        type: integer
-        format: int32
-        description: Percentage of the traffic to be routed to new version
+        description: Version of the application to use for stack name
       parameters:
         type: array
         description: List of parameters to pass to senza
@@ -254,46 +290,41 @@ definitions:
         description: YAML to provide to senza
       disable_rollback:
         type: boolean
+        description: No-op mode, return what would be created
+      region:
+        type: string
+        description: AWS region ID
+      dry_run:
+        type: boolean
         description: Disable stack rollback on error
+      tags:
+        type: array
+        description: Tags to associate with the stack
+        items:
+          type: string
     required:
-      - image_version
-      - keep_stacks
-      - new_traffic
       - senza_yaml
+      - stack_version
   stack:
     type: object
     properties:
-      stack_id:
-        type: string
-        description: Unique ID for the stack. Will be the same as the stack if the stack is successfully created.
       creation_time:
         type: string
         format: dateTime
         example: 2015-07-08T12:53:58+0000
         description: Date and time of stack creation on lizzy in ISO 8601 format
-      image_version:
+      description:
         type: string
-        description: Docker image version of the stack
-      parameters:
-        type: array
-        description: List of parameters to be passed to senza
-        items:
-          type: string
-      senza_yaml:
-        type: string
-        description: YAML to provide to senza
+        description: Stack description including used arguments
       stack_name:
         type: string
         description: Cloud formation stack name prefix
-      stack_version:
+      version:
         type: string
         description: Cloud formation stack version
       status:
         type: string
         description: Status of stack, can be be CF:STATUS_IN_CLOUD_FORMATION or some lizzy specific status
-      application_version:
-        type: string
-        description: Version of the application used for stack name and kio
   stack_patch:
     type: object
     properties:
@@ -337,3 +368,15 @@ definitions:
         type: string
         description: |
           A human-readable description of the specific occurrence of the project represented by this object.
+  delete_options:
+    type: object
+    properties:
+      dry_run:
+        type: boolean
+        description: Disable stack rollback on error
+      force:
+        type: boolean
+        description: Allow deleting multiple stacks
+      region:
+        type: string
+        description: AWS region ID

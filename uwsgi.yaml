@@ -1,7 +1,5 @@
 uwsgi:
-    socket: @nil
     http: 0.0.0.0:8080
-    mule: job.py
     module: lizzy.wsgi
     logformat : UWSGI: %(method) %(uri) -> %(status)
     threads: 4
