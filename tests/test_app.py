@@ -1,6 +1,7 @@
 import json
 import os
 from unittest.mock import ANY, MagicMock
+from urllib.parse import quote
 
 import lizzy.api
 import pytest
@@ -295,6 +296,20 @@ def test_get_stack(app, mock_senza):
     response = json.loads(request.data.decode())  # type: dict
     keys = response.keys()
     assert parameters == keys
+
+
+def test_list_stacks(app, mock_senza):
+    response = app.get('/api/stacks', headers=GOOD_HEADERS)
+    payload = json.loads(response.data.decode())  # type: dict
+    assert len(payload) > 0
+    assert response.status_code == 200
+    mock_senza.list.assert_called_with()
+
+    response = app.get('/api/stacks?references={}'.format(quote('stack,v2')), headers=GOOD_HEADERS)
+    payload = json.loads(response.data.decode())  # type: dict
+    assert len(payload) > 0
+    assert response.status_code == 200
+    mock_senza.list.assert_called_with('stack', 'v2')
 
 
 def test_get_stack_404(app, mock_senza):

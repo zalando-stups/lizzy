@@ -43,11 +43,13 @@ def exception_to_connexion_problem(func, *args, **kwargs):
 
 @bouncer
 @exception_to_connexion_problem
-def all_stacks() -> dict:
+def all_stacks(references: str=None) -> dict:
     """
     GET /stacks/
     """
-    stacks = Stack.list()
+    if not references:
+        references = []
+    stacks = Stack.list(*references)
     stacks.sort(key=lambda stack: stack.creation_time)
     return stacks, 200, _make_headers()
 

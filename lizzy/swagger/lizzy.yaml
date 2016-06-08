@@ -37,6 +37,14 @@ paths:
       security:
         - oauth:
             - "{{deployer_scope}}"
+      parameters:
+        - name: references
+          in: query
+          collectionFormat: csv
+          type: array
+          items:
+            type: string
+          required: false
       responses:
         200:
           description: List of stacks
