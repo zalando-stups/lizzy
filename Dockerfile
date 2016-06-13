@@ -1,4 +1,4 @@
-FROM registry.opensource.zalan.do/stups/python:3.5.0-12
+FROM registry.opensource.zalan.do/stups/python:3.5.1-21
 
 EXPOSE 8080
 
