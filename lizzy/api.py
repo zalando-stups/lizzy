@@ -1,17 +1,15 @@
 import json
 import logging
 import os
-from typing import List, Optional  # noqa pylint: disable=unused-import
-
-from decorator import decorator
+from typing import List, Optional, Dict  # noqa pylint: disable=unused-import
 
 import connexion
 import yaml
+from decorator import decorator
 from flask import Response
 from lizzy import config
 from lizzy.apps.senza import Senza
-from lizzy.exceptions import (ExecutionError, ObjectNotFound,
-                              TrafficNotUpdated)
+from lizzy.exceptions import ExecutionError, ObjectNotFound, TrafficNotUpdated
 from lizzy.models.stack import Stack
 from lizzy.security import bouncer
 from lizzy.util import filter_empty_values
@@ -20,8 +18,11 @@ from lizzy.version import VERSION
 logger = logging.getLogger('lizzy.api')  # pylint: disable=invalid-name
 
 
-def _make_headers() -> dict:
-    return {'X-Lizzy-Version': VERSION}
+def _make_headers(**kwargs: Dict[str, str]) -> dict:
+    headers = {'x-Lizzy-{key}'.format(key=k.title()): v.replace('\n', '\\n')
+               for k, v in kwargs.items()}
+    headers['X-Lizzy-Version'] = VERSION
+    return headers
 
 
 @decorator
@@ -62,11 +63,13 @@ def create_stack(new_stack: dict) -> dict:
 
     keep_stacks = new_stack['keep_stacks']  # type: int
     new_traffic = new_stack['new_traffic']  # type: int
-    image_version = new_stack['image_version']  # type: str
     stack_version = new_stack['stack_version']  # type: str
     senza_yaml = new_stack['senza_yaml']  # type: str
     parameters = new_stack.get('parameters', [])
     disable_rollback = new_stack.get('disable_rollback', False)
+    region = new_stack.get('region', config.region)  # type: Optional[str]
+    dry_run = new_stack.get('dry_run', False)
+    tags = new_stack.get('tags', [])
 
     try:
         senza_definition = yaml.load(senza_yaml)
@@ -92,19 +95,27 @@ def create_stack(new_stack: dict) -> dict:
     # Create the Stack
     logger.info("Creating stack %s...", stack_name)
 
-    senza = Senza(config.region)
-    tags = {'LizzyKeepStacks': keep_stacks,
-            'LizzyTargetTraffic': new_traffic}
+    print(region)
+    senza = Senza(region)
+    tags = ['LizzyKeepStacks={}'.format(keep_stacks),
+            'LizzyTargetTraffic={}'.format(new_traffic),
+            *tags]
 
-    senza.create(senza_yaml, stack_version, image_version, parameters,
-                 disable_rollback, tags)
+    output = senza.create(senza_yaml, stack_version, parameters, disable_rollback,
+                          dry_run, tags)
 
     logger.info("Stack created.", extra={'stack_name': stack_name,
                                          'stack_version': stack_version,
-                                         'image_version': image_version,
                                          'parameters': parameters})
-    stack_dict = Stack.get(stack_name, stack_version)
-    return stack_dict, 201, _make_headers()
+    stack_dict = (Stack.get(stack_name, stack_version, region=region)
+                  if not dry_run
+                  else {'stack_name': stack_name,
+                        'creation_time': '',
+                        'description': '',
+                        'status': 'DRY-RUN',
+                        'version': stack_version})
+
+    return stack_dict, 201, _make_headers(output=output)
 
 
 @bouncer
@@ -162,21 +173,24 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
 
 @bouncer
 @exception_to_connexion_problem
-def delete_stack(stack_id: str) -> dict:
+def delete_stack(stack_id: str, delete_options: dict) -> dict:
     """
     DELETE /stacks/{id}
 
     Delete a stack
     """
-    stack_name, stack_version = stack_id.rsplit('-', 1)
-    senza = Senza(config.region)
+    dry_run = delete_options.get('dry_run', False)
+    force = delete_options.get('force', False)
+    region = delete_options.get('region', config.region)  # type: Optional[str]
+
+    senza = Senza(region)
 
     logger.info("Removing stack %s...", stack_id)
 
-    senza.remove(stack_name, stack_version)
+    output = senza.remove(stack_id,
+                          dry_run=dry_run, force=force)
     logger.info("Stack %s removed.", stack_id)
-
-    return '', 204, _make_headers()
+    return '', 204, _make_headers(output=output)
 
 
 def not_found_path_handler(error):

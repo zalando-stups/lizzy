@@ -3,7 +3,7 @@ swagger: "2.0"
 info:
   title: Lizzy
   description: REST Service to deploy AWS CF templates using Senza
-  version: "1.1"
+  version: "2.0"
 
 basePath: /api
 
@@ -71,6 +71,9 @@ paths:
           headers:
             X-Lizzy-Version:
               description: Lizzy Version
+              type: string
+            X-Lizzy-Output:
+              description: Senza Output
               type: string
         400:
           description: Stack was not created because request was invalid or because the deployment failed.
@@ -155,6 +158,9 @@ paths:
             X-Lizzy-Version:
               description: Lizzy Version
               type: string
+            X-Lizzy-Output:
+              description: Senza Output
+              type: string
           schema:
             $ref: '#/definitions/problem'
       security:
@@ -166,6 +172,11 @@ paths:
           description: Stack id
           required: true
           type: string
+        - name: delete_options
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/delete_options'
     patch:
       summary: Update stack
       description: Update stack. Currently the only parameters that can be changed are the instance traffic and Taupage image.
@@ -266,20 +277,9 @@ definitions:
   new_stack:
     type: object
     properties:
-      image_version:
-        type: string
-        description: Docker image version to deploy
       stack_version:
         type: string
         description: Version of the application to use for stack name
-      keep_stacks:
-        type: integer
-        format: int32
-        description: Number of older stacks to keep
-      new_traffic:
-        type: integer
-        format: int32
-        description: Percentage of the traffic to be routed to new version
       parameters:
         type: array
         description: List of parameters to pass to senza
@@ -290,11 +290,19 @@ definitions:
         description: YAML to provide to senza
       disable_rollback:
         type: boolean
+        description: No-op mode, return what would be created
+      region:
+        type: string
+        description: AWS region ID
+      dry_run:
+        type: boolean
         description: Disable stack rollback on error
+      tags:
+        type: array
+        description: Tags to associate with the stack
+        items:
+          type: string
     required:
-      - image_version
-      - keep_stacks
-      - new_traffic
       - senza_yaml
       - stack_version
   stack:
@@ -360,3 +368,15 @@ definitions:
         type: string
         description: |
           A human-readable description of the specific occurrence of the project represented by this object.
+  delete_options:
+    type: object
+    properties:
+      dry_run:
+        type: boolean
+        description: Disable stack rollback on error
+      force:
+        type: boolean
+        description: Allow deleting multiple stacks
+      region:
+        type: string
+        description: AWS region ID

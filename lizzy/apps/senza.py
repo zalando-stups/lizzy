@@ -1,26 +1,25 @@
-from typing import Optional, List, Dict, Any
 import tempfile
+from typing import Dict, List, Optional
 
+from ..exceptions import (ExecutionError, SenzaDomainsError, SenzaPatchError,
+                          SenzaRenderError, SenzaRespawnInstancesError,
+                          SenzaTrafficError)
 from ..version import VERSION
 from .common import Application
-from ..exceptions import (ExecutionError, SenzaDomainsError, SenzaTrafficError,
-                          SenzaRespawnInstancesError, SenzaPatchError,
-                          SenzaRenderError)
 
 
 class Senza(Application):
     def __init__(self, region: str):
         super().__init__('senza', extra_parameters=['--region', region])
 
-    def create(self, senza_yaml: str, stack_version: str, image_version: str,
-               parameters: List[str], disable_rollback: bool,
-               tags: Dict[str, Any]) -> bool:
+    def create(self, senza_yaml: str, stack_version: str,
+               parameters: List[str], disable_rollback: bool, dry_run: bool,
+               tags: List[str]) -> str:
         """
         Create a new stack
 
         :param senza_yaml: Senza Definition
         :param stack_version: New stack's version
-        :param image_version: Docker image to deployed
         :param parameters: Extra parameters for the deployment
         :param disable_rollback: Disables stack rollback on creation failure
         :param tags: Extra tags to add to the stack
@@ -30,18 +29,20 @@ class Senza(Application):
             temp_yaml.write(senza_yaml.encode())
             temp_yaml.file.flush()
             args = ['--force']
+
             if disable_rollback:
                 args.append('--disable-rollback')
 
-            parameters.extend(['-t', 'LizzyVersion={}'.format(VERSION)])
+            if dry_run:
+                args.append('--dry-run')
 
-            for key, value in tags.items():
+            cli_tags = ['-t', 'LizzyVersion={}'.format(VERSION)]
+            for tag in tags:
                 # Adds the tags prepended with Lizzy
-                tag = '{0}={1}'.format(key, value)
-                parameters.extend(['-t', tag])
+                cli_tags.extend(['-t', tag])
 
-            self._execute('create', *args, temp_yaml.name, stack_version,
-                          image_version, *parameters)
+            return self._execute('create', *args, *cli_tags, temp_yaml.name,
+                                 stack_version, *parameters)
 
     def domains(self, stack_name: Optional[str]=None) -> List[Dict[str, str]]:
         """
@@ -70,10 +71,9 @@ class Senza(Application):
         return self._execute('list', *args, **kwargs,
                              expect_json=True)  # type: list
 
-    def remove(self, stack_name: str, stack_version: str) -> bool:
+    def remove(self, stack_id: str, dry_run: bool, force: bool) -> bool:
         """
         Removes a stack
-
 
         :param stack_name: Name of the application stack
         :param stack_version: Name of the application version that will
@@ -82,8 +82,12 @@ class Senza(Application):
         :return: Success of the operation
         """
         # TODO rename to delete
-        self._execute('delete', stack_name, stack_version)
-        return True
+        options = []
+        if dry_run:
+            options.append('--dry-run')
+        if force:
+            options.append('--force')
+        return self._execute('delete', *options, stack_id)
 
     def traffic(self, stack_name: str, stack_version: str,
                 percentage: int) -> List[Dict]:
