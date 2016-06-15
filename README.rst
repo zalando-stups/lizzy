@@ -4,8 +4,6 @@
 Lizzy
 =====
 
-**DISCLAIMER: Lizzy is still in alpha state.**
-
 REST Service to deploy AWS Cloud Formation templates using `Senza`_
 CLI tool.
 
