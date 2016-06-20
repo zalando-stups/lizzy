@@ -139,8 +139,7 @@ paths:
             $ref: '#/definitions/problem'
         404:
           description: |
-            Stack was not found. It's possible for a stack to exist on an AWS account and not be found by lizzy
-            because lizzy only handles stacks created by itself.
+            Stack was not found.
           schema:
             $ref: '#/definitions/problem'
     delete:
@@ -210,8 +209,7 @@ paths:
             $ref: '#/definitions/problem'
         404:
           description: |
-            Stack was not found. It's possible for a stack to exist on an AWS account and not be found by lizzy
-            because lizzy only handles stacks created by itself.
+            Stack was not found.
           headers:
             X-Lizzy-Version:
               description: Lizzy Version
@@ -222,16 +220,54 @@ paths:
         - oauth:
             - "{{deployer_scope}}"
       parameters:
-      - name: stack-id
-        in: path
-        description: Stack id
-        required: true
-        type: string
-      - name: stack_patch
-        in: body
-        required: true
-        schema:
-          $ref: '#/definitions/stack_patch'
+        - name: stack-id
+          in: path
+          description: Stack id
+          required: true
+          type: string
+        - name: stack_patch
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/stack_patch'
+
+  /stacks/{stack-id}/traffic:
+    get:
+      summary: Retrieves a lizzy stack traffic information
+      description: Retrieves a lizzy stack traffic by stack id
+      operationId: lizzy.api.get_stack_traffic
+      security:
+        - oauth:
+            - "{{deployer_scope}}"
+      parameters:
+        - name: stack-id
+          in: path
+          description: Stack Id
+          required: true
+          type: string
+      responses:
+        200:
+          description: Stack traffic information
+          headers:
+            X-Lizzy-Version:
+              description: Lizzy Version
+              type: string
+          schema:
+            type: object
+            properties:
+              weight:
+                type: integer
+                minimum: 0
+                maximum: 100
+        404:
+          description: |
+            Stack was not found.
+          headers:
+            X-Lizzy-Version:
+              description: Lizzy Version
+              type: string
+          schema:
+            $ref: '#/definitions/problem'
 
   /status:
     get:
@@ -333,6 +369,7 @@ definitions:
       status:
         type: string
         description: Status of stack, can be be CF:STATUS_IN_CLOUD_FORMATION or some lizzy specific status
+
   stack_patch:
     type: object
     properties:
