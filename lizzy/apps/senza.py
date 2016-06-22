@@ -89,8 +89,8 @@ class Senza(Application):
             options.append('--force')
         return self._execute('delete', *options, stack_id)
 
-    def traffic(self, stack_name: str, stack_version: str,
-                percentage: int) -> List[Dict]:
+    def traffic(self, stack_name: str, stack_version: Optional[str]=None,
+                percentage: Optional[int]=None) -> List[Dict]:
         """
         Changes the application traffic percentage.
 
@@ -103,8 +103,13 @@ class Senza(Application):
                                    more specific error handing.
         """
         try:
-            traffic_weights = self._execute('traffic', stack_name,
-                                            stack_version, str(percentage),
+            arguments = []
+            if stack_version is not None:
+                arguments.append(stack_version)
+            if percentage is not None:
+                arguments.append(str(percentage))
+
+            traffic_weights = self._execute('traffic', stack_name, *arguments,
                                             expect_json=True)
             return traffic_weights
         except ExecutionError as exception:

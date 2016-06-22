@@ -1,6 +1,6 @@
 import json
 import os
-from unittest.mock import ANY, MagicMock
+from unittest.mock import MagicMock
 from urllib.parse import quote
 
 import lizzy.api
@@ -416,6 +416,29 @@ def test_patch(monkeypatch, app, mock_senza):
     request = app.patch('/api/stacks/stack-1', headers=GOOD_HEADERS,
                         data=json.dumps(update_image))
     assert request.status_code == 500
+
+
+def test_get_traffic(monkeypatch, app, mock_senza):
+    traffic_output_from_senza = [
+        {
+            "identifier": "foo-v1",
+            "stack_name": "foo",
+            "version": "v1",
+            "weight%": 90.0
+        }
+    ]
+
+    # case when everything works fine
+    mock_senza.traffic.return_value = traffic_output_from_senza
+    response = app.get('/api/stacks/foo-v1/traffic', headers=GOOD_HEADERS)
+    assert response.status_code == 200
+    payload = json.loads(response.data.decode())
+    assert payload['weight'] == 90.0
+
+    # case when cannot find the version
+    mock_senza.traffic.return_value = []
+    response = app.get('/api/stacks/foo-v1/traffic', headers=GOOD_HEADERS)
+    assert response.status_code == 404
 
 
 def test_patch404(app, mock_senza):

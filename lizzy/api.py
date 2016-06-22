@@ -1,11 +1,13 @@
 import json
 import logging
 import os
-from typing import List, Optional, Dict  # noqa pylint: disable=unused-import
+from typing import (Dict, List, Optional,  # noqa pylint: disable=unused-import
+                    Tuple)
+
+from decorator import decorator
 
 import connexion
 import yaml
-from decorator import decorator
 from flask import Response
 from lizzy import config
 from lizzy.apps.senza import Senza
@@ -171,6 +173,27 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
     stack_dict = Stack.get(stack_name, stack_version)
 
     return stack_dict, 202, _make_headers()
+
+
+@bouncer
+@exception_to_connexion_problem
+def get_stack_traffic(stack_id: str) -> Tuple[dict, int, dict]:
+    """
+    GET /stacks/{id}/traffic
+
+    Update traffic and Taupage image
+    """
+    stack_name, stack_version = stack_id.rsplit('-', 1)
+    senza = Senza(config.region)
+
+    traffic_info = senza.traffic(stack_name=stack_name,
+                                 stack_version=stack_version)
+    if traffic_info:
+        return {'weight': float(traffic_info[0]['weight%'])}, 200, _make_headers()
+    else:
+        return connexion.problem(404, 'Not Found',
+                                 'Stack not found: {}'.format(stack_id),
+                                 headers=_make_headers())
 
 
 @bouncer

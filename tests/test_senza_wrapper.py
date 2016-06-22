@@ -209,6 +209,16 @@ def test_traffic(monkeypatch, popen):
     with pytest.raises(SenzaTrafficError):
         senza.traffic('lizzy', 'version42', 25)
 
+    # traffic listing
+    popen.side_effect = None
+    traffic = senza.traffic('lizzy', 'version42')
+
+    popen.assert_called_with(['senza', 'traffic', '--region', 'region', '-o', 'json', 'lizzy', 'version42'],
+                             stdout=-1,
+                             stderr=-1)
+    # returns the output result
+    assert traffic == {'stream': 'stdout'}
+
 
 def test_respawn_instances(monkeypatch, popen):
     senza = Senza('region')
