@@ -1,6 +1,6 @@
 import json
 import os
-from unittest.mock import ANY, MagicMock
+from unittest.mock import MagicMock
 from urllib.parse import quote
 
 import lizzy.api
