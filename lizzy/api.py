@@ -188,7 +188,7 @@ def get_stack_traffic(stack_id: str) -> Tuple[dict, int, dict]:
 
     traffic_info = senza.traffic(stack_name=stack_name,
                                  stack_version=stack_version)
-    if len(traffic_info) > 0:
+    if traffic_info:
         return {'weight': float(traffic_info[0]['weight%'])}, 200, _make_headers()
     else:
         return connexion.problem(404, 'Not Found',
