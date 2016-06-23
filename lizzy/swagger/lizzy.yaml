@@ -292,7 +292,7 @@ paths:
                 description: Lizzy version running
               status:
                 type: string
-              APIConfig:
+              config:
                 type: object
                 properties:
                   allowed_users:

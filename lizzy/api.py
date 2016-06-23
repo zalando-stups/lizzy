@@ -243,7 +243,7 @@ def get_app_status():
     status_info = {
         'version': os.environ.get("APPLICATION_VERSION", ""),
         'status': status,
-        'APIConfig': {
+        'config': {
             name: getattr(config, name)
             for name in dir(config) if not name.startswith('__')
         }
