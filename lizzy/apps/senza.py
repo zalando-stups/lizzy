@@ -87,7 +87,7 @@ class Senza(Application):
             options.append('--dry-run')
         if force:
             options.append('--force')
-        return self._execute('delete', *options, stack_id)
+        return self._execute('delete', *options, *stack_id.rsplit("-", 1))
 
     def traffic(self, stack_name: str, stack_version: Optional[str]=None,
                 percentage: Optional[int]=None) -> List[Dict]:

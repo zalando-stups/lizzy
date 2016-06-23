@@ -158,11 +158,13 @@ def test_remove(popen, stack_id, region, dry_run, force):
     dry_run_flag = ['--dry-run'] if dry_run else []
     force_flag = ['--force'] if force else []
 
+    stack_name, stack_ver = stack_id.rsplit("-", 1)
+
     popen.assert_called_with(['senza', 'delete']
                              + ['--region', region]
                              + dry_run_flag
                              + force_flag
-                             + [stack_id],
+                             + [stack_name, stack_ver],
                              stdout=-1, stderr=-2)
 
     assert not senza.logger.error.called
