@@ -421,6 +421,12 @@ def test_patch(monkeypatch, app, mock_senza):
 def test_get_traffic(monkeypatch, app, mock_senza):
     traffic_output_from_senza = [
         {
+            "identifier": "foo-v2",
+            "stack_name": "foo",
+            "version": "v2",
+            "weight%": 10.0
+        },
+        {
             "identifier": "foo-v1",
             "stack_name": "foo",
             "version": "v1",

@@ -186,14 +186,15 @@ def get_stack_traffic(stack_id: str) -> Tuple[dict, int, dict]:
     stack_name, stack_version = stack_id.rsplit('-', 1)
     senza = Senza(config.region)
 
-    traffic_info = senza.traffic(stack_name=stack_name,
-                                 stack_version=stack_version)
+    traffic_info = senza.traffic(stack_name=stack_name)
     if traffic_info:
-        return {'weight': float(traffic_info[0]['weight%'])}, 200, _make_headers()
-    else:
-        return connexion.problem(404, 'Not Found',
-                                 'Stack not found: {}'.format(stack_id),
-                                 headers=_make_headers())
+        for stack_traffic_info in traffic_info:
+            if stack_traffic_info['identifier'] == stack_id:
+                return {'weight': float(stack_traffic_info['weight%'])}, 200, _make_headers()
+
+    return connexion.problem(404, 'Not Found',
+                             'Stack not found: {}'.format(stack_id),
+                             headers=_make_headers())
 
 
 @bouncer
