@@ -110,6 +110,7 @@ def create_stack(new_stack: dict) -> dict:
                 taupage_yaml = definition['Properties']['UserData']['Fn::Base64']
                 taupage_config = yaml.safe_load(taupage_yaml)
                 artifact_name = taupage_config['source']
+                application_id = taupage_config['application_id']
 
         if artifact_name is None:
             missing_component_error = "Missing component type Senza::TaupageAutoScalingGroup"
@@ -141,7 +142,7 @@ def create_stack(new_stack: dict) -> dict:
         kio_extra = {'stack_name': stack_name, 'version': application_version}
         logger.info("Registering version on kio...", extra=kio_extra)
         kio = Kio()
-        if kio.versions_create(application_id=stack.stack_name,
+        if kio.versions_create(application_id=application_id,
                                version=stack.application_version,
                                artifact=artifact_name):
             logger.info("Version registered in Kio.", extra=kio_extra)
