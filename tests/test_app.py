@@ -8,6 +8,7 @@ import requests
 from fixtures.cloud_formation import (BAD_CF_DEFINITION,
                                       BAD_CF_MISSING_TAUPAGE_AUTOSCALING_GROUP,
                                       GOOD_CF_DEFINITION,
+                                      GOOD_CF_DEF_WITH_DIFFERENT_APPLICATION_ID,
                                       GOOD_CF_DEFINITION_WITH_UNUSUAL_AUTOSCALING_RESOURCE)
 from lizzy.exceptions import (AMIImageNotUpdated, ObjectNotFound,
                               SenzaRenderError, StackDeleteException,
@@ -385,6 +386,28 @@ def test_new_stack(monkeypatch, app, oauth_requests):
     stack_version = FakeStack.last_save['stack_version']
     assert FakeStack.last_save['parameters'] == ['MintBucket=bk-bucket',
                                                  'ImageVersion=28']
+
+    # Test creating stack with application_id different than StackName
+    # and it should use the correct application_id to register the version in Kio
+    mock_senza.reset_mock()
+    mock_senza.create.return_value = True
+    mock_kio.versions_create.reset_mock()
+    mock_kio.versions_create.return_value = True
+    mock_senza.render_definition.return_value = GOOD_CF_DEF_WITH_DIFFERENT_APPLICATION_ID
+
+    data = {'keep_stacks': 0,
+            'new_traffic': 100,
+            'image_version': '1.0',
+            'application_version': '333',
+            'senza_yaml': 'SenzaInfo:\n  StackName: abc',
+            'parameters': ['MintBucket=bk-bucket', 'ImageVersion=28']}
+
+    request = app.post('/api/stacks',
+                       headers=GOOD_HEADERS,
+                       data=json.dumps(data))
+    mock_kio.versions_create.assert_called_with(application_id='abc-specific-id',
+                                                version='333',
+                                                artifact='pierone.example.com/lizzy/lizzy:12')
 
     # unusual launch configuration name (usually is AppServer)
     mock_kio.reset_mock()
