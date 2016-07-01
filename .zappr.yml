@@ -10,3 +10,7 @@ approvals:
       - zalando
     # a collaborator of the repo
     collaborators: true
+commit:
+  message:
+    patterns:
+      - "#[0-9]+" # has to begin with hash # and at least one number
