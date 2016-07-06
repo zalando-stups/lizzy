@@ -99,7 +99,6 @@ def create_stack(new_stack: dict) -> dict:
     # Create the Stack
     logger.info("Creating stack %s...", stack_name)
 
-    print(region)
     senza = Senza(region)
     tags = ['LizzyKeepStacks={}'.format(keep_stacks),
             'LizzyTargetTraffic={}'.format(new_traffic),
