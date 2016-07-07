@@ -143,7 +143,7 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
     stack_patch = filter_empty_values(stack_patch)
 
     stack_name, stack_version = stack_id.rsplit('-', 1)
-    senza = Senza(config.region)
+    senza = Senza(stack_patch.get('region', config.region))
     log_info = {'stack_id': stack_id,
                 'stack_name': stack_name}
 
