@@ -1,5 +1,4 @@
 from unittest.mock import MagicMock
-from lizzy.apps.senza import Senza
 
 import pytest
 

@@ -245,6 +245,12 @@ paths:
           description: Stack Id
           required: true
           type: string
+        - name: region
+          in: query
+          type: string
+          pattern: "\\w{2}-\\w+-[0-9]"
+          description: Region of stack for listing traffic
+          required: false
       responses:
         200:
           description: Stack traffic information

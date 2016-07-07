@@ -446,6 +446,17 @@ def test_get_traffic(monkeypatch, app, mock_senza):
     response = app.get('/api/stacks/foo-v1/traffic', headers=GOOD_HEADERS)
     assert response.status_code == 404
 
+    # request invalid region format
+    response = app.get('/api/stacks/foo-v1/traffic?region=abc', headers=GOOD_HEADERS)
+    assert response.status_code == 400
+    assert "'abc' does not match" in response.data.decode()
+
+    # request with valid region format
+    mock_senza.traffic.return_value = traffic_output_from_senza
+    response = app.get('/api/stacks/foo-v1/traffic?region=fo-barbazz-7', headers=GOOD_HEADERS)
+    assert response.status_code == 200
+    mock_senza.assert_called_with('fo-barbazz-7')
+
 
 def test_patch404(app, mock_senza):
     data = {'new_ami_image': 'ami-2323'}

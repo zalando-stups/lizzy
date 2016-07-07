@@ -177,14 +177,14 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
 
 @bouncer
 @exception_to_connexion_problem
-def get_stack_traffic(stack_id: str) -> Tuple[dict, int, dict]:
+def get_stack_traffic(stack_id: str, region: str=None) -> Tuple[dict, int, dict]:
     """
     GET /stacks/{id}/traffic
 
     Update traffic and Taupage image
     """
     stack_name, stack_version = stack_id.rsplit('-', 1)
-    senza = Senza(config.region)
+    senza = Senza(region or config.region)
 
     traffic_info = senza.traffic(stack_name=stack_name)
     if traffic_info:
