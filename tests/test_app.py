@@ -8,6 +8,7 @@ import pytest
 import requests
 from fixtures.cloud_formation import (BAD_CF_DEFINITION, GOOD_CF_DEFINITION,
                                       GOOD_CF_DEFINITION_WITH_UNUSUAL_AUTOSCALING_RESOURCE)
+from lizzy.configuration import config
 from lizzy.exceptions import (ExecutionError, SenzaDomainsError,
                               SenzaRenderError)
 from lizzy.models.stack import Stack
@@ -303,13 +304,26 @@ def test_list_stacks(app, mock_senza):
     payload = json.loads(response.data.decode())  # type: dict
     assert len(payload) > 0
     assert response.status_code == 200
+    mock_senza.assert_called_with(config.region)
     mock_senza.list.assert_called_with()
 
     response = app.get('/api/stacks?references={}'.format(quote('stack,v2')), headers=GOOD_HEADERS)
     payload = json.loads(response.data.decode())  # type: dict
     assert len(payload) > 0
     assert response.status_code == 200
+    mock_senza.assert_called_with(config.region)
     mock_senza.list.assert_called_with('stack', 'v2')
+
+    # request invalid region format
+    response = app.get('/api/stacks?region=abc', headers=GOOD_HEADERS)
+    assert response.status_code == 400
+    assert "'abc' does not match" in response.data.decode()
+
+    # request with valid region format
+    response = app.get('/api/stacks?region=fo-barbazz-7', headers=GOOD_HEADERS)
+    assert response.status_code == 200
+    mock_senza.assert_called_with('fo-barbazz-7')
+    mock_senza.list.assert_called_with()
 
 
 def test_get_stack_404(app, mock_senza):
