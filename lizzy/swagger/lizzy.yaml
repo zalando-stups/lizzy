@@ -45,6 +45,12 @@ paths:
           items:
             type: string
           required: false
+        - name: region
+          in: query
+          type: string
+          pattern: "\\w{2}-\\w+-[0-9]"
+          description: Region of stacks for listing
+          required: false
       responses:
         200:
           description: List of stacks
