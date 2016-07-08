@@ -292,11 +292,20 @@ def test_get_stack(app, mock_senza):
     parameters = {'version', 'description', 'stack_name', 'status',
                   'creation_time'}
 
-    request = app.get('/api/stacks/stack-1', headers=GOOD_HEADERS)
-    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
-    response = json.loads(request.data.decode())  # type: dict
-    keys = response.keys()
-    assert parameters == keys
+    response = app.get('/api/stacks/stack-1', headers=GOOD_HEADERS)
+    assert response.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    payload = json.loads(response.data.decode())  # type: dict
+    assert parameters == payload.keys()
+
+    mock_senza.reset_mock()
+    response = app.get('/api/stacks/stack-1?region=br-south-1', headers=GOOD_HEADERS)
+    assert response.status_code == 200
+    mock_senza.assert_called_with('br-south-1')
+    mock_senza.list.assert_called_with('stack', '1')
+
+    mock_senza.reset_mock()
+    response = app.get('/api/stacks/stack-1?region=crazy-1', headers=GOOD_HEADERS)
+    assert response.status_code == 400
 
 
 def test_list_stacks(app, mock_senza):

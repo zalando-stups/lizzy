@@ -123,12 +123,12 @@ def create_stack(new_stack: dict) -> dict:
 
 @bouncer
 @exception_to_connexion_problem
-def get_stack(stack_id: str) -> dict:
+def get_stack(stack_id: str, region: Optional[str]=None) -> dict:
     """
     GET /stacks/{id}
     """
     stack_name, stack_version = stack_id.rsplit('-', 1)
-    stack_dict = Stack.get(stack_name, stack_version)
+    stack_dict = Stack.get(stack_name, stack_version, region=region or config.region)
     return stack_dict, 200, _make_headers()
 
 
