@@ -350,6 +350,7 @@ definitions:
       region:
         type: string
         description: AWS region ID
+        pattern: "\\w{2}-\\w+-[0-9]"
       dry_run:
         type: boolean
         description: Disable stack rollback on error
@@ -395,6 +396,10 @@ definitions:
         type: string
         description: "Use specified image (AMI ID or \"latest\")"
         example: latest
+      region:
+        type: string
+        description: AWS region ID
+        pattern: "\\w{2}-\\w+-[0-9]"
   problem:
     description: |
       Provides information about an error of some kind the service has encountered.
@@ -437,3 +442,4 @@ definitions:
       region:
         type: string
         description: AWS region ID
+        pattern: "\\w{2}-\\w+-[0-9]"

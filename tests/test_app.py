@@ -413,6 +413,13 @@ def test_patch(monkeypatch, app, mock_senza):
     assert request.status_code == 202
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
+    # Run in a different region
+    mock_senza.traffic.reset()
+    data_for_another_region = {'new_traffic': 50, 'region': 'ee-foobar-8'}
+    request = app.patch('/api/stacks/stack-1', headers=GOOD_HEADERS,
+                        data=json.dumps(data_for_another_region))
+    mock_senza.assert_called_with('ee-foobar-8')
+
     update_image = {'new_ami_image': 'ami-2323'}
 
     # Should change the AMI image used by the stack and respawn the instances
