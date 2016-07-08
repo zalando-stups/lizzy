@@ -143,7 +143,8 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
     stack_patch = filter_empty_values(stack_patch)
 
     stack_name, stack_version = stack_id.rsplit('-', 1)
-    senza = Senza(stack_patch.get('region', config.region))
+    use_region = stack_patch.get('region', config.region)
+    senza = Senza(use_region)
     log_info = {'stack_id': stack_id,
                 'stack_name': stack_name}
 
@@ -169,7 +170,7 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
             raise TrafficNotUpdated("App does not have a domain.")
 
     # refresh the dict
-    stack_dict = Stack.get(stack_name, stack_version)
+    stack_dict = Stack.get(stack_name, stack_version, region=use_region)
 
     return stack_dict, 202, _make_headers()
 
