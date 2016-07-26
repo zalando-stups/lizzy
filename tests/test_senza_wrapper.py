@@ -57,6 +57,7 @@ def test_create(monkeypatch, popen, version, parameters, region, disable_rollbac
                               '--force']
                              + expected_disabled_rollback
                              + expected_dry_run
+                             + ['--stacktrace-visible']
                              + cli_tags
                              + ['filename', version]
                              + parameters,
