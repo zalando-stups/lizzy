@@ -4,6 +4,7 @@ EXPOSE 8080
 
 RUN apt-get update \
  && apt-get install -q -y --no-install-recommends m4 \
+ && apt-get upgrade -y \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
