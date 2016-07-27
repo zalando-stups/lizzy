@@ -4,8 +4,6 @@
 Lizzy
 =====
 
-**DISCLAIMER: Lizzy is still in alpha state.**
-
 REST Service to deploy AWS Cloud Formation templates using `Senza`_
 CLI tool.
 
@@ -58,7 +56,6 @@ Limitations
 Currently Lizzy doesn't support:
 
 - senza definitions with more than one AppServer;
-- parameters specified by name;
 
 License
 -------
