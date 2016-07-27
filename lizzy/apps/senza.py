@@ -41,6 +41,7 @@ class Senza(Application):
                 # Adds the tags prepended with Lizzy
                 cli_tags.extend(['-t', tag])
 
+            args.append('--stacktrace-visible')
             return self._execute('create', *args, *cli_tags, temp_yaml.name,
                                  stack_version, *parameters)
 
