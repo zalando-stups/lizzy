@@ -1,2 +1,2 @@
 # Version to be checked on the client
-VERSION = '1.9'
+VERSION = '2.0'

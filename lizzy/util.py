@@ -30,3 +30,11 @@ def parse_date(date_time) -> datetime:
     if isinstance(date_time, datetime):
         return date_time
     return date_parser.parse(date_time)
+
+
+def timestamp_to_uct(timestamp: int) -> datetime:
+    """
+    Converts a timestamp to a datetime in UTC
+    """
+
+    return datetime.fromtimestamp(timestamp, pytz.utc)
