@@ -118,7 +118,7 @@ def test_security(app, mock_senza):
     assert get_stacks.headers['X-Lizzy-Version'] == CURRENT_VERSION
 
     inexistent_url = app.get('/api/does-not-exist', headers=GOOD_HEADERS)
-    assert inexistent_url.status_code == 403
+    assert inexistent_url.status_code == 404
 
     invalid_access = app.get('/api/does-not-exist')
     assert invalid_access.status_code == 401
