@@ -5,56 +5,37 @@
 Lizzy
 =====
 
-Lizzy is a wrapper around `Senza`_ (a command line deployment tool to
-create and execute AWS CloudFormation templates) that allows cross
-AWS accounts deployments.
+Lizzy is a wrapper around `Senza`_: a command line deployment tool for creating and executing AWS CloudFormation templates. With Lizzy, autonomous teams can use `Senza`_, plus their Jenkins pipelines, to continuously deploy new versions of their apps to a team-specific AWS account, then use a REST API to deploy new apps to that account. 
 
-Why Lizzy?
+Why Lizzy Exists
 ==========
 
-Lizzy was created with the objective of enabling autonomous teams at
-`Zalando`_ to use Jenkins pipelines to continuously deploy new versions of
-their apps to their AWS accounts using the `Senza`_ CLI tool.
+At `Zalando`_, development teams have their own AWS accounts so they can work autonomously. One team (Continuous Delivery) is responsible for maintaining the Jenkinses of all other Zalando teams. This allows teams to focus on their `OKR's`_ instead of spending their time configuring Jenkins or continuous deployment tools. For Zalando, Lizzy helps make this `Jenkins-as-a-Service`_ setup possible.  
 
-The managed Jenkinses at Zalando run under the Continuous Delivery team's
-AWS account. The Continuous Delivery team is responsible for
-maintaining the Jenkinses of all other Zalando teams. That allows
-other teams in the company to focus on their `OKR's`_ and not invest
-their time on configuring Jenkins or continuous deployment tools. The
-teams at Zalando enjoy `Jenkins-as-a-Service`_.
-
-Each team at Zalando has their own AWS account. So running the
-`Senza`_ tool within a managed Jenkins job would allow deployments only in
-the Continuous Delivery team's AWS account. To permit different teams
-to deploy in their own AWS account Lizzy was created.
-
-How Lizzy works?
+How Lizzy Works
 ================
 
-Lizzy consists of a REST API service (also called Agent) and the
-`Lizzy-Client`_ tool.
+Lizzy consists of the Lizzy Agent — a REST API service — and the `Lizzy-Client`_ command line tool.
 
-The Lizzy Agent is a web application that is deployed in the team's
-account and granted access to create new Cloud Formation stacks. All
-requests are expected to be authenticated using `OAuth2`_ Bearer Tokens.
+The Lizzy Agent is a web application deployed in a team's AWS
+account and granted access to create new CloudFormation stacks. All
+requests are authenticated using `OAuth2`_ bearer tokens.
 
-The `Lizzy-Client`_ is a command line tool that mimics the usage of
-the original `Senza`_ tool commands and transforms those commands to HTTP
-requests sent to the REST API of Lizzy Agent.
+`Lizzy-Client`_ mimics the usage of `Senza`_'s commands and transforms them into HTTP
+requests, which are then sent to Lizzy Agent's REST API.
 
-Who is using Lizzy?
+Who Uses Lizzy?
 ===================
 
-Lizzy is being used in production at Zalando to delivery high quality
-services to power the `fastest growing`_ online fashion
-retailer store in Europe. If you want to know more about how Lizzy is
-used at Zalando please take a look at our blog post
+Many Zalando teams use Lizzy in production to deliver high-quality
+services that power the `fastest-growing`_ online fashion
+platform in Europe. If you want to know more about how Zalando uses Lizzy, please read our blog post
 `Continuous Delivery pipelines of ghe-backups with Lizzy`_.
 
-How to run Lizzy locally?
+How to Run Lizzy Locally
 =========================
 
-We provide in this repository a `Dockerfile`_ which you can use to
+This repository includes a `Dockerfile`_ that you can use to
 build an image locally using the command:
 
 .. code-block:: sh
@@ -62,14 +43,14 @@ build an image locally using the command:
     $ docker build -t lizzy:dev .
 
 
-.. hint:: The "scm-source.json" file will be missing if you just clone
-          this repository. To know more what is this file, please read
+.. hint:: If you clone
+          this repository, the "scm-source.json" file will be missing. To know more about what is in this file, please read
           the `STUPS documentation`_. We have `tools`_ that can generate
           this file for you.
 
 After the image build, it will be available within the tag
 "lizzy:dev". You will also need to specify some environment
-variables to be used by Lizzy. Here is an "example.cfg" file:
+variables for Lizzy to use. Here is an "example.cfg" file:
 
 .. code-block:: cfg
 
@@ -79,26 +60,24 @@ variables to be used by Lizzy. Here is an "example.cfg" file:
     DEPLOYER_SCOPE=deployer
     LOG_LEVEL=DEBUG
 
-It is also necessary to configure the `AWS credentials`_ locally in
-your machine under `~/.aws`. After that you can run the Lizzy image
+You also need to configure the `AWS credentials`_ locally in
+your machine under `~/.aws`. After that, you can run the Lizzy image
 with the command:
 
 .. code-block:: sh
 
     $ docker run --rm -p 8080:8080 --env-file environment.cfg -v ~/.aws:/.aws --name lizzy -u 999 -it lizzy:dev
 
-The application by default will be listening on port `8080`. Usually
-accessible at `http://127.0.0.1:8080`, it depends on how your Docker is
-configured locally. A Swagger/OpenAPI console will be available at
+The application will listen by default on port `8080`, which is usually
+accessible at `http://127.0.0.1:8080`. It depends on how you've configured Docker locally. A Swagger/OpenAPI console is available at
 `http://127.0.0.1:8080/api/ui/#/default`.
 
 Deploying to AWS
 ================
 
-There are many ways to deploy Lizzy to AWS. At Zalando we use `STUPS
-platform`_ that provides a convenient and audit-compliant
+There are many ways to deploy Lizzy to AWS. At Zalando we use `STUPS`_, which provides a convenient and audit-compliant
 Platform-as-a-Service (PaaS). An example of the `Senza definition`_ to
-deploy Lizzy would be:
+deploy Lizzy:
 
 .. code-block:: yaml
 
@@ -142,9 +121,7 @@ deploy Lizzy would be:
 Access Control for Lizzy
 ------------------------
 
-Lizzy application will need to have access to create new Cloud
-Formation stacks and some others services from Amazon API. You will
-need to specify the a `IAM role`_ similar to:
+To create new CloudFormation stacks, Lizzy applications need access to CloudFormation plus some other services from Amazon's API. You will need to specify the `IAM role`_ in a manner like:
 
 .. code-block:: json
 
@@ -169,8 +146,7 @@ need to specify the a `IAM role`_ similar to:
         "Version": "2012-10-17"
     }
 
-That is the minimal configuration needed for Lizzy to be able to run
-successfully Senza commands. Other statements might be included in this
+That is the minimal configuration Lizzy needs to run Senza commands successfully. Other statements might be included in this.
 
 Configuration
 =============
@@ -198,33 +174,30 @@ Lizzy uses the following environment variables for configuration:
 | TOKENINFO_URL        | URL to validate the token              |           |
 +----------------------+----------------------------------------+-----------+
 
-Configuring access to Lizzy
+Configuring Access to Lizzy
 ---------------------------
 
-Two environment variables are used to configure who is allowed to
-perform successful calls to Lizzy Agent. One and only one of them must
-be used (`ALLOWED_USERS` and `ALLOWED_USER_PATTERN`). To choose which
-one fits better to your use case you need to understand what they do.
+There are two environment variables for configuring who is allowed to
+perform successful calls to the Lizzy Agent. You must use one (and ONLY one) of them: Either `ALLOWED_USERS` or `ALLOWED_USER_PATTERN`. To choose which
+one fits your use case, you first need to understand what they do.
 
 - **ALLOWED_USERS**: List of specific usernames that can access
-  Lizzy. Used when you know exactly what are the usernames of the
-  clients you want to access your service.
-- **ALLOWED_USER_PATTERN**: Regular expression that should match with
-  the username of the clients that are going to call the Lizzy
-  API. Used when you know that the username should start with some
-  pattern like `stups_.+`.
+  Lizzy. Use it when you know the exact usernames of the
+  clients you want to give access to your service.
+- **ALLOWED_USER_PATTERN**: Regular expression that should match the username of the clients that are going to call the Lizzy
+  API. Use it when you know that the username should start with some
+  pattern, like `stups_.+`.
 
-Those variables are mutually exclusives and you should use only one
-of them.
+Those variables are mutually exclusive. Again: use only one of them.
 
 Authentication Service
 ----------------------
 
 The **TOKEN_URL** environment variable should point to the service
-that provides OAuth tokens. At Zalando we use `PlanB provider`_ for
+that provides OAuth tokens. At Zalando, we use the open-source `PlanB provider`_ for
 that. The **TOKENINFO_URL** environment variable should point to the
-service stores information about the tokens. To store the OAuth2 token
-information we use another Open Source project `PlanB token info`_
+service that stores information about the tokens. To store the OAuth2 token
+information, we use `PlanB token info`_,
 also developed by Zalando. If you do not have any OAuth2
 infrastructure, please take a look at those projects.
 
@@ -254,7 +227,7 @@ limitations under the License.
 .. _OKR's: https://en.wikipedia.org/wiki/OKR
 .. _Lizzy-Client: https://github.com/zalando/lizzy-client
 .. _Zalando: https://www.zalando.com
-.. _`fastest growing`: https://www.fbicgroup.com/sites/default/files/Europes%2025%20Fastest-Growing%20Major%20Apparel%20Retailers.pdf
+.. _`fastest-growing`: https://www.fbicgroup.com/sites/default/files/Europes%2025%20Fastest-Growing%20Major%20Apparel%20Retailers.pdf
 .. _`Continuous Delivery pipelines of ghe-backups with Lizzy`: https://tech.zalando.de/blog/ci-pipelines-with-lizzy/
 .. _`AWS credentials`: http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html
 .. _`PlanB provider`: https://github.com/zalando/planb-provider
@@ -263,7 +236,7 @@ limitations under the License.
 .. _`Jenkins-as-a-Service`: https://github.com/zalando/zalando-rules-of-play#continuous-delivery
 .. _`OAuth2`: http://planb.readthedocs.io/en/latest/oauth2.html
 .. _`Dockerfile`: https://github.com/zalando/lizzy/blob/master/Dockerfile
-.. _`STUPS platform`: http://stups.readthedocs.io/en/latest/
+.. _`STUPS`: http://stups.readthedocs.io/en/latest/
 .. _`STUPS documentation`: http://stups.readthedocs.io/en/latest/user-guide/application-development.html#scm-source-json
 .. _`tools`: https://github.com/zalando-stups/python-scm-source
 .. _`Senza definition`: https://github.com/zalando-stups/senza#senza-definition
