@@ -4,7 +4,7 @@ python:
 install:
   - pip install -e .
   - pip install coveralls
-  - pip install flake8
+  - pip install flake8==2.6.2
 script:
   - python setup.py test
   - python setup.py flake8

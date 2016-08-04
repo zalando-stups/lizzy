@@ -6,6 +6,7 @@
 import logging
 
 import connexion
+import werkzeug.exceptions
 
 from lizzy.api import not_found_path_handler, expose_api_schema, health_check
 from .serialization import JSONEncoder
@@ -28,7 +29,8 @@ def setup_webapp(config: configuration.Configuration):  # pragma: no cover
     flask_app = app.app
     flask_app.json_encoder = JSONEncoder
 
-    flask_app.errorhandler(404)(not_found_path_handler)
+    flask_app.register_error_handler(werkzeug.exceptions.NotFound,
+                                     not_found_path_handler)
 
     flask_app.add_url_rule('/.well-known/schema-discovery',
                            'schema_discovery_endpoint',
