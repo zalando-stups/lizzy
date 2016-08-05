@@ -7,27 +7,35 @@ Lizzy
 =====
 
 Lizzy is a wrapper around `Senza`_: a command line deployment tool for
-creating and executing AWS CloudFormation templates. With Lizzy,
-autonomous teams can use `Senza`_, plus their Jenkins pipelines, to
-continuously deploy new versions of their apps to a team-specific AWS
+creating and executing AWS `CloudFormation`_ templates. With Lizzy,
+autonomous teams can use `Senza`_, within their `continuous delivery`_
+pipelines, to deploy new versions of their apps to a team-specific AWS
 account. Lizzy can be deployed to an AWS account, then it's REST API
 can be used to deploy new apps to that account.
 
 
-Why Lizzy Exists
-================
+Why Lizzy
+=========
 
 At `Zalando`_, development teams have their own AWS accounts so they
 can work autonomously. One team (Continuous Delivery) is responsible
-for maintaining the Jenkinses of all other Zalando teams. This allows
+for maintaining the `Jenkinses`_ of all other Zalando teams. This allows
 teams to focus on their `OKR's`_ instead of spending their time
-configuring Jenkins or creating their own continuous deployment
+configuring `Jenkins`_ or creating their own continuous deployment
 tools. For Zalando, Lizzy helps make `continuous delivery`_ using our
-`Jenkins-as-a-Service`_ setup possible.
+`Jenkins-as-a-Service`_ setup possible. Without Lizzy teams would need
+to save AWS credentials to their Jenkins instance.
+
+If your team is interested in working with `immutable stacks`_ on AWS
+you can use `Senza`_ to create and manage your stacks using
+`CloudFormation`_. Lizzy is an additional tool that provides a
+deployment API to be used by your `continuous delivery`_ pipeline to
+run Senza commands. Lizzy can be used along with any code integration
+tool like `Jenkins`_, `TravisCI`_, `CircleCI`_, etc.
 
 
 How Lizzy Works
-================
+===============
 
 Lizzy consists of the Lizzy Agent — a REST API service — and the
 `Lizzy-Client`_ command line tool.
@@ -41,14 +49,15 @@ them into HTTP requests, which are then sent to Lizzy Agent's REST
 API.
 
 
-Who Uses Lizzy?
-===============
+Who Uses Lizzy
+==============
 
 Many Zalando teams use Lizzy in production to deliver high-quality
 services that power the `fastest-growing`_ online fashion platform in
 Europe. If you want to know more about how Zalando uses Lizzy, please
 read our blog post `Continuous Delivery pipelines of ghe-backups with
 Lizzy`_.
+
 
 How to Run Lizzy Locally
 ========================
@@ -273,3 +282,9 @@ limitations under the License.
 .. _`IAM role`: http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html
 .. _`continuous delivery`: https://en.wikipedia.org/wiki/Continuous_delivery
 .. _`Swagger/OpenAPI console`: http://swagger.io/
+.. _`CloudFormation`: https://aws.amazon.com/cloudformation/
+.. _`immutable stacks`: http://thenewstack.io/a-brief-look-at-immutable-infrastructure-and-why-it-is-such-a-quest/
+.. _`Jenkinses`: https://jenkins.io/
+.. _`Jenkins`: https://jenkins.io/
+.. _`TravisCI`: https://travis-ci.org/
+.. _`CircleCI`: https://circleci.com/
