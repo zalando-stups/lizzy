@@ -3,7 +3,7 @@ FROM registry.opensource.zalan.do/stups/python:3.5.1-23
 EXPOSE 8080
 
 RUN apt-get update \
- && apt-get install -q -y --no-install-recommends m4 \
+ && apt-get install -q -y --no-install-recommends m4 libssl-dev \
  && apt-get upgrade -y \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
