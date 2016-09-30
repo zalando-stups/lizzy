@@ -18,8 +18,12 @@ def push(key, value):
                                   timeout=4)
         try:
             server.write_metric(
-                key, value, tags={'app': 'lizzy',
-                                  'version': os.environ.get("APPLICATION_VERSION", "")})
+                'lizzy.{}'.format(key),
+                value,
+                tags={
+                    'app': 'lizzy',
+                    'version': os.environ.get("APPLICATION_VERSION", "")
+                })
         except IOError as ex:
             logger.error('Error to push metric {}: {}'.format(key, str(ex)))
 
