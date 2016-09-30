@@ -1,17 +1,19 @@
+import datetime
 import json
 import logging
 import os
 from typing import (Dict, List, Optional,  # noqa pylint: disable=unused-import
                     Tuple)
 
+import yaml
 from decorator import decorator
 
 import connexion
-import yaml
 from flask import Response
-from lizzy import config
+from lizzy import config, metrics
 from lizzy.apps.senza import Senza
 from lizzy.exceptions import ExecutionError, ObjectNotFound, TrafficNotUpdated
+from lizzy.metrics import MeasureRunningTime
 from lizzy.models.stack import Stack
 from lizzy.security import bouncer
 from lizzy.util import filter_empty_values
@@ -35,8 +37,10 @@ def exception_to_connexion_problem(func, *args, **kwargs):
         problem = connexion.problem(404, 'Not Found',
                                     "Stack not found: {}".format(exception.uid),
                                     headers=_make_headers())
+        metrics.count('generic.{}.stack_not_found'.format(func.__name__))
         return problem
     except ExecutionError as error:
+        metrics.count('generic.{}.senza_cmd_error'.format(func.__name__))
         return connexion.problem(500,
                                  title='Execution Error',
                                  detail=error.output,
@@ -53,6 +57,7 @@ def all_stacks(references: str=None, region: str=None) -> dict:
         references = []
     stacks = Stack.list(*references, region=region or config.region)
     stacks.sort(key=lambda stack: stack.creation_time)
+    metrics.count('get_all_stacks')
     return stacks, 200, _make_headers()
 
 
@@ -74,10 +79,12 @@ def create_stack(new_stack: dict) -> dict:
     region = new_stack.get('region', config.region)  # type: Optional[str]
     dry_run = new_stack.get('dry_run', False)
     tags = new_stack.get('tags', [])
+    running_time = MeasureRunningTime('create_stack.success')
 
     try:
         senza_definition = yaml.load(senza_yaml)
     except yaml.YAMLError as exception:
+        metrics.count('create_stack.invalid_senza_file')
         return connexion.problem(400,
                                  'Invalid senza yaml',
                                  exception.message,
@@ -94,6 +101,7 @@ def create_stack(new_stack: dict) -> dict:
                                     "Missing property in senza yaml: {}".format(
                                         missing_property),
                                     headers=_make_headers())
+        metrics.count('create_stack.missing_stack_name_prop')
         return problem
 
     # Create the Stack
@@ -118,6 +126,9 @@ def create_stack(new_stack: dict) -> dict:
                         'status': 'DRY-RUN',
                         'version': stack_version})
 
+    running_time.finish()
+    metrics.count('create_stack.region.{}'.format(region))
+
     return stack_dict, 201, _make_headers(output=output)
 
 
@@ -129,6 +140,7 @@ def get_stack(stack_id: str, region: Optional[str]=None) -> dict:
     """
     stack_name, stack_version = stack_id.rsplit('-', 1)
     stack_dict = Stack.get(stack_name, stack_version, region=region or config.region)
+    metrics.count('get_stack')
     return stack_dict, 200, _make_headers()
 
 
@@ -147,6 +159,7 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
     senza = Senza(use_region)
     log_info = {'stack_id': stack_id,
                 'stack_name': stack_name}
+    running_time = MeasureRunningTime('patch_stack.success')
 
     if 'new_ami_image' in stack_patch:
         # Change the AMI image of the Auto Scaling Group (ASG) and respawn the
@@ -172,6 +185,7 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
     # refresh the dict
     stack_dict = Stack.get(stack_name, stack_version, region=use_region)
 
+    running_time.finish()
     return stack_dict, 202, _make_headers()
 
 
@@ -185,6 +199,7 @@ def get_stack_traffic(stack_id: str, region: str=None) -> Tuple[dict, int, dict]
     """
     stack_name, stack_version = stack_id.rsplit('-', 1)
     senza = Senza(region or config.region)
+    running_time = MeasureRunningTime('get_stack_traffic.success')
 
     traffic_info = senza.traffic(stack_name=stack_name)
     if traffic_info:
@@ -192,6 +207,7 @@ def get_stack_traffic(stack_id: str, region: str=None) -> Tuple[dict, int, dict]
             if stack_traffic_info['identifier'] == stack_id:
                 return {'weight': float(stack_traffic_info['weight%'])}, 200, _make_headers()
 
+    running_time.finish()
     return connexion.problem(404, 'Not Found',
                              'Stack not found: {}'.format(stack_id),
                              headers=_make_headers())
@@ -213,8 +229,11 @@ def delete_stack(stack_id: str, delete_options: dict) -> dict:
 
     logger.info("Removing stack %s...", stack_id)
 
+    running_time = MeasureRunningTime('delete_stack.success')
     output = senza.remove(stack_id,
                           dry_run=dry_run, force=force)
+    running_time.finish()
+
     logger.info("Stack %s removed.", stack_id)
     return '', 204, _make_headers(output=output)
 

@@ -13,6 +13,7 @@ class Configuration:  # pylint: disable=too-few-public-methods
     region = environmental.Str('REGION', 'eu-west-1')  # AWS Region
     token_url = environmental.Str('TOKEN_URL')
     token_info_url = environmental.Str('TOKENINFO_URL')
+    kairosdb_url = environmental.Str('KAIROSDB_URL', None)
 
 
 config = Configuration()  # pylint: disable=invalid-name
