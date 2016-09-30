@@ -18,7 +18,7 @@ def push(key, value):
                                   timeout=4)
         try:
             server.write_metric(
-                'lizzy.{}'.format(key),
+                '{}.lizzy.{}'.format(config.metrics_prefix, key),
                 value,
                 tags={
                     'app': 'lizzy',
