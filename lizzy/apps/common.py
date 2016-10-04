@@ -3,6 +3,7 @@ from logging import getLogger
 from subprocess import PIPE, STDOUT, Popen
 from typing import Iterable, Optional
 
+from .. import sentry_client
 from ..exceptions import ExecutionError
 
 
@@ -30,6 +31,11 @@ class Application:  # pylint: disable=too-few-public-methods
         process = Popen(command, stdout=PIPE, stderr=stderr_to)
         stdout, stderr = process.communicate()
         output = stdout.decode()
+        sentry_client.capture_breadcrumb(data={
+            'command': ' '.join(command),
+            'command_return_code': process.returncode,
+            'output': output
+        })
         if process.returncode == 0:
             if expect_json and (output or not accept_empty):
                 try:

@@ -4,12 +4,11 @@ import os
 from typing import (Dict, List, Optional,  # noqa pylint: disable=unused-import
                     Tuple)
 
+import connexion
 import yaml
 from decorator import decorator
-
-import connexion
 from flask import Response
-from lizzy import config, metrics
+from lizzy import config, metrics, sentry_client
 from lizzy.apps.senza import Senza
 from lizzy.exceptions import ExecutionError, ObjectNotFound, TrafficNotUpdated
 from lizzy.metrics import MeasureRunningTime
@@ -39,11 +38,15 @@ def exception_to_connexion_problem(func, *args, **kwargs):
         metrics.count('generic.{}.stack_not_found'.format(func.__name__))
         return problem
     except ExecutionError as error:
+        sentry_client.captureException()
         metrics.count('generic.{}.senza_cmd_error'.format(func.__name__))
         return connexion.problem(500,
                                  title='Execution Error',
                                  detail=error.output,
                                  headers=_make_headers())
+    except Exception:
+        sentry_client.captureException()
+        raise
 
 
 @bouncer
@@ -52,6 +55,10 @@ def all_stacks(references: str=None, region: str=None) -> dict:
     """
     GET /stacks/
     """
+    sentry_client.capture_breadcrumb(data={
+        'references': references,
+        'region': region
+    })
     if not references:
         references = []
     stacks = Stack.list(*references, region=region or config.region)
@@ -79,6 +86,13 @@ def create_stack(new_stack: dict) -> dict:
     dry_run = new_stack.get('dry_run', False)
     tags = new_stack.get('tags', [])
     running_time = MeasureRunningTime('create_stack.success')
+
+    sentry_client.capture_breadcrumb(data={
+        'keep_stacks': keep_stacks,
+        'new_traffic': new_traffic,
+        'stack_version': stack_version,
+        'disable_rollback': disable_rollback,
+    })
 
     try:
         senza_definition = yaml.load(senza_yaml)
@@ -137,6 +151,11 @@ def get_stack(stack_id: str, region: Optional[str]=None) -> dict:
     """
     GET /stacks/{id}
     """
+    sentry_client.capture_breadcrumb(data={
+        'stack_id': stack_id,
+        'region': region,
+    })
+
     stack_name, stack_version = stack_id.rsplit('-', 1)
     stack_dict = Stack.get(stack_name, stack_version, region=region or config.region)
     metrics.count('get_stack')
@@ -151,6 +170,11 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
 
     Update traffic and Taupage image
     """
+    sentry_client.capture_breadcrumb(data={
+        'stack_id': stack_id,
+        'stack_patch': stack_patch,
+    })
+
     stack_patch = filter_empty_values(stack_patch)
 
     stack_name, stack_version = stack_id.rsplit('-', 1)
@@ -196,6 +220,10 @@ def get_stack_traffic(stack_id: str, region: str=None) -> Tuple[dict, int, dict]
 
     Update traffic and Taupage image
     """
+    sentry_client.capture_breadcrumb(data={
+        'stack_id': stack_id,
+        'region': region,
+    })
     stack_name, stack_version = stack_id.rsplit('-', 1)
     senza = Senza(region or config.region)
     running_time = MeasureRunningTime('get_stack_traffic.success')
@@ -220,6 +248,10 @@ def delete_stack(stack_id: str, delete_options: dict) -> dict:
 
     Delete a stack
     """
+    sentry_client.capture_breadcrumb(data={
+        'stack_id': stack_id,
+        'delete_options': delete_options,
+    })
     dry_run = delete_options.get('dry_run', False)
     force = delete_options.get('force', False)
     region = delete_options.get('region', config.region)  # type: Optional[str]
