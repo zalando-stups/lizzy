@@ -7,3 +7,4 @@ stups-senza>=1.0.40
 uwsgi
 flask==0.11.1
 metricz==0.1.4
+raven
