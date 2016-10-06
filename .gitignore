@@ -11,3 +11,4 @@ build.py
 run.sh
 __pycache__
 .tox/
+.idea/
