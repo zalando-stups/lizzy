@@ -37,6 +37,7 @@ class FakeConfig:
         self.deployer_scope = 'myscope'
         self.token_url = 'https://ouath.example/access_token'
         self.port = 8080
+        self.sentry_dsn = None
 
 
 class FakeResponse:

@@ -1,14 +1,15 @@
 from typing import List, Optional  # NOQA  pylint: disable=unused-import
 
 from lizzy.exceptions import ObjectNotFound
+
 from ..apps.senza import Senza
-from ..util import timestamp_to_uct
 from ..configuration import config
+from ..util import timestamp_to_uct
 
 REMOVED_STACK = object()
 
 
-class Stack():
+class Stack:
     prefix = 'lizzy_stack'
     key = 'stack_id'
     search_properties = ['stack_id']

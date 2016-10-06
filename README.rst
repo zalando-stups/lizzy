@@ -204,6 +204,8 @@ Lizzy uses the following environment variables for configuration:
 +----------------------+----------------------------------------+-----------+
 | REGION               | AWS Region to use                      | eu-west-1 |
 +----------------------+----------------------------------------+-----------+
+| SENTRY_DSN           | Sentry URL with client keys            |           |
++----------------------+----------------------------------------+-----------+
 | TOKEN_URL            | URL to get a new token                 |           |
 +----------------------+----------------------------------------+-----------+
 | TOKENINFO_URL        | URL to validate the token              |           |
