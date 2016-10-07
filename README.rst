@@ -170,7 +170,8 @@ need to specify the `IAM role`_ in a manner like:
                     "cloudwatch:*",
                     "elasticache:*",
                     "acm:*",
-                    "autoscaling:*"
+                    "autoscaling:*",
+                    "sqs:*"
                 ],
                 "Effect": "Allow",
                 "Resource": "*"
