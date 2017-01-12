@@ -270,7 +270,7 @@ def delete_stack(stack_id: str, delete_options: dict) -> dict:
 
 
 def not_found_path_handler(error):
-    return connexion.problem(401, 'Unauthorized', '')
+    return connexion.problem(401, 'Unauthorized', '').flask_response_object()
 
 
 def expose_api_schema():
