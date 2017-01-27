@@ -1,12 +1,16 @@
 language: python
 python:
-  - "3.5"
+- '3.5'
 install:
-  - pip install -e .
-  - pip install coveralls
-  - pip install flake8==2.6.2
+- pip install -e .
+- pip install coveralls
+- pip install codacy-coverage
+- pip install flake8==2.6.2
 script:
-  - python setup.py test
-  - python setup.py flake8
+- python setup.py test
+- python setup.py flake8
 after_success:
-  - coveralls
+- coveralls
+- python-codacy-coverage -r coverage.xml
+env:
+- secure: qUiw9QOl9ET6m2zucZs5qkNQXaKgETZnd7fkAtI9nd71An9u3h2SfvdmeyUdcLs3qy3VIeHGHQa8vtDKTxAYUjHtkD4/xUNUvP0hIERnID7D9TUD8cankKpVSLkS9DRWQjjR5UgdcY45ZCblK0G6ci+nHHm7z6eZ0EWaxOmoKMsBxyuwJJQQ21T5YFQawGQ0jZcUESYe4keyc0zKr2i9DvIaH+9ryXBopoeWanvx6vlSeVR5EAA1snnWuWanjdlXD0jiOCcF4jMDKnqTK7oqofoLKSitkuRjl5WE0rpEzcvyxGiX01axP3FLJ7/bmIFu8wFHUFZ54wjqcq0pt6QyHEc6RlYc/BWZybIG2W7ocScOLCqkuJsiIVDiTJ2jvQersZt5M5/YAjsy1bShISjsEl6f8sxWyNtrBKR34Qcf5TeU53eV5ip8Dz4OznpHOax3F9ZBOHxucvaD2cSyEHnOwP3MV0i6+jjklJ8vFiY61+emNwaIqAHni5OXXxycdd6r4s0wjwajOi1dd4d5S3zbpmA8agg72duIyzbDYqWG7wacF51gkeiecRhvywPf/gfy1FIgqDZWzSASOJXT6uNpmdn3rAG4c29ja4mEJyu/nIpM08pqEYay+iysXFPdvuqkn9Vs75vqQ9FWIWhUp01xrtVP1a3aGt2Vq19Ccuu1I10=
