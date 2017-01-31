@@ -23,7 +23,7 @@ for maintaining the `Jenkinses`_ of all other Zalando teams. This allows
 teams to focus on their `OKR's`_ instead of spending their time
 configuring `Jenkins`_ or creating their own continuous deployment
 tools. For Zalando, Lizzy helps make `continuous delivery`_ using our
-`Jenkins-as-a-Service`_ setup possible. Without Lizzy teams would need
+Jenkins-as-a-Service setup possible. Without Lizzy teams would need
 to save AWS credentials to their Jenkins instance.
 
 If your team is interested in working with `immutable stacks`_ on AWS
@@ -275,7 +275,6 @@ limitations under the License.
 .. _`PlanB provider`: https://github.com/zalando/planb-provider
 .. _`PlanB token info`: https://github.com/zalando/planb-tokeninfo
 .. _`GitHub practices`: https://guides.github.com/introduction/flow/
-.. _`Jenkins-as-a-Service`: https://github.com/zalando/zalando-rules-of-play#continuous-delivery
 .. _`OAuth2`: http://planb.readthedocs.io/en/latest/oauth2.html
 .. _`Dockerfile`: https://github.com/zalando/lizzy/blob/master/Dockerfile
 .. _`STUPS`: http://stups.readthedocs.io/en/latest/
