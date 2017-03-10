@@ -1,21 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import ast
 import os
-import re
 import sys
 
 from setuptools import find_packages, setup
 from setuptools.command.test import test as TestCommand
-
-_version_re = re.compile(r'VERSION\s+=\s+(.*)')
-
-MINOR_VERSION = 1
-
-with open('lizzy/version.py', 'rb') as f:
-    version_content = f.read().decode('utf-8')
-    VERSION = ast.literal_eval(_version_re.search(version_content).group(1))
 
 
 def get_long_description():
@@ -55,11 +45,12 @@ class PyTest(TestCommand):
         errno = pytest.main(self.pytest_args)
         sys.exit(errno)
 
+VERSION = '2017.0.dev1'
 
 setup(
     name='lizzy',
     packages=find_packages(),
-    version='{}.{}'.format(VERSION, MINOR_VERSION),
+    version=VERSION,
     description='REST Service to deploy AWS CF templates using Senza',
     long_description=get_long_description(),
     author='Zalando SE',
