@@ -27,5 +27,5 @@ twine upload dist/*
 git checkout */version.py
 git checkout setup.py
 
-#git tag -s ${version} -m "${version}"
-#git push --tags
+git tag -s ${version} -m "${version}"
+git push --tags
