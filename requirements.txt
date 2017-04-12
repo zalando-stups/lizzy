@@ -1,4 +1,4 @@
-connexion>=1.1.3
+connexion==1.1.5
 environmental>=1.1
 decorator
 pytz
