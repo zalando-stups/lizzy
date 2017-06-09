@@ -14,6 +14,7 @@ from lizzy.exceptions import (ExecutionError, SenzaDomainsError,
 from lizzy.models.stack import Stack
 from lizzy.service import setup_webapp
 from lizzy.version import VERSION
+from senza import __version__ as SENZA_VERSION
 
 CURRENT_VERSION = VERSION
 
@@ -117,6 +118,7 @@ def test_security(app, mock_senza):
     get_stacks = app.get('/api/stacks', headers=GOOD_HEADERS)
     assert get_stacks.status_code == 200
     assert get_stacks.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    assert get_stacks.headers['X-Senza-Version'] == SENZA_VERSION
 
     inexistent_url = app.get('/api/does-not-exist', headers=GOOD_HEADERS)
     assert inexistent_url.status_code == 404
@@ -198,6 +200,7 @@ def test_bad_senza_yaml(app, monkeypatch, mock_senza):
     response = json.loads(request.data.decode())
     assert response['title'] == 'Invalid senza yaml'
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    assert request.headers['X-Senza-Version'] == SENZA_VERSION
 
     mock_senza = MagicMock()
     mock_senza.return_value = mock_senza
@@ -255,6 +258,7 @@ def test_new_stack(app, mock_senza,
                                          expected_tags)
     assert request.status_code == 201
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    assert request.headers['X-Senza-Version'] == SENZA_VERSION
     response = json.loads(request.get_data().decode())
     assert len(response) == 5
     assert response['stack_name'] == 'abc'
@@ -295,6 +299,7 @@ def test_get_stack(app, mock_senza):
 
     response = app.get('/api/stacks/stack-1', headers=GOOD_HEADERS)
     assert response.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    assert response.headers['X-Senza-Version'] == SENZA_VERSION    
     payload = json.loads(response.data.decode())  # type: dict
     assert parameters == payload.keys()
 
@@ -341,6 +346,7 @@ def test_get_stack_404(app, mock_senza):
     request = app.get('/api/stacks/stack-404', headers=GOOD_HEADERS)
     assert request.status_code == 404
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    assert request.headers['X-Senza-Version'] == SENZA_VERSION
 
 
 @pytest.mark.parametrize(
@@ -366,6 +372,7 @@ def test_delete(app, mock_senza, stack_id, region, dry_run, force):
     request = app.delete(url, data=json.dumps(data), headers=GOOD_HEADERS)
     assert request.status_code == 204
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    assert request.headers['X-Senza-Version'] == SENZA_VERSION
     mock_senza.assert_called_once_with(region)
     mock_senza.remove.assert_called_once_with(stack_id,
                                               dry_run=dry_run, force=force)
@@ -374,6 +381,7 @@ def test_delete(app, mock_senza, stack_id, region, dry_run, force):
     request = app.delete(url, data=json.dumps(data), headers=GOOD_HEADERS)
     assert request.status_code == 204
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    assert request.headers['X-Senza-Version'] == SENZA_VERSION
 
 
 @pytest.mark.parametrize(
@@ -407,6 +415,7 @@ def test_patch(monkeypatch, app, mock_senza):
                                                stack_name='stack',
                                                stack_version='1')
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    assert request.headers['X-Senza-Version'] == SENZA_VERSION
 
     # Should return 500 when not possible to change the traffic
     # while running the one of the senza commands an error occurs
@@ -422,6 +431,7 @@ def test_patch(monkeypatch, app, mock_senza):
                         data=json.dumps({}))
     assert request.status_code == 202
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    assert request.headers['X-Senza-Version'] == SENZA_VERSION
 
     # Run in a different region
     mock_senza.traffic.reset()
@@ -439,6 +449,7 @@ def test_patch(monkeypatch, app, mock_senza):
                         data=json.dumps(update_image))
     assert request.status_code == 202
     assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    assert request.headers['X-Senza-Version'] == SENZA_VERSION
     mock_senza.patch.assert_called_once_with('stack', '1', 'ami-2323')
     mock_senza.respawn_instances.assert_called_once_with('stack', '1')
 
@@ -496,6 +507,7 @@ def test_patch404(app, mock_senza):
                          data=json.dumps(data))
     assert response.status_code == 404
     assert response.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    assert response.headers['X-Senza-Version'] == SENZA_VERSION
 
 
 def test_api_discovery_endpoint(app):

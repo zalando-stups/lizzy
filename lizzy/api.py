@@ -16,6 +16,7 @@ from lizzy.models.stack import Stack
 from lizzy.security import bouncer
 from lizzy.util import filter_empty_values
 from lizzy.version import VERSION
+from senza import __version__ as SENZA_VERSION
 
 logger = logging.getLogger('lizzy.api')  # pylint: disable=invalid-name
 
@@ -24,6 +25,7 @@ def _make_headers(**kwargs: Dict[str, str]) -> dict:
     headers = {'x-Lizzy-{key}'.format(key=k.title()): v.replace('\n', '\\n')
                for k, v in kwargs.items()}
     headers['X-Lizzy-Version'] = VERSION
+    headers['X-Senza-Version'] = SENZA_VERSION
     return headers
 
 
@@ -293,6 +295,7 @@ def get_app_status():
 
     status_info = {
         'version': os.environ.get("APPLICATION_VERSION", ""),
+        'senza_version': SENZA_VERSION,
         'status': status,
         'config': {
             name: getattr(config, name)
