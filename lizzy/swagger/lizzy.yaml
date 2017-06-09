@@ -58,6 +58,9 @@ paths:
             X-Lizzy-Version:
               description: Lizzy Version
               type: string
+            X-Senza-Version:
+              description: Senza Version
+              type: string
           schema:
             type: array
             items:
@@ -68,6 +71,9 @@ paths:
           headers:
             X-Lizzy-Version:
               description: Lizzy Version
+              type: string
+            X-Senza-Version:
+              description: Senza Version
               type: string
           schema:
             $ref: '#/definitions/problem'
@@ -86,6 +92,9 @@ paths:
             X-Lizzy-Version:
               description: Lizzy Version
               type: string
+            X-Senza-Version:
+              description: Senza Version
+              type: string
             X-Lizzy-Output:
               description: Senza Output
               type: string
@@ -95,6 +104,9 @@ paths:
             X-Lizzy-Version:
               description: Lizzy Version
               type: string
+            X-Senza-Version:
+              description: Senza Version
+              type: string
           schema:
             $ref: '#/definitions/problem'
         401:
@@ -103,6 +115,9 @@ paths:
           headers:
             X-Lizzy-Version:
               description: Lizzy Version
+              type: string
+            X-Senza-Version:
+              description: Senza Version
               type: string
           schema:
             $ref: '#/definitions/problem'
@@ -142,6 +157,9 @@ paths:
             X-Lizzy-Version:
               description: Lizzy Version
               type: string
+            X-Senza-Version:
+              description: Senza Version
+              type: string
           schema:
             $ref: '#/definitions/stack'
         401:
@@ -168,6 +186,9 @@ paths:
             X-Lizzy-Version:
               description: Lizzy Version
               type: string
+            X-Senza-Version:
+              description: Senza Version
+              type: string
           schema:
             $ref: '#/definitions/problem'
         500:
@@ -176,6 +197,9 @@ paths:
           headers:
             X-Lizzy-Version:
               description: Lizzy Version
+              type: string
+            X-Senza-Version:
+              description: Senza Version
               type: string
             X-Lizzy-Output:
               description: Senza Output
@@ -207,6 +231,9 @@ paths:
             X-Lizzy-Version:
               description: Lizzy Version
               type: string
+            X-Senza-Version:
+              description: Senza Version
+              type: string
           schema:
             type: object
             $ref: '#/definitions/stack'
@@ -217,6 +244,9 @@ paths:
             X-Lizzy-Version:
               description: Lizzy Version
               type: string
+            X-Senza-Version:
+              description: Senza Version
+              type: string
           schema:
             $ref: '#/definitions/problem'
         404:
@@ -225,6 +255,9 @@ paths:
           headers:
             X-Lizzy-Version:
               description: Lizzy Version
+              type: string
+            X-Senza-Version:
+              description: Senza Version
               type: string
           schema:
             $ref: '#/definitions/problem'
@@ -270,6 +303,9 @@ paths:
             X-Lizzy-Version:
               description: Lizzy Version
               type: string
+            X-Senza-Version:
+              description: Senza Version
+              type: string
           schema:
             type: object
             properties:
@@ -283,6 +319,9 @@ paths:
           headers:
             X-Lizzy-Version:
               description: Lizzy Version
+              type: string
+            X-Senza-Version:
+              description: Senza Version
               type: string
           schema:
             $ref: '#/definitions/problem'
@@ -302,12 +341,18 @@ paths:
             X-Lizzy-Version:
               description: Lizzy Version
               type: string
+            X-Senza-Version:
+              description: Senza Version
+              type: string
           schema:
             type: object
             properties:
               version:
                 type: string
                 description: Lizzy version running
+              senza_version:
+                type: string
+                description: Senza version running
               status:
                 type: string
               config:
