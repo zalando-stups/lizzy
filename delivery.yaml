@@ -1,0 +1,27 @@
+build_steps:
+  - desc: "Install dependencies"
+    cmd: |
+      apt-get install -q -y --no-install-recommends python3.5 \
+                                                    python3.5-dev \
+                                                    python3-pip \
+                                                    python3-setuptools \
+                                                    python3-wheel \
+                                                    gcc \
+                                                    libffi-dev \
+                                                    libssl-dev \
+                                                    tox
+      curl -sSL https://get.docker.com/ | sh
+  - desc: "Test Lizzy"
+    cmd: python3 setup.py test
+  - desc: "Build Docker Image"  # The image should be buildable even if not uploaded
+    cmd: |
+      docker build --build-arg BUILDER_VERSION=#{CDP_BUILD_VERSION} -t pierone.stups.zalan.do/bus/lizzy:#{CDP_BUILD_VERSION} .
+  - desc: "Push Docker Image (if on master)"
+    cmd: |
+      IS_PR_BUILD=${CDP_PULL_REQUEST_NUMBER+"true"}
+      if [[ $CDP_TARGET_BRANCH == "master" && ${IS_PR_BUILD} != "true" ]]
+      then
+        docker push pierone.stups.zalan.do/bus/lizzy:#{CDP_BUILD_VERSION}
+      else
+        echo "Image not pushed because the build is not a push to master"
+      fi
