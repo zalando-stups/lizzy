@@ -21,6 +21,4 @@ RUN pip install -r requirements.txt
 ADD _retry.json /.aws/models/_retry.json
 ADD _retry.json /root/.aws/models/_retry.json
 
-ADD scm-source.json /
-
 CMD uwsgi --yaml uwsgi.yaml
