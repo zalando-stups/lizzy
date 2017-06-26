@@ -1,18 +1,15 @@
-approvals:
-  # PR needs at least 1 approvals
-  minimum: 1
-  # approval = comment that matches this regex
-  pattern: "^(:\\+1:|👍|LGTM)$"
-  from:
-    # commenter must be either one of:
-    # a public zalando org member
-    orgs:
-      - zalando
-    # a collaborator of the repo
-    collaborators: true
-commit:
-  message:
-    patterns:
-      - "#[0-9]+" # has to begin with hash # and at least one number
-
 X-Zalando-Team: bus
+X-Zalando-Type: code
+
+approvals:
+  # PR needs at least 2 approvals
+  minimum: 2
+  groups: 
+    zalando: 
+      from: 
+        # commenter must be either one of:
+        # a public zalando org member
+        orgs: 
+          - zalando
+        # a collaborator of the repo
+    	collaborators: true
