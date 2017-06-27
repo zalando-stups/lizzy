@@ -44,7 +44,6 @@ Before you submit a pull request, check that it meets these guidelines:
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
 
-
 .. _Github Issues: https://github.com/zalando-stups/lizzy/issues
 .. _bug: https://github.com/zalando-stups/lizzy/issues?q=is%3Aopen+is%3Aissue+label%3Abug
 .. _enhancement: https://github.com/zalando-stups/lizzy/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement
