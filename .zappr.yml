@@ -1,15 +1,11 @@
 X-Zalando-Team: bus
 X-Zalando-Type: code
 
+# Every PR needs two approvals from Zalando employees.
 approvals:
-  # PR needs at least 2 approvals
-  minimum: 2
-  groups: 
-    zalando: 
-      from: 
-        # commenter must be either one of:
-        # a public zalando org member
-        orgs: 
+  groups:
+    zalando:
+      minimum: 2
+      from:
+        orgs:
           - zalando
-        # a collaborator of the repo
-    	collaborators: true
