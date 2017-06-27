@@ -10,7 +10,7 @@ build_steps:
                                                     libffi-dev \
                                                     libssl-dev \
                                                     tox
-      curl -sSL https://get.docker.com/ | sh
+      curl -sSL https://delivery.cloud.zalando.com/utils/ensure-docker | sh
       pip3 install -r requirements.txt
   - desc: "Test Lizzy"
     cmd: python3 setup.py test
