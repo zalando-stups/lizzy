@@ -16,10 +16,17 @@ build_steps:
     cmd: python3 setup.py test
   - desc: "Build Docker Image"  # The image should be buildable even if not uploaded
     cmd: |
-      docker build -t pierone.stups.zalan.do/bus/pierone.stups.zalan.do/bus/lizzy:cdp#{CDP_TARGET_BRANCH_COUNTER} .
+      if [[ $CDP_TARGET_BRANCH == "master" && ${IS_PR_BUILD} != "true" ]]
+      then
+        docker build -t pierone.stups.zalan.do/bus/pierone.stups.zalan.do/bus/lizzy:cdp#{CDP_TARGET_BRANCH_COUNTER} .
+      else
+        # Docker image is built on PR just to make sure it works.
+        docker build -t pierone.stups.zalan.do/bus/pierone.stups.zalan.do/bus/lizzy:pullrequest .
+      fi
   - desc: "Push Docker Image (if on master)"
     cmd: |
       IS_PR_BUILD=${CDP_PULL_REQUEST_NUMBER+"true"}
+      
       if [[ $CDP_TARGET_BRANCH == "master" && ${IS_PR_BUILD} != "true" ]]
       then
         docker push pierone.stups.zalan.do/bus/lizzy:cdp#{CDP_TARGET_BRANCH_COUNTER}
