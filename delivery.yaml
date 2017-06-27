@@ -10,16 +10,25 @@ build_steps:
                                                     libffi-dev \
                                                     libssl-dev \
                                                     tox
-      curl -sSL https://get.docker.com/ | sh
+      curl -sSL https://delivery.cloud.zalando.com/utils/ensure-docker | sh
       pip3 install -r requirements.txt
   - desc: "Test Lizzy"
     cmd: python3 setup.py test
   - desc: "Build Docker Image"  # The image should be buildable even if not uploaded
     cmd: |
-      docker build -t pierone.stups.zalan.do/bus/pierone.stups.zalan.do/bus/lizzy:cdp#{CDP_TARGET_BRANCH_COUNTER} .
+      IS_PR_BUILD=${CDP_PULL_REQUEST_NUMBER+"true"}
+      
+      if [[ $CDP_TARGET_BRANCH == "master" && ${IS_PR_BUILD} != "true" ]]
+      then
+        docker build -t pierone.stups.zalan.do/bus/pierone.stups.zalan.do/bus/lizzy:cdp#{CDP_TARGET_BRANCH_COUNTER} .
+      else
+        # Docker image is built on PR just to make sure it works.
+        docker build -t pierone.stups.zalan.do/bus/pierone.stups.zalan.do/bus/lizzy:pullrequest .
+      fi
   - desc: "Push Docker Image (if on master)"
     cmd: |
       IS_PR_BUILD=${CDP_PULL_REQUEST_NUMBER+"true"}
+      
       if [[ $CDP_TARGET_BRANCH == "master" && ${IS_PR_BUILD} != "true" ]]
       then
         docker push pierone.stups.zalan.do/bus/lizzy:cdp#{CDP_TARGET_BRANCH_COUNTER}
