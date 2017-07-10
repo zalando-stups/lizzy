@@ -1,5 +1,5 @@
 build_steps:
-  - desc: "Install dependencies"
+  - desc: Install dependencies
     cmd: |
       apt-get install -q -y --no-install-recommends python3.5 \
                                                     python3.5-dev \
@@ -10,28 +10,16 @@ build_steps:
                                                     libffi-dev \
                                                     libssl-dev \
                                                     tox
-      curl -sSL https://delivery.cloud.zalando.com/utils/ensure-docker | sh
+      curl -fsSL https://delivery.cloud.zalando.com/utils/ensure-docker | sh
       pip3 install -r requirements.txt
-  - desc: "Test Lizzy"
+  - desc: Run tests
     cmd: python3 setup.py test
-  - desc: "Build Docker Image"  # The image should be buildable even if not uploaded
+  - desc: Build and push a Docker Image  # The image should be buildable even if not uploaded
     cmd: |
-      IS_PR_BUILD=${CDP_PULL_REQUEST_NUMBER+"true"}
-      
-      if [[ $CDP_TARGET_BRANCH == "master" && ${IS_PR_BUILD} != "true" ]]
-      then
-        docker build -t pierone.stups.zalan.do/bus/pierone.stups.zalan.do/bus/lizzy:cdp#{CDP_TARGET_BRANCH_COUNTER} .
-      else
-        # Docker image is built on PR just to make sure it works.
-        docker build -t pierone.stups.zalan.do/bus/pierone.stups.zalan.do/bus/lizzy:pullrequest .
-      fi
-  - desc: "Push Docker Image (if on master)"
-    cmd: |
-      IS_PR_BUILD=${CDP_PULL_REQUEST_NUMBER+"true"}
-      
-      if [[ $CDP_TARGET_BRANCH == "master" && ${IS_PR_BUILD} != "true" ]]
-      then
-        docker push pierone.stups.zalan.do/bus/lizzy:cdp#{CDP_TARGET_BRANCH_COUNTER}
+      IMAGE=pierone.stups.zalan.do/bus/lizzy:cdp${CDP_TARGET_BRANCH_COUNTER}
+      docker build -t "$IMAGE" .
+      if [ -z "$CDP_PULL_REQUEST_NUMBER" ]; then
+        docker push "$IMAGE"
       else
         echo "Image not pushed because the build is not a push to master"
       fi
