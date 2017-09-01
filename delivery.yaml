@@ -16,7 +16,7 @@ build_steps:
     cmd: python3 setup.py test
   - desc: Build and push a Docker Image  # The image should be buildable even if not uploaded
     cmd: |
-      IMAGE=pierone.stups.zalan.do/bus/lizzy:cdp${CDP_TARGET_BRANCH_COUNTER}
+      IMAGE=pierone.stups.zalan.do/automata/lizzy:cdp${CDP_TARGET_BRANCH_COUNTER}
       docker build -t "$IMAGE" .
       if [ -z "$CDP_PULL_REQUEST_NUMBER" ]; then
         docker push "$IMAGE"
