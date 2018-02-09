@@ -3,7 +3,7 @@ environmental>=1.1
 decorator
 pytz
 pyyaml
-stups-senza==2.1.83
+stups-senza==2.1.96
 uwsgi
 flask==0.11.1
 metricz==0.1.4
