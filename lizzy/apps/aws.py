@@ -1,3 +1,4 @@
+from _ast import Tuple
 from datetime import datetime, timedelta
 from logging import getLogger
 
@@ -14,22 +15,36 @@ class AWS(object):
         self.logger = getLogger('lizzy.app.aws')
         self.region = region
 
-    def get_load_balancer_info(self, stack_id: str):
-        cf = boto3.client("cloudformation", self.region)
+    def get_load_balancer_info(self, stack_id: str) -> Tuple[str, str]:
+        """
+        Resolves the name and type of a stack's load balancer. Raises ObjectNotFound exception if the specified stack
+        does not exist or the stack has no load balancer. Useful in combination with get_request_count
+        :param stack_id: The stack's id in the format: <stack_name>-<stack_version>
+        :return: (load_balancer_name, load_balancer_type)
+        """
+        cloudformation = boto3.client("cloudformation", self.region)
         try:
-            response = cf.describe_stack_resource(StackName=stack_id, LogicalResourceId="AppLoadBalancer")
-            lb_id = response['StackResourceDetail']['PhysicalResourceId']
-            lb_type = response['StackResourceDetail']['ResourceType']
+            response = cloudformation.describe_stack_resource(StackName=stack_id, LogicalResourceId="AppLoadBalancer")
+            lb_id = str(response['StackResourceDetail']['PhysicalResourceId'])
+            lb_type = str(response['StackResourceDetail']['ResourceType'])
             return lb_id, lb_type
-        except ClientError as e:
-            msg = e.response.get('Error', {}).get('Message', 'Unknown')
+        except ClientError as error:
+            msg = error.response.get('Error', {}).get('Message', 'Unknown')
             if all(marker in msg for marker in [stack_id, 'does not exist']):
                 raise ObjectNotFound(msg)
             else:
-                raise e
+                raise error
 
-    def get_request_count(self, lb_id: str, lb_type: str, minutes: int = 5):
-        cw = boto3.client('cloudwatch', self.region)
+    def get_request_count(self, lb_id: str, lb_type: str, minutes: int = 5) -> int:
+        """
+        Resolves the request count as reported by AWS Cloudwatch for a given load balancer in the last n minutes.
+        Compatible with classic and application load balancers.
+        :param lb_id: the id/name of the load balancer
+        :param lb_type: either 'AWS::ElasticLoadBalancingV2::LoadBalancer' or 'AWS::ElasticLoadBalancing::LoadBalancer'
+        :param minutes: defines the time span to count requests in: now - minutes
+        :return: the number of request
+        """
+        cloudwatch = boto3.client('cloudwatch', self.region)
         end = datetime.utcnow()
         start = end - timedelta(minutes=minutes)
         kwargs = {
@@ -57,7 +72,7 @@ class AWS(object):
             })
         else:
             raise Exception('unknown load balancer type: ' + lb_type)
-        metrics = cw.get_metric_statistics(**kwargs)
+        metrics = cloudwatch.get_metric_statistics(**kwargs)
         if len(metrics['Datapoints']) > 0:
             return int(metrics['Datapoints'][0]['Sum'])
         return 0

@@ -242,6 +242,7 @@ def get_stack_traffic(stack_id: str, region: str=None) -> Tuple[dict, int, dict]
                              'Stack not found: {}'.format(stack_id),
                              headers=_make_headers())
 
+
 @bouncer
 @exception_to_connexion_problem
 def get_stack_request_count(stack_id: str, region: str=None, minutes: int=5) -> Tuple[dict, int, dict]:
@@ -254,15 +255,9 @@ def get_stack_request_count(stack_id: str, region: str=None, minutes: int=5) -> 
         'region': region,
     })
     aws = AWS(region or config.region)
-    running_time = MeasureRunningTime('get_stack_request_count.success')
     lb_id, lb_type = aws.get_load_balancer_info(stack_id)
     request_count = aws.get_request_count(lb_id, lb_type, minutes)
     return {'request_count': request_count}, 200, _make_headers()
-
-    running_time.finish()
-    return connexion.problem(404, 'Not Found',
-                             'Stack not found: {}'.format(stack_id),
-                             headers=_make_headers())
 
 
 @bouncer

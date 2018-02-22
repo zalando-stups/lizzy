@@ -45,6 +45,7 @@ class PyTest(TestCommand):
         errno = pytest.main(self.pytest_args)
         sys.exit(errno)
 
+
 VERSION = '2017.0.dev1'
 
 setup(
