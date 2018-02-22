@@ -9,13 +9,15 @@ from lizzy.exceptions import ObjectNotFound
 
 
 class AWS(object):
-
+    """
+    Provides convenient access to AWS resources by abstracting and wrapping boto3 calls.
+    """
     def __init__(self, region: str):
         super().__init__()
         self.logger = getLogger('lizzy.app.aws')
         self.region = region
 
-    def get_load_balancer_info(self, stack_id: str) -> Tuple[str, str]:
+    def get_load_balancer_info(self, stack_id: str):
         """
         Resolves the name and type of a stack's load balancer. Raises ObjectNotFound exception if the specified stack
         does not exist or the stack has no load balancer. Useful in combination with get_request_count

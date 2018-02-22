@@ -245,7 +245,7 @@ def get_stack_traffic(stack_id: str, region: str=None) -> Tuple[dict, int, dict]
 
 @bouncer
 @exception_to_connexion_problem
-def get_stack_request_count(stack_id: str, region: str=None, minutes: int=5) -> Tuple[dict, int, dict]:
+def get_stack_request_count(stack_id: str, region: str = None, minutes: int = 5) -> Tuple[dict, int, dict]:
     """
     GET /stacks/{id}/request_count
 
