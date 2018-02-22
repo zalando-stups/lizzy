@@ -561,3 +561,31 @@ def test_health_check_failing(app, mock_senza):
 
     response = app.get('/health')
     assert response.status_code == 500
+
+def test_request_count(app, mock_aws):
+    mock_aws.get_load_balancer_info.return_value = 'lb-id', 'lb-type'
+    mock_aws.get_request_count.return_value = 3185
+
+    response = app.get('/api/stacks/stack_name-stack_version/request_count', headers=GOOD_HEADERS)
+    assert response.status_code == 200
+    mock_aws.get_load_balancer_info.assert_called_with('stack_name-stack_version')
+    mock_aws.get_request_count.assert_called_with('lb-id', 'lb-type', 5)
+
+    assert json.loads(response.data.decode()) == {'request_count': 3185}
+
+def test_request_count_set_minutes(app, mock_aws):
+    mock_aws.get_load_balancer_info.return_value = 'lb-id', 'lb-type'
+    mock_aws.get_request_count.return_value = 3185
+
+    response = app.get('/api/stacks/stack_name-stack_version/request_count?minutes=15', headers=GOOD_HEADERS)
+    assert response.status_code == 200
+    mock_aws.get_load_balancer_info.assert_called_with('stack_name-stack_version')
+    mock_aws.get_request_count.assert_called_with('lb-id', 'lb-type', 15)
+
+    assert json.loads(response.data.decode()) == {'request_count': 3185}
+
+def test_request_count_set_minutes_invalid(app, mock_aws):
+    mock_aws.get_request_count.return_value = 3185
+
+    response = app.get('/api/stacks/stack_name-stack_version/request_count?minutes=0', headers=GOOD_HEADERS)
+    assert response.status_code == 400

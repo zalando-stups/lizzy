@@ -9,6 +9,7 @@ import yaml
 from decorator import decorator
 from flask import Response
 from lizzy import config, metrics, sentry_client
+from lizzy.apps.aws import AWS
 from lizzy.apps.senza import Senza
 from lizzy.exceptions import ExecutionError, ObjectNotFound, TrafficNotUpdated
 from lizzy.metrics import MeasureRunningTime
@@ -235,6 +236,28 @@ def get_stack_traffic(stack_id: str, region: str=None) -> Tuple[dict, int, dict]
         for stack_traffic_info in traffic_info:
             if stack_traffic_info['identifier'] == stack_id:
                 return {'weight': float(stack_traffic_info['weight%'])}, 200, _make_headers()
+
+    running_time.finish()
+    return connexion.problem(404, 'Not Found',
+                             'Stack not found: {}'.format(stack_id),
+                             headers=_make_headers())
+
+@bouncer
+@exception_to_connexion_problem
+def get_stack_request_count(stack_id: str, region: str=None, minutes: int=5) -> Tuple[dict, int, dict]:
+    """
+    GET /stacks/{id}/request_count
+
+    """
+    sentry_client.capture_breadcrumb(data={
+        'stack_id': stack_id,
+        'region': region,
+    })
+    aws = AWS(region or config.region)
+    running_time = MeasureRunningTime('get_stack_request_count.success')
+    lb_id, lb_type = aws.get_load_balancer_info(stack_id)
+    request_count = aws.get_request_count(lb_id, lb_type, minutes)
+    return {'request_count': request_count}, 200, _make_headers()
 
     running_time.finish()
     return connexion.problem(404, 'Not Found',
