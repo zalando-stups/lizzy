@@ -1,4 +1,6 @@
-from _ast import Tuple
+"""
+Provides convenient access to AWS resources by abstracting and wrapping boto3 calls.
+"""
 from datetime import datetime, timedelta
 from logging import getLogger
 
