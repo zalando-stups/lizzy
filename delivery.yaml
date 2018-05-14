@@ -1,25 +1,19 @@
-build_steps:
-  - desc: Install dependencies
-    cmd: |
-      apt-get install -q -y --no-install-recommends python3.5 \
-                                                    python3.5-dev \
-                                                    python3-pip \
-                                                    python3-setuptools \
-                                                    python3-wheel \
-                                                    gcc \
-                                                    libffi-dev \
-                                                    libssl-dev \
-                                                    tox
-      curl -fsSL https://delivery.cloud.zalando.com/utils/ensure-docker | sh
-      pip3 install -r requirements.txt
-  - desc: Run tests
-    cmd: python3 setup.py test
-  - desc: Build and push a Docker Image  # The image should be buildable even if not uploaded
-    cmd: |
-      IMAGE=pierone.stups.zalan.do/automata/lizzy:cdp${CDP_TARGET_BRANCH_COUNTER}
-      docker build -t "$IMAGE" .
-      if [ -z "$CDP_PULL_REQUEST_NUMBER" ]; then
-        docker push "$IMAGE"
-      else
-        echo "Image not pushed because the build is not a push to master"
-      fi
+version: "2017-09-20"
+pipeline:
+  - id: build
+    type: script
+    overlay: ci/python
+    commands:
+    - desc: "Install dependencies"
+      cmd: pip3 install -U  setuptools -r requirements.txt
+    - desc: Run tests
+      cmd: python3 setup.py test
+    - desc: Build and push a Docker Image  # The image should be buildable even if not uploaded
+      cmd: |
+        IMAGE=pierone.stups.zalan.do/automata/lizzy:cdp${CDP_TARGET_BRANCH_COUNTER}
+        docker build -t "$IMAGE" .
+        if [ -z "$CDP_PULL_REQUEST_NUMBER" ]; then
+          docker push "$IMAGE"
+        else
+          echo "Image not pushed because the build is not a push to master"
+        fi
