@@ -326,6 +326,62 @@ paths:
           schema:
             $ref: '#/definitions/problem'
 
+  /stacks/{stack-id}/request_count:
+    get:
+      summary: Retrieves the request count of a lizzy stack as reported by the corresponding AWS laod balancer
+      description: Retrieves the request count of a lizzy stack by stack id
+      operationId: lizzy.api.get_stack_request_count
+      security:
+        - oauth:
+            - "{{deployer_scope}}"
+      parameters:
+        - name: stack-id
+          in: path
+          description: Stack Id
+          required: true
+          type: string
+        - name: region
+          in: query
+          type: string
+          pattern: "\\w{2}-\\w+-[0-9]"
+          description: Region of stack
+          required: false
+        - name: minutes
+          in: query
+          type: integer
+          default: 5
+          minimum: 1
+          description: The returned number of reqests occured in the last minutes as specified by this parameter
+          required: false
+      responses:
+        200:
+          description: Request Count of lizzy stack
+          headers:
+            X-Lizzy-Version:
+              description: Lizzy Version
+              type: string
+            X-Senza-Version:
+              description: Senza Version
+              type: string
+          schema:
+            type: object
+            properties:
+              request_count:
+                type: integer
+                minimum: 0
+        404:
+          description: |
+            Stack was not found.
+          headers:
+            X-Lizzy-Version:
+              description: Lizzy Version
+              type: string
+            X-Senza-Version:
+              description: Senza Version
+              type: string
+          schema:
+            $ref: '#/definitions/problem'
+
   /status:
     get:
       summary: Retrieves the application status
