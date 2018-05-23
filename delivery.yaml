@@ -8,7 +8,6 @@ pipeline:
       cmd: pipenv install --dev --deploy
     - desc: Run tests
       cmd: |
-      export PYTHONPATH=.
       pipenv run make ci-checks
     - desc: Build and push a Docker Image  # The image should be buildable even if not uploaded
       cmd: |
