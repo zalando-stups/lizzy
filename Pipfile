@@ -1,0 +1,24 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+connexion = "==1.1.5"
+environmental = ">=1.1"
+decorator = "*"
+pytz = "*"
+stups-senza = "==2.1.100"
+metricz = "==0.1.4"
+raven = "*"
+PyYAML = "*"
+uWSGI = "*"
+Flask = "==0.11.1"
+
+[dev-packages]
+pytest = "*"
+pytest-cov = "*"
+factory-boy = "*"
+
+[requires]
+python_version = "3.6"
