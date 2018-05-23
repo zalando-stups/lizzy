@@ -1,24 +1,19 @@
-FROM registry.opensource.zalan.do/stups/python:3.5-cd28
+FROM registry.opensource.zalan.do/stups/python:latest
 
 EXPOSE 8080
 
-RUN apt-get update \
- && apt-get install -q -y --no-install-recommends python3-venv m4 build-essential libssl-dev libffi-dev python-dev \
- && apt-get upgrade -y \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
 
-ADD uwsgi.yaml /
-ADD setup.py /
-ADD requirements.txt /
-ADD lizzy /lizzy
+# We can't use / with pipenv https://github.com/pypa/pipenv/issues/1648
+COPY Pipfile.lock /app
+RUN pipenv install --ignore-pipfile --verbose
 
-RUN python -m venv /lizzy_env
-ENV PATH=/lizzy_env/bin:$PATH
-RUN pip install -U pip setuptools wheel
-RUN pip install -r requirements.txt
+ADD uwsgi.yaml /app
+ADD setup.py /app
+ADD requirements.txt /app
+ADD lizzy /lizzy/app
 
 ADD _retry.json /.aws/models/_retry.json
 ADD _retry.json /root/.aws/models/_retry.json
 
-CMD uwsgi --yaml uwsgi.yaml
+CMD pipenv run uwsgi --yaml uwsgi.yaml
