@@ -6,12 +6,10 @@ WORKDIR /app
 
 # We can't use / with pipenv https://github.com/pypa/pipenv/issues/1648
 COPY Pipfile.lock /app
-RUN pipenv install --ignore-pipfile --verbose
+RUN pipenv install --ignore-pipfile
 
 ADD uwsgi.yaml /app
-ADD setup.py /app
-ADD requirements.txt /app
-ADD lizzy /lizzy/app
+ADD lizzy /app/lizzy
 
 ADD _retry.json /.aws/models/_retry.json
 ADD _retry.json /root/.aws/models/_retry.json
