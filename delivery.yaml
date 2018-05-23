@@ -7,8 +7,7 @@ pipeline:
     - desc: "Setup Pipenv"
       cmd: pipenv install --dev --deploy
     - desc: Run tests
-      cmd: |
-      pipenv run make ci-checks
+      cmd: pipenv run make ci-checks
     - desc: Build and push a Docker Image  # The image should be buildable even if not uploaded
       cmd: |
         IMAGE=pierone.stups.zalan.do/automata/lizzy:cdp${CDP_TARGET_BRANCH_COUNTER}
