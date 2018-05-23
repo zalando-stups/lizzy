@@ -1,9 +1,0 @@
-checks:
-    - specification
-    - branch-release
-    - codevalidator
-specification:
-    allowed_schemes: ['https']
-    allowed_formats: ['github', 'uri']
-branch-release:
-    pattern: '^v(?:\d|\_|\.)+$'
