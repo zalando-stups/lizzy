@@ -4,6 +4,8 @@ EXPOSE 8080
 
 WORKDIR /app
 
+ENV PIPENV_VENV_IN_PROJECT true
+
 # We can't use / with pipenv https://github.com/pypa/pipenv/issues/1648
 COPY Pipfile.lock /app
 RUN pipenv install --ignore-pipfile
