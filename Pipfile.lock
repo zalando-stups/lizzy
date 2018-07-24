@@ -292,7 +292,7 @@
                 "sha256:ac75e506b6735c4525f86fdfa1c9b618e1b4364f26a3a02fb90273390c9bc06c"
             ],
             "index": "pypi",
-            "version": "==2.1.100"
+            "version": "==2.1.117"
         },
         "stups-tokens": {
             "hashes": [
