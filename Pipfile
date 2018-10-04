@@ -19,6 +19,7 @@ Flask = "<2.0"
 pytest = "*"
 pytest-cov = "*"
 factory-boy = "*"
+pylint = "*"
 
 [requires]
 python_version = "3.6"

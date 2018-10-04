@@ -1,9 +1,9 @@
-import connexion.decorators.produces as produces
+import connexion.apps.flask_app as flask_app
 
 from .models.stack import Stack
 
 
-class JSONEncoder(produces.JSONEncoder):
+class JSONEncoder(flask_app.FlaskJSONEncoder):
     def default(self, o):
         if isinstance(o, Stack):
             stack_dict = {"creation_time": o.creation_time,
