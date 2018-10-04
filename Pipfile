@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-connexion = "==1.1.5"
+connexion = "<2.0.0"
 environmental = ">=1.1"
 decorator = "*"
 pytz = "*"
@@ -13,7 +13,7 @@ metricz = "==0.1.4"
 raven = "*"
 PyYAML = "*"
 uWSGI = "*"
-Flask = "==0.11.1"
+Flask = "<2.0"
 
 [dev-packages]
 pytest = "*"
