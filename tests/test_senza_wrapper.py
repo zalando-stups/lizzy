@@ -280,7 +280,7 @@ def test_scale(monkeypatch, popen):
 
     popen.assert_called_with(['senza', 'scale', '--region', 'region',
                               'lizzy', 'version42', '0', '--force'],
-                             stdout=-1, stderr=-1)
+                             stdout=-1, stderr=-2)
 
     # test error case
     popen.side_effect = ExecutionError('', '')

@@ -190,11 +190,10 @@ class Senza(Application):
         """
         try:
             arguments = []
-            if new_scale:
-                print ("new scale: {}".format(new_scale))
+            if new_scale is not None:
                 arguments.append(str(new_scale))
             arguments.append('--force')
 
-            self._execute('scale', stack_name, stack_version, *arguments)
+            return self._execute('scale', stack_name, stack_version, *arguments)
         except ExecutionError as exception:
             raise SenzaScaleError(exception.error, exception.output)
