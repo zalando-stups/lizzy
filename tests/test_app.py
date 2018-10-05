@@ -91,10 +91,14 @@ def app(monkeypatch):
 @pytest.fixture(autouse=True)
 def oauth_requests(monkeypatch: '_pytest.monkeypatch.monkeypatch'):
     class Session(requests.Session):
-        def get(self, url: str, params: dict=None, timeout=0):
+        def get(self, url: str, params:dict=None, headers:dict=None, timeout=0):
             params = params or {}
+            headers = headers or {}
             if url == "https://ouath.example/token_info":
-                token = params['access_token']
+                if params:
+                    token = params['access_token']
+                else:
+                    _, token = headers['Authorization'].split()
                 if token == "100":
                     return FakeResponse(200,
                                         '{"scope": ["myscope"], "uid": "test_user"}')
@@ -299,7 +303,7 @@ def test_get_stack(app, mock_senza):
 
     response = app.get('/api/stacks/stack-1', headers=GOOD_HEADERS)
     assert response.headers['X-Lizzy-Version'] == CURRENT_VERSION
-    assert response.headers['X-Senza-Version'] == SENZA_VERSION    
+    assert response.headers['X-Senza-Version'] == SENZA_VERSION
     payload = json.loads(response.data.decode())  # type: dict
     assert parameters == payload.keys()
 
