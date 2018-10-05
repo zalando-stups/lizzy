@@ -1,1 +1,1 @@
-VERSION = '2017.0.dev1'
+VERSION = '2018.0.dev1'

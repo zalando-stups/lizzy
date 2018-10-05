@@ -459,6 +459,20 @@ def test_patch(monkeypatch, app, mock_senza):
                         data=json.dumps(update_image))
     assert request.status_code == 500
 
+    # Should change the stack scale
+    request = app.patch('/api/stacks/stack-1',
+                        headers=GOOD_HEADERS,
+                        data=json.dumps(data))
+    assert request.status_code == 202
+    assert request.headers['X-Lizzy-Version'] == CURRENT_VERSION
+    assert request.headers['X-Senza-Version'] == SENZA_VERSION
+    mock_senza.scale.assert_called_once_with('stack', '1', '2')
+
+    # Should return 500 when not possible to change the scale
+    mock_senza.patch.side_effect = ExecutionError(1, 'fake error')
+    request = app.patch('/api/stacks/stack-1', headers=GOOD_HEADERS,
+                        data=json.dumps(data))
+    assert request.status_code == 500
 
 def test_get_traffic(monkeypatch, app, mock_senza):
     traffic_output_from_senza = [

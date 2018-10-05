@@ -4,7 +4,7 @@ import pytest
 
 from lizzy.apps.senza import Senza
 from lizzy.version import VERSION
-from lizzy.exceptions import (ExecutionError, SenzaPatchError,
+from lizzy.exceptions import (ExecutionError, SenzaPatchError, SenzaScaleError,
                               SenzaRespawnInstancesError, SenzaTrafficError,
                               SenzaDomainsError, SenzaRenderError)
 
@@ -265,6 +265,28 @@ def test_patch(monkeypatch, popen):
 
     with pytest.raises(SenzaPatchError):
         senza.patch('lizzy', 'version42', 'latest')
+
+
+def test_scale(monkeypatch, popen):
+    senza = Senza('region')
+    senza.logger = MagicMock()
+    senza.scale('lizzy', 'version42', 0)
+
+    cmd = 'senza scale --region region lizzy version42 0 --force'
+    senza.logger.debug.assert_called_with('Executing %s.', 'senza',
+                                          extra={'command': cmd})
+    assert not senza.logger.error.called
+    assert not senza.logger.exception.called
+
+    popen.assert_called_with(['senza', 'scale', '--region', 'region',
+                              'lizzy', 'version42', '0', '--force'],
+                             stdout=-1, stderr=-1)
+
+    # test error case
+    popen.side_effect = ExecutionError('', '')
+
+    with pytest.raises(SenzaScaleError):
+        senza.scale('lizzy', 'version42', 0)
 
 
 def test_render_definition(monkeypatch, popen):

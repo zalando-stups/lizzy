@@ -34,6 +34,10 @@ class SenzaTrafficError(ExecutionError):
     """Raised when `senza traffic` command returns an unexpected error."""
 
 
+class SenzaScaleError(ExecutionError):
+    """Raised when `senza scale` command returns an unexpected error."""
+
+
 class SenzaRespawnInstancesError(ExecutionError):
     """Raised when `senza respawn-instances` command returns
     an unexpected error."""

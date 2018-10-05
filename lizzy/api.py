@@ -170,7 +170,7 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
     """
     PATCH /stacks/{id}
 
-    Update traffic and Taupage image
+    Update scale, traffic and Taupage image
     """
     sentry_client.capture_breadcrumb(data={
         'stack_id': stack_id,
@@ -185,6 +185,10 @@ def patch_stack(stack_id: str, stack_patch: dict) -> dict:
     log_info = {'stack_id': stack_id,
                 'stack_name': stack_name}
     running_time = MeasureRunningTime('patch_stack.success')
+
+    if 'new_scale' in stack_patch:
+        new_scale = stack_patch['new_scale']
+        senza.scale(stack_name, stack_version, new_scale)
 
     if 'new_ami_image' in stack_patch:
         # Change the AMI image of the Auto Scaling Group (ASG) and respawn the
