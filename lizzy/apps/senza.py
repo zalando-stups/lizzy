@@ -190,7 +190,7 @@ class Senza(Application):
         """
         try:
             arguments = []
-            if new_scale:
+            if new_scale is not None:
                 arguments.append(str(new_scale))
             else:
                 raise Exception("The scale argument must be provided.")
