@@ -177,7 +177,7 @@ class Senza(Application):
                                   extra={'command.output': exception.output})
                 raise SenzaRenderError(exception.error, exception.output)
 
-    def scale(self, stack_name: str, stack_version: str, new_scale: int):
+    def scale(self, stack_name: str, stack_version: Optional[str], new_scale: int):
         """
         Rescales the application.
 
@@ -190,8 +190,11 @@ class Senza(Application):
         """
         try:
             arguments = []
-            if new_scale is not None:
+            if new_scale:
                 arguments.append(str(new_scale))
+            else:
+                raise Exception("The scale argument must be provided.")
+
             arguments.append('--force')
 
             return self._execute('scale', stack_name, stack_version, *arguments)
