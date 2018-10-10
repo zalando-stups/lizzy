@@ -437,6 +437,11 @@ definitions:
   stack_patch:
     type: object
     properties:
+      new_scale:
+        type: integer
+        format: int32
+        description: Desired number of instances
+        minimum: 0
       new_traffic:
         type: integer
         format: int32

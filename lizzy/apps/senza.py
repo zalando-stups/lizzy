@@ -3,7 +3,7 @@ from typing import Dict, List, Optional
 
 from ..exceptions import (ExecutionError, SenzaDomainsError, SenzaPatchError,
                           SenzaRenderError, SenzaRespawnInstancesError,
-                          SenzaTrafficError)
+                          SenzaTrafficError, SenzaScaleError)
 from ..version import VERSION
 from .common import Application
 
@@ -176,3 +176,27 @@ class Senza(Application):
                 self.logger.error('Failed to render CloudFormation defition.',
                                   extra={'command.output': exception.output})
                 raise SenzaRenderError(exception.error, exception.output)
+
+    def scale(self, stack_name: str, stack_version: Optional[str], new_scale: int):
+        """
+        Rescales the application.
+
+        :param stack_name: Name of the application stack
+        :param stack_version: Name of the application version that will be
+                              changed
+        :param scale: New scale
+        :raises SenzaScaleError: when a ExecutionError is thrown to allow
+                                   more specific error handing.
+        """
+        try:
+            arguments = []
+            if new_scale is not None:
+                arguments.append(str(new_scale))
+            else:
+                raise Exception("The scale argument must be provided.")
+
+            arguments.append('--force')
+
+            return self._execute('scale', stack_name, stack_version, *arguments)
+        except ExecutionError as exception:
+            raise SenzaScaleError(exception.error, exception.output)
