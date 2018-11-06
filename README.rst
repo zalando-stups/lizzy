@@ -249,6 +249,11 @@ Contributing to Lizzy
 We welcome your ideas, issues, and pull requests. Just follow the
 usual/standard `GitHub practices`_.
 
+Updating Senza Version
+----------------------
+Change senza version in ``Pipfile``, run ``pipenv lock``, and commit both the ``Pipfile`` and
+``Pipfile.lock``.
+
 License
 =======
 Copyright 2015 Zalando SE
