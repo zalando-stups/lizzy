@@ -4,6 +4,8 @@ pipeline:
     type: script
     overlay: ci/python
     commands:
+    - desc: "Setup OS packages"
+      cmd: apt-get install -y python-dev
     - desc: "Setup Pipenv"
       cmd: pipenv install --dev --deploy
     - desc: Run tests
