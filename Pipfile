@@ -12,7 +12,7 @@ stups-senza = "==2.1.135"
 metricz = "==0.1.4"
 raven = "*"
 PyYAML = "*"
-uWSGI = "2.0.17.1"
+uWSGI = "==2.0.17.1"
 Flask = "<2.0"
 
 [dev-packages]
