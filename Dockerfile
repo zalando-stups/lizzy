@@ -1,5 +1,7 @@
 FROM registry.opensource.zalan.do/stups/python:latest
 
+RUN apt-get update && apt-get install -y python3-dev && apt clean && rm -rf /var/tmp/* /tmp/* /var/lib/apt/*
+
 EXPOSE 8080
 
 WORKDIR /app
