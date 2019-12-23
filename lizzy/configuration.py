@@ -14,7 +14,6 @@ class Configuration:  # pylint: disable=too-few-public-methods
     token_url = environmental.Str('TOKEN_URL')
     token_info_url = environmental.Str('TOKENINFO_URL')
     kairosdb_url = environmental.Str('KAIROSDB_URL', None)
-    metrics_prefix = environmental.Str('METRICS_PREFIX', 'default')
     sentry_dsn = environmental.Str('SENTRY_DSN', None)
 
 
